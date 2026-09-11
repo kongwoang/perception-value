@@ -86,7 +86,12 @@ def mono_range_sigma(det_dir, cheap_mode, seqs, cfg: RiskConfig) -> float:
 
 def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
           pp: P.PlannerParams, cp: P.CostParams, crit_model,
-          range_source: str = "mono", sigma: float = 0.0, seed: int = 0) -> pd.DataFrame:
+          range_source: str = "mono", sigma: float = 0.0, seed: int = 0,
+          lp: P.LateralParams | None = None,
+          lc: P.LateralCostParams | None = None) -> pd.DataFrame:
+    """One row per frame. Both downstream tasks are scored from the same perception."""
+    lp = lp or P.LateralParams()
+    lc = lc or P.LateralCostParams()
     rng = np.random.default_rng(seed)
     rows = []
     for s in seqs:
@@ -96,6 +101,7 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
         c = DetCache(det_dir / cheap_mode / f"{s}.npz")
         f = DetCache(det_dir / full_mode / f"{s}.npz")
         prev_c = prev_f = None
+        prev_lc_ = prev_lf_ = None
         for i, fr in enumerate(c.frames):
             fr = int(fr)
             j = f.index[fr]
@@ -113,8 +119,9 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
                 bx = d["xyxy"][k].astype(float)
                 z, lo, hi, tt = _apply_range_source(bx, geo_k, g, range_source, rng, sigma)
                 a, _ = P.required_decel(z, lo, hi, tt, v, pp)
+                lat_a, lat_off = P.lateral_action(z, lo, hi, v, lp)
                 out[tag] = {"a": a, "n": int(k.sum()), "conf": d["conf"][k],
-                            "ent": d["binent"][k]}
+                            "ent": d["binent"][k], "lat_a": lat_a, "lat_off": lat_off}
             a_gt, _ = P.required_decel(g["long_near"], g["lat_min"], g["lat_max"],
                                        g["ttc"], v, pp)
             act_c = P.discrete_action(out["cheap"]["a"], pp)
@@ -122,16 +129,30 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
             Jc = P.decision_cost(act_c, a_gt, prev_c, pp, cp)
             Jf = P.decision_cost(act_f, a_gt, prev_f, pp, cp)
             prev_c, prev_f = act_c, act_f
+
+            Lc = P.lateral_cost(out["cheap"]["lat_a"], out["cheap"]["lat_off"],
+                                g["long_near"], g["lat_min"], g["lat_max"], v, prev_lc_, lp, lc)
+            Lf = P.lateral_cost(out["full"]["lat_a"], out["full"]["lat_off"],
+                                g["long_near"], g["lat_min"], g["lat_max"], v, prev_lf_, lp, lc)
+            lat_gt_a, lat_gt_off = P.lateral_action(g["long_near"], g["lat_min"],
+                                                    g["lat_max"], v, lp)
+            prev_lc_, prev_lf_ = out["cheap"]["lat_a"], out["full"]["lat_a"]
             conf = out["cheap"]["conf"]
             rows.append({
                 "seq": s, "frame": fr, "v_ego": v,
                 "a_cheap": out["cheap"]["a"], "a_full": out["full"]["a"], "a_gt": a_gt,
                 "act_cheap": act_c, "act_full": act_f,
                 "J_cheap": Jc["J"], "J_full": Jf["J"], "dJ": Jc["J"] - Jf["J"],
+                "dJ_long": Jc["J"] - Jf["J"],
                 "collision_cheap": Jc["collision"], "collision_full": Jf["collision"],
                 "same_action": int(act_c == act_f),
                 "n_cheap": out["cheap"]["n"], "n_full": out["full"]["n"],
                 "empty_cheap": int(out["cheap"]["n"] == 0),
+                "lat_act_cheap": out["cheap"]["lat_a"], "lat_act_full": out["full"]["lat_a"],
+                "lat_act_gt": lat_gt_a,
+                "Jlat_cheap": Lc["J"], "Jlat_full": Lf["J"], "dJ_lat": Lc["J"] - Lf["J"],
+                "lat_same_action": int(out["cheap"]["lat_a"] == out["full"]["lat_a"]),
+                "lat_collision_cheap": Lc["collision"], "lat_collision_full": Lf["collision"],
                 "crit_sum": float(cg.sum()),
                 "unc_sum": float(out["cheap"]["ent"].sum()),
                 "conf_mean": float(conf.mean()) if len(conf) else 0.0,

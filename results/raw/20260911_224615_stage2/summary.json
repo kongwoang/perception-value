@@ -1,0 +1,227 @@
+{
+  "oracle_gap": [
+    {
+      "config": "KITTI 320->640",
+      "task": "longitudinal",
+      "n": 8008,
+      "act_diff": 0.272977022977023,
+      "improved_same_action": 0.66996699669967,
+      "corr_dE_dJ": 0.04116641398007735,
+      "corr_crit_dJ": -0.150749222288114,
+      "eta_E@20": 0.155092544589673,
+      "eta_crit@20": 0.020832505692494604,
+      "eta_unc@20": 0.024153154001849492,
+      "eta_speed@20": 0.7873982389547349,
+      "eta_E@20_speedstrat": 0.21272008239172938,
+      "eta_E@20_nonempty": 0.10662462898896499,
+      "oracle_gap@20": 0.844907455410327
+    },
+    {
+      "config": "KITTI 320->640",
+      "task": "lateral",
+      "n": 8008,
+      "act_diff": 0.09552947052947053,
+      "improved_same_action": 0.8813714704803813,
+      "corr_dE_dJ": -0.034026157580016786,
+      "corr_crit_dJ": 0.054658124180751645,
+      "eta_E@20": -0.2567998003336294,
+      "eta_crit@20": -0.20883006244574884,
+      "eta_unc@20": -0.1428134167740966,
+      "eta_speed@20": -1.3252180130675901,
+      "eta_E@20_speedstrat": -0.3193520038963845,
+      "eta_E@20_nonempty": -0.07116708457390161,
+      "oracle_gap@20": 1.2567998003336294
+    },
+    {
+      "config": "KITTI 512->640",
+      "task": "longitudinal",
+      "n": 8008,
+      "act_diff": 0.19068431568431568,
+      "improved_same_action": 0.753721820501914,
+      "corr_dE_dJ": 0.0394466554330195,
+      "corr_crit_dJ": -0.0250586633128007,
+      "eta_E@20": 0.21329548506148446,
+      "eta_crit@20": 0.03826249426484943,
+      "eta_unc@20": 0.06667705295799309,
+      "eta_speed@20": 0.21380444734962872,
+      "eta_E@20_speedstrat": 0.11633976614429441,
+      "eta_E@20_nonempty": 0.1612854382392162,
+      "oracle_gap@20": 0.7867045149385156
+    },
+    {
+      "config": "KITTI 512->640",
+      "task": "lateral",
+      "n": 8008,
+      "act_diff": 0.032092907092907096,
+      "improved_same_action": 0.9608677158655891,
+      "corr_dE_dJ": -0.01469787237310294,
+      "corr_crit_dJ": -0.007217234746221639,
+      "eta_E@20": -0.12963456097642934,
+      "eta_crit@20": -0.014350443621663479,
+      "eta_unc@20": 0.15521791472886282,
+      "eta_speed@20": -0.1479245461997605,
+      "eta_E@20_speedstrat": -0.10265956545413459,
+      "eta_E@20_nonempty": -0.02603037809379839,
+      "oracle_gap@20": 1.1296345609764293
+    },
+    {
+      "config": "KITTI 320->640 oracle range",
+      "task": "longitudinal",
+      "n": 8008,
+      "act_diff": 0.1717032967032967,
+      "improved_same_action": 0.7799779977997799,
+      "corr_dE_dJ": 0.14066368863586826,
+      "corr_crit_dJ": -0.19446219293477884,
+      "eta_E@20": 0.19796790236129846,
+      "eta_crit@20": 0.020494076058021424,
+      "eta_unc@20": 0.016257256443351745,
+      "eta_speed@20": 0.8642133312258609,
+      "eta_E@20_speedstrat": 0.2662582707919776,
+      "eta_E@20_nonempty": 0.21045642050267027,
+      "oracle_gap@20": 0.8020320976387015
+    },
+    {
+      "config": "KITTI 320->640 oracle range",
+      "task": "lateral",
+      "n": 8008,
+      "act_diff": 0.0501998001998002,
+      "improved_same_action": 0.935093509350935,
+      "corr_dE_dJ": -0.03962627165416571,
+      "corr_crit_dJ": 0.08354017302418953,
+      "eta_E@20": -0.24311418438032995,
+      "eta_crit@20": 0.09124419776852477,
+      "eta_unc@20": 0.05992080251050255,
+      "eta_speed@20": -1.3516325581697044,
+      "eta_E@20_speedstrat": -0.34302765935605084,
+      "eta_E@20_nonempty": 0.0019648983465758363,
+      "oracle_gap@20": 1.24311418438033
+    }
+  ],
+  "task_conditionality": [
+    {
+      "config": "KITTI 320->640",
+      "spearman": -0.14951273609088703,
+      "top10_overlap": 0.03245942571785269,
+      "top20_overlap": 0.28214731585518105,
+      "top30_overlap": 0.48501248959200666,
+      "eta_long_ranked_by_lat": 0.08692708372615827,
+      "eta_lat_ranked_by_long": -1.5435239656782227
+    },
+    {
+      "config": "KITTI 512->640",
+      "spearman": 0.008964168877514772,
+      "top10_overlap": 0.13108614232209737,
+      "top20_overlap": 0.3882646691635456,
+      "top30_overlap": 0.6136552872606161,
+      "eta_long_ranked_by_lat": 0.05969013804650659,
+      "eta_lat_ranked_by_long": -0.07342840758699468
+    },
+    {
+      "config": "KITTI 320->640 oracle range",
+      "spearman": -0.1864704835993067,
+      "top10_overlap": 0.031210986267166042,
+      "top20_overlap": 0.5031210986267166,
+      "top30_overlap": 0.6815154038301415,
+      "eta_long_ranked_by_lat": 0.12538773369384176,
+      "eta_lat_ranked_by_long": -1.3477867145956155
+    }
+  ],
+  "heuristics": [
+    {
+      "task": "longitudinal",
+      "heuristic": "ego speed",
+      "eta_pooled": 0.7873982389547349,
+      "eta_speed_stratified": 0.28529419054894706
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "empty-frame indicator",
+      "eta_pooled": 0.5599770218760464,
+      "eta_speed_stratified": 0.11632978616028376
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "few cheap detections",
+      "eta_pooled": 0.6390085213165458,
+      "eta_speed_stratified": 0.13024708295752926
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "low confidence",
+      "eta_pooled": 0.6314131931770671,
+      "eta_speed_stratified": 0.12836474338973303
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "speed x empty",
+      "eta_pooled": 0.7316929610845623,
+      "eta_speed_stratified": 0.563191717088386
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "criticality",
+      "eta_pooled": 0.020832505692494604,
+      "eta_speed_stratified": 0.12833864755553473
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "uncertainty",
+      "eta_pooled": 0.024153154001849492,
+      "eta_speed_stratified": 0.0335153668403071
+    },
+    {
+      "task": "longitudinal",
+      "heuristic": "PERCEPTION-GAIN ORACLE",
+      "eta_pooled": 0.155092544589673,
+      "eta_speed_stratified": 0.21272008239172938
+    },
+    {
+      "task": "lateral",
+      "heuristic": "ego speed",
+      "eta_pooled": -1.3252180130675901,
+      "eta_speed_stratified": -0.5958881040811324
+    },
+    {
+      "task": "lateral",
+      "heuristic": "empty-frame indicator",
+      "eta_pooled": -0.8991067737547139,
+      "eta_speed_stratified": -0.5584147141442984
+    },
+    {
+      "task": "lateral",
+      "heuristic": "few cheap detections",
+      "eta_pooled": -1.1600932180971026,
+      "eta_speed_stratified": -0.5331870828258131
+    },
+    {
+      "task": "lateral",
+      "heuristic": "low confidence",
+      "eta_pooled": -1.0477756436969643,
+      "eta_speed_stratified": -0.548672475630638
+    },
+    {
+      "task": "lateral",
+      "heuristic": "speed x empty",
+      "eta_pooled": -1.2192731968944732,
+      "eta_speed_stratified": -0.9076651269610094
+    },
+    {
+      "task": "lateral",
+      "heuristic": "criticality",
+      "eta_pooled": -0.20883006244574884,
+      "eta_speed_stratified": -0.30854331667294016
+    },
+    {
+      "task": "lateral",
+      "heuristic": "uncertainty",
+      "eta_pooled": -0.1428134167740966,
+      "eta_speed_stratified": -0.20382076484333758
+    },
+    {
+      "task": "lateral",
+      "heuristic": "PERCEPTION-GAIN ORACLE",
+      "eta_pooled": -0.2567998003336294,
+      "eta_speed_stratified": -0.3193520038963845
+    }
+  ]
+}

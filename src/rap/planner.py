@@ -170,3 +170,122 @@ COSTS = {
     "no_collision_term": CostParams(lam_collision=0.0),
     "symmetric": CostParams(lam_brake=1.0, lam_collision=0.0),
 }
+
+
+# ---------------------------------------------------------------------------------------
+# Second downstream task: a lateral / corridor-avoidance decision.
+#
+# This is deliberately governed by a different property of the scene than the braking
+# controller. Braking depends on the nearest in-lane obstacle's range; lateral avoidance
+# depends on how obstacles are distributed *across* candidate corridors. A frame can
+# therefore matter for one task and not the other, which is what section 7 of the plan
+# asks us to look for.
+
+LAT_KEEP, LAT_LEFT, LAT_RIGHT, LAT_BRAKE = 0, 1, 2, 3
+LAT_ACTION_NAMES = ("KEEP", "LEFT_AVOID", "RIGHT_AVOID", "BRAKE")
+
+
+@dataclass(frozen=True)
+class LateralParams:
+    # Defaults chosen by measuring the clearance distribution on KITTI rather than by
+    # guessing: half_w 1.6 (vehicle plus margin) with a 2.5 s headway leaves the lane
+    # blocked on 22% of frames, and a lateral shift helps on 86% of those -- an active
+    # decision without being degenerate. A 1.0 m corridor left GT choosing KEEP on 97%
+    # of frames, which made the task carry no information.
+    half_w: float = 1.6          # half width of the swept corridor [m]
+    offset: float = 3.0          # lateral shift an avoid manoeuvre commits to [m]
+    lookahead: float = 45.0      # how far ahead clearance is assessed [m]
+    t_headway: float = 2.5       # desired time headway [s]
+    standoff: float = 2.0
+    min_gain: float = 3.0        # clearance a shift must buy before it is worth taking [m]
+    v_floor: float = 1.0         # below this speed the lateral decision is moot
+
+    def needed_clearance(self, v_ego: float) -> float:
+        """Time-headway requirement, not a full stopping distance.
+
+        Planning to a complete stop at every frame would leave almost every urban frame
+        in violation and flatten the decision.
+        """
+        return min(v_ego * self.t_headway + self.standoff, self.lookahead)
+
+
+def corridor_clearance(dist, lat_min, lat_max, offset: float, p: LateralParams) -> float:
+    """Distance to the nearest obstacle overlapping the corridor centred on `offset`."""
+    dist = np.asarray(dist, dtype=np.float64)
+    if dist.size == 0:
+        return p.lookahead
+    lo = np.asarray(lat_min, dtype=np.float64) - offset
+    hi = np.asarray(lat_max, dtype=np.float64) - offset
+    hit = (lo < p.half_w) & (hi > -p.half_w) & (dist <= p.lookahead) & (dist > -2.0)
+    return float(dist[hit].min()) if hit.any() else p.lookahead
+
+
+def lateral_action(dist, lat_min, lat_max, v_ego: float, p: LateralParams) -> tuple[int, float]:
+    """Pick a corridor. Returns the action and the lateral offset it commits to."""
+    if v_ego < p.v_floor:
+        return LAT_KEEP, 0.0
+    need = p.needed_clearance(v_ego)
+    c_keep = corridor_clearance(dist, lat_min, lat_max, 0.0, p)
+    if c_keep >= need:
+        return LAT_KEEP, 0.0
+    c_left = corridor_clearance(dist, lat_min, lat_max, +p.offset, p)
+    c_right = corridor_clearance(dist, lat_min, lat_max, -p.offset, p)
+    best_side, best_c = (LAT_LEFT, c_left) if c_left >= c_right else (LAT_RIGHT, c_right)
+    if best_c >= need or best_c - c_keep >= p.min_gain:
+        return best_side, (p.offset if best_side == LAT_LEFT else -p.offset)
+    return LAT_BRAKE, 0.0
+
+
+@dataclass(frozen=True)
+class LateralCostParams:
+    lam_collision: float = 6.0
+    lam_shortfall: float = 2.0    # on the *normalised* clearance shortfall, so it is bounded
+    lam_deviation: float = 0.30   # per metre of lateral displacement
+    lam_brake: float = 0.80       # progress lost by stopping
+    lam_switch: float = 0.10      # penalise flip-flopping between corridors
+
+
+def lateral_cost(action: int, offset: float, dist_gt, lat_min_gt, lat_max_gt,
+                 v_ego: float, prev_action: int | None,
+                 p: LateralParams, c: LateralCostParams) -> dict:
+    """Score the chosen corridor against the true scene.
+
+    Deliberately not a detection metric: it asks whether the corridor the vehicle
+    committed to was actually clear, and what the manoeuvre cost in deviation and progress.
+    """
+    need = p.needed_clearance(v_ego)
+    if action == LAT_BRAKE:
+        true_clear = corridor_clearance(dist_gt, lat_min_gt, lat_max_gt, 0.0, p)
+        collision = float(true_clear < p.standoff and v_ego > p.v_floor)
+        shortfall = 0.0          # stopping resolves the clearance requirement
+        deviation = 0.0
+        brake = 1.0
+    else:
+        true_clear = corridor_clearance(dist_gt, lat_min_gt, lat_max_gt, offset, p)
+        collision = float(true_clear < p.standoff)
+        shortfall = max(0.0, need - true_clear) / max(need, 1e-6)   # normalised to [0,1]
+        deviation = abs(offset)
+        brake = 0.0
+    switch = 0.0 if prev_action is None else float(action != prev_action)
+    J = (c.lam_collision * collision + c.lam_shortfall * shortfall ** 2
+         + c.lam_deviation * deviation + c.lam_brake * brake + c.lam_switch * switch)
+    return {"J": J, "collision": collision, "shortfall": shortfall,
+            "deviation": deviation, "brake": brake, "clearance": true_clear}
+
+
+LATERAL_PLANNERS = {
+    "default": LateralParams(),
+    "wide": LateralParams(half_w=2.2),
+    "narrow": LateralParams(half_w=1.0),
+    "short_headway": LateralParams(t_headway=1.5),
+    "long_headway": LateralParams(t_headway=4.0),
+    "timid": LateralParams(min_gain=6.0),
+    "eager": LateralParams(min_gain=1.0),
+    "short_lookahead": LateralParams(lookahead=30.0),
+}
+
+LATERAL_COSTS = {
+    "default": LateralCostParams(),
+    "deviation_heavy": LateralCostParams(lam_deviation=1.0, lam_brake=1.5),
+    "safety_heavy": LateralCostParams(lam_collision=12.0, lam_deviation=0.15),
+}
