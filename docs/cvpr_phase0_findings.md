@@ -9,6 +9,10 @@ Generated from `results/raw/` on a Jetson AGX Xavier. Every run directory stores
 resolved config, git commit and environment, so each number below traces back to the
 code that produced it.
 
+> Figure paths below are relative to this file inside the repository. A rendered version
+> with the figures inlined is published at
+> <https://claude.ai/code/artifact/420ce9d6-e4c7-405a-a7b5-2dc515841b31>.
+
 | | |
 |---|---|
 | Data | KITTI tracking, 21 labelled sequences, 8 008 frames, 46 469 evaluable GT objects |
