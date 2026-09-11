@@ -1,0 +1,116 @@
+{
+  "sigma": 0.5955680829272938,
+  "n_scenes": 10,
+  "rows": [
+    {
+      "config": "nuScenes mini",
+      "task": "longitudinal",
+      "n": 404,
+      "act_diff": 0.11138613861386139,
+      "improved_same_action": 1.0,
+      "corr_dE_dJ": -0.07626791512623123,
+      "corr_crit_dJ": 0.032844294311032564,
+      "eta_E@20": 0.18535546130427125,
+      "eta_crit@20": 0.07542673586382784,
+      "eta_unc@20": 0.07966610175503522,
+      "eta_speed@20": 0.2095586729121724,
+      "eta_E@20_nonempty": 0.21578047002262796,
+      "eta_E@20_speedstrat": 0.07490459520076086,
+      "oracle_gap@20": 0.8146445386957287
+    },
+    {
+      "config": "nuScenes mini",
+      "task": "lateral",
+      "n": 404,
+      "act_diff": 0.0297029702970297,
+      "improved_same_action": 1.0,
+      "corr_dE_dJ": 0.00042727819592612283,
+      "corr_crit_dJ": 0.1022246990738448,
+      "eta_E@20": 0.24467795925222038,
+      "eta_crit@20": 0.24467795925222038,
+      "eta_unc@20": 0.04118173583990939,
+      "eta_speed@20": -0.3367600331147244,
+      "eta_E@20_nonempty": 0.24467795925222194,
+      "eta_E@20_speedstrat": -0.004039647140605234,
+      "oracle_gap@20": 0.7553220407477796
+    },
+    {
+      "config": "nuScenes mini oracle range",
+      "task": "longitudinal",
+      "n": 404,
+      "act_diff": 0.11138613861386139,
+      "improved_same_action": 1.0,
+      "corr_dE_dJ": -0.07626791512623123,
+      "corr_crit_dJ": 0.032844294311032564,
+      "eta_E@20": 0.18535546130427125,
+      "eta_crit@20": 0.07542673586382784,
+      "eta_unc@20": 0.07966610175503522,
+      "eta_speed@20": 0.2095586729121724,
+      "eta_E@20_nonempty": 0.21578047002262796,
+      "eta_E@20_speedstrat": 0.07490459520076086,
+      "oracle_gap@20": 0.8146445386957287
+    },
+    {
+      "config": "nuScenes mini oracle range",
+      "task": "lateral",
+      "n": 404,
+      "act_diff": 0.0297029702970297,
+      "improved_same_action": 1.0,
+      "corr_dE_dJ": 0.00042727819592612283,
+      "corr_crit_dJ": 0.1022246990738448,
+      "eta_E@20": 0.24467795925222038,
+      "eta_crit@20": 0.24467795925222038,
+      "eta_unc@20": 0.04118173583990939,
+      "eta_speed@20": -0.3367600331147244,
+      "eta_E@20_nonempty": 0.24467795925222194,
+      "eta_E@20_speedstrat": -0.004039647140605234,
+      "oracle_gap@20": 0.7553220407477796
+    }
+  ],
+  "task_conditionality": [
+    {
+      "config": "nuScenes mini",
+      "spearman": 0.025320081765978147,
+      "top10_overlap": 0.15,
+      "top20_overlap": 0.6296296296296297
+    },
+    {
+      "config": "nuScenes mini oracle range",
+      "spearman": 0.025320081765978147,
+      "top10_overlap": 0.15,
+      "top20_overlap": 0.6296296296296297
+    }
+  ],
+  "heuristics": [
+    {
+      "heuristic": "ego speed",
+      "eta_pooled": 0.2095586729121724,
+      "eta_speed_stratified": 0.15841080535235177
+    },
+    {
+      "heuristic": "empty-frame",
+      "eta_pooled": 0.29694285923112496,
+      "eta_speed_stratified": 0.07873820743104279
+    },
+    {
+      "heuristic": "few detections",
+      "eta_pooled": 0.25428244735403227,
+      "eta_speed_stratified": 0.2653532250216682
+    },
+    {
+      "heuristic": "criticality",
+      "eta_pooled": 0.07542673586382784,
+      "eta_speed_stratified": -0.011941592980637055
+    },
+    {
+      "heuristic": "uncertainty",
+      "eta_pooled": 0.07966610175503522,
+      "eta_speed_stratified": 0.004774632239129472
+    },
+    {
+      "heuristic": "PERCEPTION-GAIN ORACLE",
+      "eta_pooled": 0.18535546130427125,
+      "eta_speed_stratified": 0.07490459520076086
+    }
+  ]
+}

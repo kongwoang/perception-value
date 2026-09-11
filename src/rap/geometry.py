@@ -18,7 +18,7 @@ from . import kitti
 # ----------------------------------------------------------------------------- per-object geometry
 
 GEOM_FIELDS = [
-    ("seq", "U8"), ("frame", "i4"), ("track_id", "i4"), ("type", "U16"),
+    ("seq", "U16"), ("frame", "i4"), ("track_id", "i4"), ("type", "U16"),
     ("x1", "f4"), ("y1", "f4"), ("x2", "f4"), ("y2", "f4"),
     ("truncated", "f4"), ("occluded", "i4"),
     ("long_near", "f4"),     # nearest longitudinal distance of the footprint [m]
@@ -32,7 +32,7 @@ GEOM_FIELDS = [
 ]
 
 
-def sequence_geometry(seq: str, smooth_halfwidth: int = 2) -> np.ndarray:
+def sequence_geometry(seq: str, smooth_halfwidth: int = 2) -> np.ndarray:  # noqa: D401
     """Per-object ego-frame geometry for every evaluable GT object in a sequence."""
     calib = kitti.load_calib(seq)
     lab = kitti.load_labels(seq)
@@ -59,28 +59,32 @@ def sequence_geometry(seq: str, smooth_halfwidth: int = 2) -> np.ndarray:
     return out
 
 
-def _fill_range_rate(geom: np.ndarray, halfwidth: int) -> None:
+def _fill_range_rate(geom: np.ndarray, halfwidth: int, dt: float | None = None) -> None:
     """Range rate per track by local linear fit of long_near against time.
+
+    `dt` is the frame interval; it defaults to KITTI's 10 Hz but nuScenes keyframes are
+    2 Hz, and using the wrong value would scale every range rate and TTC by 5x.
 
     long_near is measured in the *current* camera frame, so its time derivative is
     already the relative closing rate — exactly what TTC needs, with no ego-motion
     compensation.
     """
+    dt = kitti.FRAME_DT if dt is None else dt
     geom["ttc"] = np.inf
     for tid in np.unique(geom["track_id"]):
         if tid < 0:
             continue
         idx = np.flatnonzero(geom["track_id"] == tid)
         order = idx[np.argsort(geom["frame"][idx])]
-        f = geom["frame"][order].astype(float) * kitti.FRAME_DT
+        f = geom["frame"][order].astype(float) * dt
         d = geom["long_near"][order].astype(float)
         n = len(order)
         for j in range(n):
             lo, hi = max(0, j - halfwidth), min(n, j + halfwidth + 1)
             # only fit over temporally contiguous neighbours
-            while lo < j and f[j] - f[lo] > (halfwidth + 0.5) * kitti.FRAME_DT:
+            while lo < j and f[j] - f[lo] > (halfwidth + 0.5) * dt:
                 lo += 1
-            while hi - 1 > j and f[hi - 1] - f[j] > (halfwidth + 0.5) * kitti.FRAME_DT:
+            while hi - 1 > j and f[hi - 1] - f[j] > (halfwidth + 0.5) * dt:
                 hi -= 1
             if hi - lo < 2:
                 continue

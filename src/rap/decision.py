@@ -27,6 +27,20 @@ from .mono import box_iou
 from .risk import RiskConfig
 
 
+class KittiAdapter:
+    """Dataset-specific pieces the decision builder needs; nuScenes supplies its own."""
+
+    name = "kitti"
+
+    @staticmethod
+    def geometry(seq):
+        return G.sequence_geometry(seq)
+
+    @staticmethod
+    def speeds(seq):
+        return kitti.load_oxts(seq)[:, 8]
+
+
 def _apply_range_source(bx, geo_k, g, source: str, rng, sigma: float):
     """Return (z, lat_min, lat_max, ttc) for the kept detections under one geometry source."""
     z = geo_k["z"].copy()
@@ -56,11 +70,12 @@ def _apply_range_source(bx, geo_k, g, source: str, rng, sigma: float):
     return z, lo, hi, tt
 
 
-def mono_range_sigma(det_dir, cheap_mode, seqs, cfg: RiskConfig) -> float:
+def mono_range_sigma(det_dir, cheap_mode, seqs, cfg: RiskConfig,
+                     adapter=KittiAdapter) -> float:
     """Relative range error of the deployed monocular estimator, for noise calibration."""
     errs = []
     for s in seqs:
-        geom = G.sequence_geometry(s)
+        geom = adapter.geometry(s)
         c = DetCache(det_dir / cheap_mode / f"{s}.npz")
         for i, fr in enumerate(c.frames):
             fr = int(fr)
@@ -88,16 +103,17 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
           pp: P.PlannerParams, cp: P.CostParams, crit_model,
           range_source: str = "mono", sigma: float = 0.0, seed: int = 0,
           lp: P.LateralParams | None = None,
-          lc: P.LateralCostParams | None = None) -> pd.DataFrame:
+          lc: P.LateralCostParams | None = None,
+          adapter=KittiAdapter) -> pd.DataFrame:
     """One row per frame. Both downstream tasks are scored from the same perception."""
     lp = lp or P.LateralParams()
     lc = lc or P.LateralCostParams()
     rng = np.random.default_rng(seed)
     rows = []
     for s in seqs:
-        geom = G.sequence_geometry(s)
+        geom = adapter.geometry(s)
         crit_all = G.criticality_for(geom, crit_model)
-        speeds = kitti.load_oxts(s)[:, 8]
+        speeds = adapter.speeds(s)
         c = DetCache(det_dir / cheap_mode / f"{s}.npz")
         f = DetCache(det_dir / full_mode / f"{s}.npz")
         prev_c = prev_f = None
@@ -162,12 +178,12 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
 
 
 def add_perception_gain(df: pd.DataFrame, det_dir, cheap_mode, full_mode, seqs,
-                        cfg: RiskConfig) -> pd.DataFrame:
+                        cfg: RiskConfig, adapter=KittiAdapter) -> pd.DataFrame:
     """dE = detections recovered, matched the same way Phase 0 did."""
     from .risk import match
     rec = []
     for s in seqs:
-        geom = G.sequence_geometry(s)
+        geom = adapter.geometry(s)
         c = DetCache(det_dir / cheap_mode / f"{s}.npz")
         f = DetCache(det_dir / full_mode / f"{s}.npz")
         for i, fr in enumerate(c.frames):

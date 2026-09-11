@@ -1,0 +1,9 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes",
+  "version": "v1.0-mini",
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "scenes": 0,
+  "out": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_det"
+}

@@ -1,0 +1,8 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes",
+  "version": "v1.0-mini",
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_det",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "tag": "nusc_decision"
+}

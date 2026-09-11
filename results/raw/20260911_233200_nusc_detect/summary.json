@@ -1,0 +1,21 @@
+{
+  "version": "v1.0-mini",
+  "scenes": [
+    "scene-0061",
+    "scene-0103",
+    "scene-0553",
+    "scene-0655",
+    "scene-0757",
+    "scene-0796",
+    "scene-0916",
+    "scene-1077",
+    "scene-1094",
+    "scene-1100"
+  ],
+  "frames": 404,
+  "seconds": 33.00096082687378,
+  "modes": [
+    "ns_cheap_320",
+    "ns_full_640"
+  ]
+}

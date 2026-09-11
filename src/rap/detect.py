@@ -46,6 +46,10 @@ MODES = {
     "cheap_512": Mode("cheap_512", 160, 512),
     "full_640": Mode("full_640", 192, 640),
     "full_960": Mode("full_960", 288, 960),
+    # nuScenes CAM_FRONT is 1600x900 (16:9). These keep that aspect and preserve the
+    # KITTI pair's 4x pixel ratio, so the fidelity gap is comparable across datasets.
+    "ns_cheap_320": Mode("ns_cheap_320", 192, 320),
+    "ns_full_640": Mode("ns_full_640", 384, 640),
 }
 
 

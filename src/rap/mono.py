@@ -23,10 +23,11 @@ HEIGHT_PRIOR = {"vehicle": 1.55, "person": 1.72, "cyclist": 1.72}
 CAMERA_HEIGHT = 1.65  # KITTI cam2 height above the road [m]
 
 
-def range_ground(y2: np.ndarray, calib: Calib, min_px: float = 2.0) -> np.ndarray:
+def range_ground(y2: np.ndarray, calib: Calib, min_px: float = 2.0,
+                 cam_h: float = CAMERA_HEIGHT) -> np.ndarray:
     """Distance from where the box bottom meets the road plane."""
     dv = np.maximum(y2 - calib.cy, min_px)
-    return calib.fy * CAMERA_HEIGHT / dv
+    return calib.fy * cam_h / dv
 
 
 def range_height(y1: np.ndarray, y2: np.ndarray, coarse: np.ndarray,
@@ -112,7 +113,8 @@ def box_iou(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return np.where(union > 0, inter / np.maximum(union, 1e-9), 0.0)
 
 
-def predicted_geometry(det: dict, prev_det: dict | None, calib: Calib) -> dict:
+def predicted_geometry(det: dict, prev_det: dict | None, calib: Calib,
+                       cam_h: float = CAMERA_HEIGHT, dt: float = FRAME_DT) -> dict:
     """Per-detection estimated ego geometry: range, lateral extent, TTC."""
     xyxy = det["xyxy"].astype(np.float64)
     n = len(xyxy)
@@ -121,12 +123,12 @@ def predicted_geometry(det: dict, prev_det: dict | None, calib: Calib) -> dict:
         return {"z": z, "z_ground": z, "z_height": z, "lat_min": z, "lat_max": z,
                 "ttc": z, "box_h": z}
     x1, y1, x2, y2 = xyxy.T
-    zg = range_ground(y2, calib)
+    zg = range_ground(y2, calib, cam_h=cam_h)
     zh = range_height(y1, y2, det["coarse"], calib)
     z = np.clip(fuse_range(zg, zh, y2, calib), 0.5, 200.0)
     lat_min, lat_max = lateral_offset(x1, x2, z, calib)
     prev_h = (associate_prev(xyxy, prev_det["xyxy"].astype(np.float64))
               if prev_det is not None else np.full(n, np.nan))
-    ttc = ttc_from_scale(y2 - y1, prev_h)
+    ttc = ttc_from_scale(y2 - y1, prev_h, dt)
     return {"z": z, "z_ground": np.clip(zg, 0.5, 200.0), "z_height": np.clip(zh, 0.5, 200.0),
             "lat_min": lat_min, "lat_max": lat_max, "ttc": ttc, "box_h": y2 - y1}
