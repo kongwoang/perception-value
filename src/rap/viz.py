@@ -352,3 +352,93 @@ def sensitivity_dots(sens: pd.DataFrame, path, controls=("uniform", "proximity")
     ax.grid(True, axis="x")
     ax.set_axisbelow(True)
     fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def fail_vs_recover(obj: pd.DataFrame, p_fail, p_recover, path, nbins=10):
+    """Failure and recoverability are different questions — three ways of showing it."""
+    fig, axes = plt.subplots(1, 3, figsize=(12.4, 4.0))
+    fail = obj["cheap_fail"].to_numpy(bool)
+
+    # A: among objects cheap got wrong, does extra compute actually fix them? By distance.
+    ax = axes[0]
+    d = obj.loc[fail, "gt_dist"].to_numpy()
+    ok = obj.loc[fail, "full_ok"].to_numpy(float)
+    edges = np.array([0, 10, 20, 30, 45, 60, 200])
+    xs, ys, ns = [], [], []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        m = (d >= lo) & (d < hi)
+        if m.sum() < 30:
+            continue
+        xs.append(f"{lo}–{hi if hi < 200 else '∞'}")
+        ys.append(float(ok[m].mean()))
+        ns.append(int(m.sum()))
+    x = np.arange(len(xs))
+    ax.bar(x, ys, 0.6, color=SERIES[0], zorder=3)
+    ax.axhline(float(ok.mean()), color=SERIES[1], lw=2, ls="--",
+               label=f"overall {ok.mean():.2f}")
+    ax.set_xticks(x); ax.set_xticklabels(xs, rotation=15, ha="right")
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("ego distance (m)")
+    ax.set_ylabel("P(FULL recovers | CHEAP failed)")
+    ax.set_title("A  Recoverability depends strongly on range")
+    ax.legend(); _tidy(ax)
+    for xi, v, n in zip(x, ys, ns):
+        ax.annotate(f"n={n:,}", (xi, 0.03), ha="center", fontsize=7.5, color=INK2)
+
+    # B: the two predicted factors are correlated but far from interchangeable
+    ax = axes[1]
+    pf, pr = np.asarray(p_fail)[fail], np.asarray(p_recover)[fail]
+    ax.scatter(pf, pr, s=5, alpha=0.08, color=SERIES[0], linewidths=0)
+    q = np.quantile(pf, np.linspace(0, 1, nbins + 1))
+    q = np.unique(q)
+    idx = np.clip(np.digitize(pf, q[1:-1]), 0, len(q) - 2)
+    bx = [pf[idx == b].mean() for b in range(len(q) - 1) if (idx == b).sum() > 30]
+    by = [pr[idx == b].mean() for b in range(len(q) - 1) if (idx == b).sum() > 30]
+    ax.plot(bx, by, "-o", ms=8, color=SERIES[1], label="binned mean")
+    ax.set_xlabel("predicted P(cheap fails)")
+    ax.set_ylabel("predicted P(full recovers | fails)")
+    ax.set_title(f"B  Correlated, not the same (r = {np.corrcoef(pf, pr)[0,1]:+.2f})")
+    ax.legend(); _tidy(ax); ax.grid(True, axis="x")
+
+    # C: how well each factor can be predicted at all
+    ax = axes[2]
+    from sklearn.metrics import roc_auc_score
+    names, aucs, bases = [], [], []
+    for lab, y, p, m in [("P(cheap fails)", obj["cheap_fail"].to_numpy(float), p_fail, slice(None)),
+                         ("P(recovers | fails)", obj["full_ok"].to_numpy(float), p_recover, fail),
+                         ("P(compute helps)", (obj["gain"] > 0).to_numpy(float), p_fail, slice(None))]:
+        yy, pp = np.asarray(y)[m], np.asarray(p)[m]
+        if lab == "P(compute helps)":
+            continue
+        names.append(lab); aucs.append(roc_auc_score(yy, pp)); bases.append(float(yy.mean()))
+    x = np.arange(len(names))
+    ax.bar(x, np.array(aucs) - 0.5, 0.5, bottom=0.5, color=[SERIES[0], SERIES[3]], zorder=3)
+    ax.axhline(0.5, color=MUTED, lw=1.2)
+    ax.set_xticks(x); ax.set_xticklabels(names, rotation=12, ha="right")
+    ax.set_ylim(0.45, 0.9)
+    ax.set_ylabel("out-of-fold AUC")
+    ax.set_title("C  Recoverability is barely predictable")
+    for xi, v in zip(x, aucs):
+        ax.annotate(f"{v:.3f}", (xi, v), ha="center", va="bottom", fontsize=10, color=INK2)
+    _tidy(ax)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def phase0b_budget(bud: pd.DataFrame, path, policies, labels=None, mode="pooled"):
+    assert len(policies) <= len(SERIES), "hues are assigned in fixed order, never cycled"
+    d = bud[bud["mode"] == mode]
+    fig, ax = plt.subplots(figsize=(8.0, 4.6))
+    for i, p in enumerate(policies):
+        sub = d[d.policy == p].sort_values("quota")
+        if not len(sub):
+            continue
+        color = MUTED if p == "oracle" else SERIES[i]
+        ls = "--" if p in ("oracle", "random") else "-"
+        ax.plot(sub.quota * 100, sub["eta"], ls, marker="o", ms=7, color=color,
+                label=(labels or {}).get(p, p.replace("_", " ")))
+    ax.set_xlabel("FULL-compute quota (% of frames)")
+    ax.set_ylabel("share of the oracle's risk reduction captured")
+    ax.set_title("Adding a recoverability factor changes nothing")
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9)
+    _tidy(ax)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)

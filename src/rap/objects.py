@@ -32,11 +32,33 @@ from .risk import RiskConfig, match
 
 # Candidate features are the deployable ones; provenance is checked the same way frame
 # features are, against this registry.
-OBJ_FEATURES: dict[str, str] = {}
+#
+# The registry is declared here rather than filled in as a side effect of building a
+# table: the leakage guard has to work on a table loaded from disk, and a registry that
+# only exists after the first build silently passes on an empty column list.
+OBJ_FEATURES: dict[str, str] = {
+    # detector uncertainty about this candidate
+    "o_conf": "unc", "o_logit": "unc", "o_entropy": "unc", "o_margin": "unc",
+    "o_binent": "unc", "o_below_thr": "unc", "o_conf_gap_to_thr": "unc",
+    # apparent size and image position -- what resolution actually buys
+    "o_h_px": "size", "o_w_px": "size", "o_area_frac": "size", "o_log_h": "size",
+    "o_aspect": "size", "o_cx_frac": "size", "o_cy_frac": "size",
+    "o_bottom_below_horizon": "size", "o_touches_edge": "size",
+    # monocular ego geometry -> estimated downstream criticality
+    "o_z": "crit", "o_z_ground": "crit", "o_z_height": "crit", "o_lat_abs": "crit",
+    "o_ttc": "crit", "o_ttc_inv": "crit", "o_c_hat": "crit",
+    "o_is_person": "crit", "o_is_cyclist": "crit",
+    # frame and neighbourhood context
+    "o_n_overlap": "ctx", "o_max_overlap": "ctx", "o_n_cand_frame": "ctx",
+    "o_conf_rank": "ctx", "o_frame_conf_mean": "ctx", "o_frame_conf_max": "ctx",
+    "o_motion_mean": "ctx", "o_img_bright_mean": "ctx", "o_img_lap_var": "ctx",
+    "o_prev_h": "ctx",
+}
 
 
 def _f(name: str, group: str) -> str:
-    OBJ_FEATURES[name] = group
+    """Assert, rather than register: the declaration above is the single source."""
+    assert OBJ_FEATURES.get(name) == group, f"{name!r} not declared in OBJ_FEATURES as {group!r}"
     return name
 
 

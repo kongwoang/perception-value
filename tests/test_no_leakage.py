@@ -90,3 +90,15 @@ def test_registry_is_complete_at_import():
     assert len(mod.registry()) >= 60, len(mod.registry())
     for arm in mod.ARMS:
         assert mod.columns_for(arm), arm
+
+
+def test_object_registry_complete_at_import_and_matches_builder():
+    """The object-level guard must also work before any table has been built."""
+    import importlib
+    import rap.objects as O
+    importlib.reload(O)
+    assert len(O.object_columns()) >= 30, len(O.object_columns())
+    O.assert_no_object_leakage(O.object_columns())
+    for bad in ["cheap_fail", "full_ok", "full_recovers", "gain", "crit_gt", "value"]:
+        with pytest.raises(ValueError):
+            O.assert_no_object_leakage(O.object_columns() + [bad])

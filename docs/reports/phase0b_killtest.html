@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Failure Is Not Recoverability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  :root {
+    --ground:#ffffff; --surface:#ffffff; --surface-2:#f1f4f8;
+    --ink:#141820; --ink-2:#414b59; --muted:#6d7787;
+    --rule:#d8dee7; --rule-strong:#b6bfcd;
+    --accent:#1f66bd; --accent-soft:#eaf1fb;
+    --warn:#b8471a; --warn-soft:#fcefe8;
+    --good:#0f6d4d; --good-soft:#e6f4ee;
+    --sans:"IBM Plex Sans",sans-serif; --serif:"Source Serif 4",Georgia,serif;
+    --mono:"IBM Plex Mono",monospace;
+  }
+  body { background:#fff; color:var(--ink); font-family:var(--serif);
+         font-size:10.2pt; line-height:1.5; margin:0; }
+  p,ul,ol,h2,h3,figcaption,caption,.callout,.aside,.standfirst,footer { max-width:62em; }
+  .eyebrow { font-family:var(--sans); font-size:8.5pt; font-weight:600; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--muted); margin:0 0 14px; }
+  h1 { font-family:var(--sans); font-weight:700; font-size:24pt; line-height:1.1;
+       letter-spacing:-.02em; margin:0 0 14px; max-width:20ch; }
+  .standfirst { font-size:11.5pt; color:var(--ink-2); margin:0 0 20px; }
+  .masthead { border-bottom:1px solid var(--rule); padding-bottom:18px; margin-bottom:22px; }
+  .verdict { font-family:var(--sans); background:var(--warn-soft); color:var(--warn);
+             border:1px solid #e0b39c; padding:9px 14px; margin-bottom:20px; }
+  .verdict b { font-size:11pt; font-weight:700; letter-spacing:.04em; margin-right:10px; }
+  .verdict span { color:var(--ink-2); font-size:9.5pt; }
+  section { margin-top:24px; margin-bottom:24px; }
+  h2 { font-family:var(--sans); font-size:14pt; font-weight:600; letter-spacing:-.012em;
+       margin:0 0 6px; padding-top:13px; border-top:2px solid var(--ink); break-after:avoid; }
+  h2 .qmark { display:block; font-size:8.5pt; font-weight:600; letter-spacing:.14em;
+              text-transform:uppercase; color:var(--accent); margin-bottom:7px; }
+  h3 { font-family:var(--sans); font-size:10.5pt; font-weight:600; margin:18px 0 8px;
+       break-after:avoid; }
+  p { margin:0 0 12px; }
+  ul,ol { padding-left:20px; margin:0 0 12px; } li { margin-bottom:7px; }
+  strong { font-weight:600; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--surface-2);
+         padding:1px 4px; border-radius:2px; }
+  .num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .callout { border-left:3px solid var(--warn); background:var(--warn-soft);
+             padding:16px 18px; margin:20px 0; break-inside:avoid; }
+  .callout .tag { font-family:var(--sans); font-size:8pt; font-weight:600; letter-spacing:.13em;
+                  text-transform:uppercase; color:var(--warn); display:block; margin-bottom:8px; }
+  .callout p:last-child { margin-bottom:0; }
+  .aside { border-left:3px solid var(--rule-strong); padding:3px 0 3px 18px; margin:18px 0;
+           font-size:9.6pt; color:var(--ink-2); break-inside:avoid; }
+  .aside .tag { font-family:var(--sans); font-size:8pt; font-weight:600; letter-spacing:.13em;
+                text-transform:uppercase; color:var(--muted); display:block; margin-bottom:7px; }
+  .aside p:last-child { margin-bottom:0; }
+  table { border-collapse:collapse; font-family:var(--sans); font-size:8.7pt; width:100%; }
+  caption { caption-side:bottom; text-align:left; font-family:var(--sans); font-size:8.3pt;
+            color:var(--muted); padding-top:9px; }
+  th,td { text-align:left; padding:5px 10px 5px 0; border-bottom:1px solid var(--rule);
+          vertical-align:baseline; }
+  thead th { font-size:8pt; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+             color:var(--muted); border-bottom:1px solid var(--rule-strong); }
+  thead th.keepcase { text-transform:none; letter-spacing:.02em; font-size:8.8pt; }
+  td.n, th.n { text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums;
+               padding-right:0; }
+  thead th.n { text-align:right; }
+  thead th.n.keepcase { font-family:var(--sans); }
+  td.n + td, th.n + th { padding-left:14px; }
+  tbody tr.hi td { background:var(--accent-soft); font-weight:500; }
+  tbody tr.ctl td { color:var(--muted); }
+  tbody tr.kill td { background:var(--warn-soft); }
+  tbody tr:last-child td { border-bottom:none; }
+  .tablewrap { margin:18px 0 6px; break-inside:avoid; }
+  figure { margin:20px 0; break-inside:avoid; }
+  figure img { display:block; width:100%; max-width:100%; height:auto;
+               border:1px solid var(--rule); }
+  figcaption { font-family:var(--sans); font-size:8.6pt; line-height:1.45; color:var(--ink-2);
+               margin-top:8px; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  footer { margin-top:26px; padding-top:16px; border-top:1px solid var(--rule);
+           font-family:var(--sans); font-size:8.6pt; color:var(--muted); }
+  .ok { color:var(--good); font-weight:600; }
+  .no { color:var(--warn); font-weight:600; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <p class="eyebrow">Phase 0B · interim · kill test on existing KITTI data</p>
+  <h1>Failure Is Not Recoverability</h1>
+  <p class="standfirst">
+    Phase 0 left a testable successor hypothesis: that a frame's value decomposes as
+    criticality × P(cheap fails) × P(full recovers | fails), and that modelling those
+    factors separately beats a monolithic regressor. Half of that hypothesis is true.
+    The half that carries the method contribution is not.
+  </p>
+  <div class="verdict"><b>WEAK GO</b>
+    <span>the three-factor decomposition is not justified — but object-level value prediction is</span>
+  </div>
+</header>
+
+<section style="margin-top:0">
+  <h2 style="border-top:none;padding-top:0"><span class="qmark">The requested table</span>Every method at matched compute</h2>
+  <p>
+    KITTI, 8,008 frames, 21 sequences, <code>cheap_320 → full_640</code>. η is the share
+    of the oracle's achievable risk reduction captured at a given FULL-compute quota.
+    All learned scores are leave-one-sequence-out.
+  </p>
+  <div class="tablewrap">
+    <table>
+      <caption>Object-level scores are sums over CHEAP candidates down to the 0.10 cache floor. The frame-level product is shown separately because it is much weaker than the object-level one, and beating the weak form would not have been a real test.</caption>
+      <thead><tr>
+        <th>Method</th><th class="n keepcase">η@10</th><th class="n keepcase">η@20</th><th class="n keepcase">η@30</th><th class="n keepcase">η@50</th>
+      </tr></thead>
+      <tbody>
+        <tr class="ctl"><td>random</td><td class="n">0.165</td><td class="n">0.234</td><td class="n">0.301</td><td class="n">0.463</td></tr>
+        <tr><td>uncertainty</td><td class="n">0.375</td><td class="n">0.435</td><td class="n">0.502</td><td class="n">0.648</td></tr>
+        <tr><td>criticality</td><td class="n">0.448</td><td class="n">0.522</td><td class="n">0.607</td><td class="n">0.743</td></tr>
+        <tr class="ctl"><td>uncertainty × criticality <em>(frame)</em></td><td class="n">0.321</td><td class="n">0.428</td><td class="n">0.485</td><td class="n">0.654</td></tr>
+        <tr class="hi"><td>uncertainty × criticality <em>(object)</em> — the baseline to beat</td><td class="n">0.472</td><td class="n">0.532</td><td class="n">0.595</td><td class="n">0.731</td></tr>
+        <tr><td>monolithic frame regressor</td><td class="n">0.451</td><td class="n">0.537</td><td class="n">0.606</td><td class="n">0.728</td></tr>
+        <tr><td>fail × criticality</td><td class="n">0.521</td><td class="n">0.563</td><td class="n">0.638</td><td class="n">0.777</td></tr>
+        <tr><td>gain × criticality</td><td class="n">0.506</td><td class="n">0.570</td><td class="n">0.638</td><td class="n">0.779</td></tr>
+        <tr class="kill"><td>fail × recover × criticality — the proposed method</td><td class="n">0.509</td><td class="n">0.561</td><td class="n">0.640</td><td class="n">0.781</td></tr>
+        <tr class="ctl"><td>oracle</td><td class="n">1.000</td><td class="n">1.000</td><td class="n">1.000</td><td class="n">1.000</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="qmark">The answer</span>Does explicit recoverability add value beyond the product baseline?</h2>
+
+  <div class="callout">
+    <span class="tag">No — the third factor is inert</span>
+    <p>
+      Adding <code>p_recover</code> to <code>p_fail × criticality</code> changes nothing:
+      median Δη of <span class="num">−0.002</span> across 21 held-out sequences, better in
+      only 8 of them, <span class="num">p = 0.73</span>. Against the two-factor
+      <code>gain × criticality</code> the difference is exactly
+      <span class="num">0.000</span> (10/21, <span class="num">p = 0.75</span>).
+      The three-factor decomposition is not justified by this data.
+    </p>
+  </div>
+
+  <p>
+    The reason is measurable rather than speculative. Failure and recoverability genuinely
+    <em>are</em> different quantities — but the second one is barely predictable from what
+    a cheap model emits, and it is positively correlated with the first, so as a separate
+    multiplicative factor it contributes estimation noise rather than structure.
+  </p>
+
+  <figure>
+    <img src="figs/figB1_fail_vs_recover.png" alt="Three panels. A: P(FULL recovers given CHEAP failed) by ego distance, lowest at 0–10 m (0.33), peaking at 30–60 m (0.79), falling again beyond 60 m. B: scatter of predicted P(cheap fails) against predicted P(full recovers given fails) with a rising binned mean, correlation +0.48. C: out-of-fold AUC, 0.793 for failure versus 0.653 for recoverability.">
+    <figcaption><b>Recoverability is real, range-dependent, and hard to predict.</b> Failures inside 10 m are mostly occlusion and truncation, which more resolution does not fix (recovery 0.33); failures beyond 60 m are too small for either mode (0.50); the fixable band is 30–60 m (0.79). But out-of-fold AUC is only 0.653 against a base rate of 0.674, versus 0.793 for failure — and the two predictions correlate at r = +0.48.</figcaption>
+  </figure>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Per-sequence comparisons at a 20% quota, Wilcoxon signed-rank over 21 held-out sequences.</caption>
+      <thead><tr>
+        <th>Baseline → candidate</th><th class="n">Sequences better</th>
+        <th class="n keepcase">median Δη</th><th class="n keepcase">p</th><th>Verdict</th>
+      </tr></thead>
+      <tbody>
+        <tr class="kill"><td>fail × crit → fail × <strong>recover</strong> × crit</td><td class="n">8 / 21</td><td class="n">−0.002</td><td class="n">0.73</td><td class="no">inert</td></tr>
+        <tr class="kill"><td>gain × crit → fail × <strong>recover</strong> × crit</td><td class="n">10 / 21</td><td class="n">+0.000</td><td class="n">0.75</td><td class="no">inert</td></tr>
+        <tr class="hi"><td>unc × crit (object) → fail × crit</td><td class="n">17 / 21</td><td class="n">+0.086</td><td class="n">0.0007</td><td class="ok">real</td></tr>
+        <tr class="hi"><td>unc × crit (object) → gain × crit</td><td class="n">16 / 21</td><td class="n">+0.086</td><td class="n">0.0016</td><td class="ok">real</td></tr>
+        <tr><td>monolithic → gain × crit</td><td class="n">15 / 21</td><td class="n">+0.066</td><td class="n">0.005</td><td class="ok">real</td></tr>
+        <tr><td>uncertainty → unc × crit (object)</td><td class="n">16 / 21</td><td class="n">+0.077</td><td class="n">0.005</td><td class="ok">real</td></tr>
+        <tr class="kill"><td><strong>criticality alone</strong> → fail × recover × crit</td><td class="n">12 / 21</td><td class="n">+0.028</td><td class="n">0.14</td><td class="no">not significant</td></tr>
+        <tr class="kill"><td><strong>criticality alone</strong> → gain × crit</td><td class="n">11 / 21</td><td class="n">+0.019</td><td class="n">0.14</td><td class="no">not significant</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure>
+    <img src="figs/figB2_budget.png" alt="Budget curves for eight policies across quotas 10 to 50 percent. The fail-times-criticality and fail-times-recover-times-criticality lines lie on top of each other, above uncertainty-times-criticality and the monolithic regressor.">
+    <figcaption><b>The two-factor and three-factor curves are indistinguishable</b> at every quota. What separates the upper group from the lower is the learned object-level failure model, not the recoverability factor.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="qmark">What did work</span>Object-level learned value, not decomposition</h2>
+  <p>
+    Both <code>uncertainty × criticality (object)</code> and <code>fail × criticality</code>
+    are sums over the same CHEAP candidates, multiplied by the same estimated criticality.
+    The only difference between them is that one uses raw <span class="num">(1 − confidence)</span>
+    as the failure proxy and the other learns it from 35 candidate-level features. That
+    single substitution is worth <span class="num">+0.086</span> η on 17 of 21 sequences
+    (<span class="num">p = 0.0007</span>).
+  </p>
+  <p>
+    So there <em>is</em> a real effect here, and it survives the negative test the plan
+    specified — the simple product baseline does not match the learned model. But the
+    effect is located in the failure factor, not in the decomposition, and a two-factor
+    formulation is both simpler and equally strong.
+  </p>
+
+  <div class="aside">
+    <span class="tag">The problem for a method paper</span>
+    <p>
+      Neither the two-factor nor the three-factor model significantly beats
+      <strong>criticality alone</strong> (<span class="num">p = 0.14</span> for both), and
+      criticality alone is a nearly free heuristic. Criterion 5 of the Phase 0B plan is
+      therefore not met. On the plan's own terms this is a <strong>WEAK GO</strong>: the
+      phenomenon is real and the formulation is defensible, but the method contribution
+      is not yet demonstrated.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="qmark">Structural finding</span>A ceiling the plan did not anticipate</h2>
+  <p>
+    A deployed gate can only anchor a per-object score on something CHEAP actually emits.
+    Measured over 69,014 rows:
+  </p>
+  <div class="tablewrap">
+    <table>
+      <caption>Anchor coverage. Ground-truth objects with no overlapping CHEAP candidate at any score are invisible to any object-anchored model, whatever its features.</caption>
+      <thead><tr><th>Quantity</th><th class="n">Value</th></tr></thead>
+      <tbody>
+        <tr><td>Recovered objects with a CHEAP candidate (IoU ≥ 0.3)</td><td class="n">54.7%</td></tr>
+        <tr class="hi"><td>Recoverable <em>risk mass</em> that is anchorable</td><td class="n">66.8%</td></tr>
+        <tr class="ctl"><td>…therefore invisible to any object-anchored model</td><td class="n">33.2%</td></tr>
+        <tr><td>P(full recovers | cheap fails), all GT objects</td><td class="n">0.490</td></tr>
+        <tr><td>P(full recovers | cheap fails), anchored candidates</td><td class="n">0.674</td></tr>
+        <tr><td>P(full breaks an object CHEAP got right)</td><td class="n">0.031</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Two consequences. First, a third of the recoverable risk is structurally out of reach
+    of the factorised formulation, which plausibly explains why it cannot pull clear of
+    criticality-only — criticality scores the whole frame and is not subject to that
+    ceiling. Second, most anchorable recoveries appear only as candidates in the
+    <span class="num">[0.10, 0.25)</span> confidence band, i.e. <em>below</em> the
+    operating threshold; a gate that looked only at accepted detections would miss them.
+  </p>
+</section>
+
+<section>
+  <h2>What I recommend</h2>
+  <ol>
+    <li><strong>Drop the three-factor model.</strong> It is not distinguishable from the
+      two-factor <code>P(compute helps object i) × criticality(i)</code>, which is simpler
+      and equally strong.</li>
+    <li><strong>Attack the 33% anchor ceiling before adding datasets.</strong> The most
+      likely reason the factorised model cannot beat criticality-only is that it cannot see
+      a third of the risk. A hybrid — object-anchored term plus a frame-level residual —
+      is the obvious test and costs one experiment.</li>
+    <li><strong>Only then</strong> proceed to a moderate fidelity pair (512 → 640), a second
+      detector family, and a second dataset, in that order.</li>
+    <li>If the ceiling cannot be broken, position the paper as a
+      <strong>problem-formulation and benchmark</strong> contribution rather than a method
+      paper. The falsified stakes hypothesis, the risk/detection metric reversal, and the
+      failure-versus-recoverability distinction are each publishable observations.</li>
+  </ol>
+  <p>
+    No RL, no neural scheduler, and no detector optimisation were attempted, per the plan.
+  </p>
+</section>
+
+<section>
+  <h2>What this does not say</h2>
+  <ul>
+    <li>Not that uncertainty is useless — it is real signal (η@20 = 0.435 versus 0.234 random),
+      it just predicts perception difficulty rather than downstream value of compute.</li>
+    <li>Not that recoverability is a meaningless concept. It is measurably distinct
+      (P(recover | fail) = 0.49 over all objects, range-dependent from 0.33 to 0.79). It is
+      simply not predictable enough, from cheap-side features, to earn its own factor.</li>
+    <li>Not a generalisation claim. This is one dataset, one detector, one fidelity pair.
+      The generalisation tests in the Phase 0B plan have not been run.</li>
+  </ul>
+</section>
+
+<footer>
+  <p>
+    Run <code>20260911_170905_recoverability</code>, branch <code>exp/phase0b-generalization</code>,
+    commit <code>92dff2e</code>. Object labels come from ground truth; every predictor input is
+    restricted to CHEAP-side candidate features, checked against a declared provenance registry
+    that is complete at import so the guard cannot pass on an empty column list.
+    69,014 candidate rows, 54,085 anchored. Phase-0 raw results were not modified.
+  </p>
+</footer>
+
+</body>
+</html>
