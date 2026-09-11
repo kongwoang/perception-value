@@ -1,0 +1,11 @@
+{
+  "weights": "/home/kongwoang/models/yolo/rtdetr-l.pt",
+  "backend": "trt",
+  "cheap": "rt_mid_480",
+  "full": "rt_full_640",
+  "extra_modes": [],
+  "sequences": null,
+  "limit": 0,
+  "out": "data/cache/rtdetr_kitti_mid",
+  "engine_stem": "rtdetrl"
+}
