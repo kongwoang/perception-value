@@ -26,11 +26,12 @@ def main():
     ap.add_argument("--full", default="ns_full_640")
     ap.add_argument("--scenes", type=int, default=0, help="limit number of scenes")
     ap.add_argument("--out", default=str(CACHE / "nusc_det"))
+    ap.add_argument("--engine_stem", default=None)
     args = ap.parse_args()
 
     run = runmeta.new_run("nusc_detect", vars(args))
     db = NuScenesDB(args.dataroot, args.version)
-    det = TwoFidelityDetector(args.weights, backend="trt")
+    det = TwoFidelityDetector(args.weights, backend="trt", engine_stem=args.engine_stem)
     modes = [args.cheap, args.full]
     outdir = Path(args.out)
     scenes = db.scenes[: args.scenes] if args.scenes else db.scenes

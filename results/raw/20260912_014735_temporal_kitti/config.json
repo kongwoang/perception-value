@@ -1,0 +1,7 @@
+{
+  "dataset": "kitti",
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "tag": "temporal_kitti"
+}

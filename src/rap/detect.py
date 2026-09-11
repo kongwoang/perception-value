@@ -83,7 +83,8 @@ class TwoFidelityDetector:
     """
 
     def __init__(self, weights: str, device: str = "cuda:0", half: bool = True,
-                 backend: str = "torch", engine_dir: str | None = None):
+                 backend: str = "torch", engine_dir: str | None = None,
+                 engine_stem: str | None = None):
         self.device = torch.device(device)
         self.backend = backend
         self.half = half and self.device.type == "cuda" and backend == "torch"
@@ -91,6 +92,10 @@ class TwoFidelityDetector:
         self.weights = weights
         self._engines: dict[str, object] = {}
         self.engine_dir = engine_dir
+        # engines are named <stem>_<mode>.engine; the stem defaults to the weights file
+        # name but is separable, because RT-DETR weights ("rtdetr-l.pt") and its engines
+        # ("rtdetrl_*.engine") do not share a spelling.
+        self.engine_stem = engine_stem
         if backend == "torch":
             from ultralytics import RTDETR, YOLO
             self.yolo = (RTDETR if "rtdetr" in str(weights).lower() else YOLO)(weights)
@@ -107,7 +112,7 @@ class TwoFidelityDetector:
         from pathlib import Path as _P
         from .trt import TRTModule
         if mode.name not in self._engines:
-            stem = _P(self.weights).stem
+            stem = self.engine_stem or _P(self.weights).stem
             path = _P(self.engine_dir) / f"{stem}_{mode.name}.engine"
             self._engines[mode.name] = TRTModule(path, device=str(self.device))
         return self._engines[mode.name]

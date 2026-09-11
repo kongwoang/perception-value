@@ -32,11 +32,14 @@ def main():
     ap.add_argument("--sequences", nargs="*", default=None)
     ap.add_argument("--limit", type=int, default=0, help="frames per sequence (0 = all)")
     ap.add_argument("--out", default=str(CACHE / "det"))
+    ap.add_argument("--engine_stem", default=None,
+                    help="engine filename stem if it differs from the weights stem")
     args = ap.parse_args()
 
     modes = [args.cheap, args.full] + list(args.extra_modes)
     run = runmeta.new_run("detect", vars(args))
-    det = TwoFidelityDetector(args.weights, backend=args.backend)
+    det = TwoFidelityDetector(args.weights, backend=args.backend,
+                              engine_stem=args.engine_stem)
     seqs = args.sequences or kitti.sequences()
     outdir = Path(args.out)
 
