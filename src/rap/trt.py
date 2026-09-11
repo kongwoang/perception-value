@@ -1,0 +1,44 @@
+"""Minimal TensorRT runner that exchanges data with PyTorch tensors.
+
+One engine per perception mode, each built for a fixed input shape, so the
+executed graph is exactly what was profiled.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+import numpy as np
+import torch
+
+
+class TRTModule:
+    def __init__(self, engine_path: str | Path, device: str = "cuda:0"):
+        import tensorrt as trt
+
+        self.trt = trt
+        self.logger = trt.Logger(trt.Logger.ERROR)
+        self.runtime = trt.Runtime(self.logger)
+        self.engine = self.runtime.deserialize_cuda_engine(Path(engine_path).read_bytes())
+        if self.engine is None:
+            raise RuntimeError(f"could not deserialize {engine_path}")
+        self.ctx = self.engine.create_execution_context()
+        self.device = torch.device(device)
+        self.stream = torch.cuda.Stream(device=self.device)
+
+        self.buffers, self.bindings, self.input_idx, self.output_idx = [], [], [], []
+        for i in range(self.engine.num_bindings):
+            shape = tuple(self.engine.get_binding_shape(i))
+            dtype = torch.from_numpy(np.zeros(1, trt.nptype(self.engine.get_binding_dtype(i)))).dtype
+            buf = torch.empty(shape, dtype=dtype, device=self.device)
+            self.buffers.append(buf)
+            self.bindings.append(int(buf.data_ptr()))
+            (self.input_idx if self.engine.binding_is_input(i) else self.output_idx).append(i)
+
+        self.input_shape = tuple(self.buffers[self.input_idx[0]].shape)
+        self.input_dtype = self.buffers[self.input_idx[0]].dtype
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        inp = self.buffers[self.input_idx[0]]
+        inp.copy_(x.to(dtype=self.input_dtype, non_blocking=True))
+        self.ctx.execute_v2(self.bindings)
+        return self.buffers[self.output_idx[0]]

@@ -28,8 +28,8 @@ def environment() -> dict:
     }
     try:
         import torch
-        env |= {"torch": torch.__version__, "cuda": torch.version.cuda,
-                "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None}
+        env.update({"torch": torch.__version__, "cuda": torch.version.cuda,
+                    "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None})
     except Exception:
         pass
     for path, key in [("/etc/nv_tegra_release", "tegra"),

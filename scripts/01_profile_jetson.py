@@ -25,15 +25,15 @@ from rap.detect import MODES, TwoFidelityDetector   # noqa: E402
 class RailSampler(threading.Thread):
     def __init__(self, period=0.05):
         super().__init__(daemon=True)
-        self.period, self.samples, self._stop = period, [], threading.Event()
+        self.period, self.samples, self._halt = period, [], threading.Event()
 
     def run(self):
-        while not self._stop.is_set():
+        while not self._halt.is_set():
             self.samples.append((time.time(), power.read_power_mw()))
             time.sleep(self.period)
 
     def stop(self):
-        self._stop.set()
+        self._halt.set()
         self.join(timeout=2)
 
     def summary(self) -> dict:
@@ -42,7 +42,7 @@ class RailSampler(threading.Thread):
         keys = self.samples[0][1].keys()
         arr = {k: np.array([s[1].get(k, np.nan) for s in self.samples]) for k in keys}
         out = {f"{k}_mw_mean": float(np.nanmean(v)) for k, v in arr.items()}
-        out |= {f"{k}_mw_p95": float(np.nanpercentile(v, 95)) for k, v in arr.items()}
+        out.update({f"{k}_mw_p95": float(np.nanpercentile(v, 95)) for k, v in arr.items()})
         out["n_samples"] = len(self.samples)
         return out
 
@@ -64,7 +64,7 @@ def profile_mode(det, mode, images, warmup, reps, idle_baseline):
         x, r, pad, _ = det.preprocess(img, mode)
         torch.cuda.synchronize()
         t1 = time.perf_counter()
-        raw = det.forward(x)
+        raw = det.forward(x, mode)
         torch.cuda.synchronize()
         t2 = time.perf_counter()
         det.postprocess(raw, mode, r, pad, img.shape)
@@ -109,6 +109,7 @@ def main():
     ap.add_argument("--reps", type=int, default=400)
     ap.add_argument("--warmup", type=int, default=60)
     ap.add_argument("--half", type=int, default=1)
+    ap.add_argument("--backend", default="torch", choices=["torch", "trt"])
     ap.add_argument("--images", default="", help="dir of real frames; synthetic if empty")
     ap.add_argument("--rounds", type=int, default=3, help="interleaved repeats of the mode sweep")
     args = ap.parse_args()
@@ -123,7 +124,7 @@ def main():
     else:
         images = [(rng.random((375, 1242, 3)) * 255).astype(np.uint8) for _ in range(8)]
 
-    det = TwoFidelityDetector(args.weights, half=bool(args.half))
+    det = TwoFidelityDetector(args.weights, half=bool(args.half), backend=args.backend)
 
     print("measuring idle baseline (10 s)...")
     idle = RailSampler()

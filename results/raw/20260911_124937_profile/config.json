@@ -1,0 +1,15 @@
+{
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "modes": [
+    "cheap_320",
+    "cheap_384",
+    "cheap_512",
+    "full_640",
+    "full_960"
+  ],
+  "reps": 150,
+  "warmup": 40,
+  "half": 1,
+  "images": "",
+  "rounds": 1
+}

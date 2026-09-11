@@ -64,16 +64,42 @@ def letterbox(img: np.ndarray, net_h: int, net_w: int):
 
 
 class TwoFidelityDetector:
-    def __init__(self, weights: str, device: str = "cuda:0", half: bool = True):
-        from ultralytics import YOLO
-        self.yolo = YOLO(weights)
+    """Runs both fidelities from one set of weights.
+
+    backend="trt" executes the same graph through the per-mode TensorRT engine that
+    the profiler measures; backend="torch" is the eager reference used to validate
+    the engines.
+    """
+
+    def __init__(self, weights: str, device: str = "cuda:0", half: bool = True,
+                 backend: str = "torch", engine_dir: str | None = None):
         self.device = torch.device(device)
-        self.half = half and self.device.type == "cuda"
-        self.net = self.yolo.model.to(self.device).eval()
-        if self.half:
-            self.net = self.net.half()
-        self.names = self.yolo.names
+        self.backend = backend
+        self.half = half and self.device.type == "cuda" and backend == "torch"
         self._keep = torch.tensor(COCO_KEEP, device=self.device)
+        self.weights = weights
+        self._engines: dict[str, object] = {}
+        self.engine_dir = engine_dir
+        if backend == "torch":
+            from ultralytics import YOLO
+            self.yolo = YOLO(weights)
+            self.net = self.yolo.model.to(self.device).eval()
+            if self.half:
+                self.net = self.net.half()
+            self.names = self.yolo.names
+        else:
+            from pathlib import Path as _P
+            self.names = None
+            self.engine_dir = engine_dir or str(_P(weights).parent / "engines")
+
+    def engine_for(self, mode: "Mode"):
+        from pathlib import Path as _P
+        from .trt import TRTModule
+        if mode.name not in self._engines:
+            stem = _P(self.weights).stem
+            path = _P(self.engine_dir) / f"{stem}_{mode.name}.engine"
+            self._engines[mode.name] = TRTModule(path, device=str(self.device))
+        return self._engines[mode.name]
 
     # -- preprocessing -------------------------------------------------------
     def preprocess(self, img_bgr: np.ndarray, mode: Mode):
@@ -84,7 +110,9 @@ class TwoFidelityDetector:
         return x.unsqueeze(0), r, pad, lb
 
     @torch.no_grad()
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mode: "Mode" = None) -> torch.Tensor:
+        if self.backend == "trt":
+            return self.engine_for(mode)(x)
         out = self.net(x)
         return out[0] if isinstance(out, (list, tuple)) else out
 
@@ -150,7 +178,7 @@ class TwoFidelityDetector:
     @torch.no_grad()
     def detect(self, img_bgr: np.ndarray, mode: Mode):
         x, r, pad, lb = self.preprocess(img_bgr, mode)
-        raw = self.forward(x)
+        raw = self.forward(x, mode)
         det = self.postprocess(raw, mode, r, pad, img_bgr.shape)
         return det, lb
 
