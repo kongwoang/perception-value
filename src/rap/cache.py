@@ -35,8 +35,16 @@ def save(path: Path, frames: list[int], dets: list[dict], geos: list[dict] | Non
 
 
 class DetCache:
+    """Per-frame views over one cached sequence.
+
+    The arrays are materialised on construction rather than read through the lazy
+    `NpzFile`: indexing a lazy npz re-inflates the whole array on every access, which
+    made per-frame reads dominate table building by a factor of ~15.
+    """
+
     def __init__(self, path: Path):
-        self.z = np.load(path, allow_pickle=False)
+        with np.load(path, allow_pickle=False) as z:
+            self.z = {k: z[k] for k in z.files}
         self.frames = self.z["frames"]
         self.offsets = self.z["offsets"]
         self.index = {int(f): i for i, f in enumerate(self.frames)}
@@ -61,4 +69,4 @@ class DetCache:
         return {k: self.z[f"geo_{k}"][s] for k in GEO_ARRAYS}
 
     def scalars(self, i: int) -> dict:
-        return {k[3:]: float(self.z[k][i]) for k in self.z.files if k.startswith("fs_")}
+        return {k[3:]: float(v[i]) for k, v in self.z.items() if k.startswith("fs_")}
