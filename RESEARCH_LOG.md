@@ -1,0 +1,151 @@
+# Research Log
+
+Append-only. Newest entries at the bottom. Do not rewrite past entries except to fix
+typos — being able to see what was believed *at the time* is the point.
+
+Entry template:
+
+```
+## YYYY-MM-DD HH:MM — title
+**Objective**
+**Changes made**
+**Run IDs**
+**Observations**
+**Problems encountered**
+**Current interpretation**
+**Next step**
+```
+
+---
+
+## 2026-09-11 12:30 — Repository bootstrap, dataset and environment audit
+
+**Objective**
+Stand up the Phase-0 repository and establish what this board and this data can
+actually support, before writing any experiment code.
+
+**Changes made**
+- Found `~/research/risk-aware-perception/` existing but completely empty and not a
+  git repository. Nothing to preserve; `git init` and built from scratch.
+- Audited the board: Jetson AGX Xavier, L4T R35.6.5, MAXN, GPU at 1377 MHz. Conda env
+  `edge` already had torch 2.1.0a0 (CUDA 11.4, working), torchvision 0.16, cv2 4.5.4,
+  TensorRT 8.5.2.2. Added scikit-learn 1.3.2 and ultralytics 8.3.40 (`--no-deps`, so
+  the existing Jetson torch build is untouched).
+- Chose **KITTI tracking** as the dataset. It is the only openly downloadable driving
+  set that supplies all three things Phase 0 needs at once: sequences (so splits can
+  be by scene and motion features are causal), GT 3D boxes in ego coordinates (so
+  criticality is geometric rather than invented), and track IDs (so range rate and TTC
+  are measurable). 21 labelled training sequences, ~8 k frames.
+- Started the 15.8 GB image archive downloading at ~3.5 MB/s; labels, calibration and
+  oxts (2.2 MB / 88 KB / 8 MB) landed immediately and unblocked all geometry work.
+
+**Observations**
+- Label census over all 21 sequences: Car 27300, DontCare 18039, Pedestrian 11470,
+  Van 3301, Cyclist 1938, Truck 1189, Misc 793, Person 676, Tram 595.
+- The rectified-camera -> velodyne -> IMU chain reproduces sane ego-frame geometry: a
+  car at camera (x=+9.6, z=21.8) lands at ego (x=+23 forward, y=-10 left), i.e. 10 m
+  to the right. Sign conventions verified by unit test rather than by eye.
+
+**Problems encountered**
+- The first background download died when its parent session ended, at 226 MB of
+  15.8 GB. Replaced with a `setsid` resume loop that re-issues `curl -C -` until the
+  content length matches.
+- `curl` 7.68 on this image does not have `--retry-all-errors`.
+
+**Current interpretation**
+Data and environment are adequate. The open question is whether the *compute* side
+can be made to behave — see the next entry.
+
+**Next step**
+Profile the two fidelities on the board before committing to a CHEAP/FULL pair.
+
+## 2026-09-11 12:50 — PyTorch eager cannot measure this experiment; moved to TensorRT
+
+**Objective**
+Confirm that FULL is meaningfully more expensive than CHEAP on this board. This is
+GO criterion 1, and the whole latency/power story depends on it.
+
+**Changes made**
+- Wrote `scripts/01_profile_jetson.py` (median/p95 latency, peak GPU memory, INA3221
+  rail power sampled at 20 Hz against a measured idle baseline).
+- Wrote `scripts/00_build_engines.py` and `src/rap/trt.py`; added a `backend` switch to
+  `TwoFidelityDetector` so the same pre/post-processing serves both backends.
+
+**Run IDs**
+`20260911_125017_profile`
+
+**Observations**
+- In PyTorch eager the median end-to-end latency was **flat**: 25.5 / 24.9 / 24.9 /
+  25.5 / 26.9 ms for 320 / 384 / 512 / 640 / 960. GPU rail power over idle was *not*
+  flat: 1.36 / 1.67 / 2.11 / 2.56 / 6.07 W. Compute was scaling; wall clock was not.
+- Direct diagnosis: a fixed ~19 ms floor for yolov8s and yolov8n alike, unchanged from
+  31 kpx to 492 kpx, and only breaking at 1311 kpx. CUDA-event timing agreed with wall
+  clock, so this is real GPU-timeline idle, not measurement error — ~225 modules at
+  ~85 us of launch overhead each on Xavier's weak CPU.
+- After FP16 TensorRT: cheap_320 fell from 19.3 ms to **6.8 ms** end to end.
+- The TRT engine reproduces eager FP32 to <0.004 confidence and <0.1 px on boxes, with
+  one borderline detection near the 0.10 threshold dropped. Validated on a real-aspect
+  image, not on noise.
+
+**Problems encountered**
+- `trtexec` invoked via `subprocess.run` from the export script reported "no
+  CUDA-capable device is detected" while the identical command worked from a shell.
+  Not chased; engine building moved to a standalone shell loop.
+- `trt.nptype()` in TensorRT 8.5 dereferences `np.bool`, removed in numpy 1.24. Mapped
+  TRT dtypes to torch dtypes directly instead.
+- Engine builds take ~11-12 minutes each on this board.
+
+**Current interpretation**
+A latency study in PyTorch eager on Xavier would have measured Python, not perception.
+Everything downstream — profiling, detection, and the risk-per-millisecond numbers —
+runs on the TensorRT engines, which is also the honest deployment path for this board.
+
+**Next step**
+Detection over all 21 sequences once the archive finishes extracting.
+
+## 2026-09-11 13:20 — Pipeline validated on a synthetic negative control
+
+**Objective**
+Exercise every analysis stage before the images arrive, and find out how the analyses
+behave when there is provably no criticality signal to find.
+
+**Changes made**
+- `scripts/99_synthetic_pipeline_check.py`: real GT labels, simulated detections whose
+  recall depends only on apparent box height. Size correlates with distance, but there
+  is no mechanism by which *criticality* governs whether CHEAP fails.
+- Added the specificity analysis (same arms against `Value_visual`), the standard-metric
+  scoring of the budget selections, and a `feat_n_det` negative control for the pair test.
+- Added `H_visual_plus_stakes` (all visual features plus the single scalar
+  `feat_crit_sum`) to separate "stakes" from criticality *structure*.
+
+**Observations**
+- On the synthetic null, criticality arms still predict `Value_task` at rho ~ 0.31 and
+  F -> G gains +0.157 per-sequence Spearman (p = 0.012). This is **not** signal: it is
+  scale. `Value_task = sum_i crit_i * err_i`, so a frame's total criticality sets the
+  magnitude of its value, and criticality features recover that magnitude while
+  complexity features cannot.
+- The uncertainty-matched pair test on the same data returns null, as it should:
+  rho(d_crit, d_value) = -0.027 (p = 0.17), sign agreement 0.47. Matching on the
+  *extensive* uncertainty features (candidate counts, entropy sums) implicitly matches
+  scene scale, which is exactly what removes the confound.
+- Budget selections scored on the standard detection metric were near-identical across
+  all learned policies (0.31-0.33 at 20 %) while differing by 0.2+ on risk — the
+  signature of task-specific routing.
+
+**Problems encountered**
+- The feature registry was populated as a side effect of computing features, so the
+  leakage guard passed vacuously on a table loaded from disk. Now primed at import.
+- Matching in 46 raw dimensions admitted 1 pair. Matching now runs in an 8-component
+  PCA subspace fitted on the matching variables only.
+- `HistGradientBoosting`'s OpenMP threads were contending: leave-one-sequence-out over
+  8 folds took 38.6 s. Fanning out over folds with single-threaded workers gives
+  **1.5 s** for bit-identical predictions (26x).
+- No parquet engine on this board; tables are pandas pickles.
+
+**Current interpretation**
+The raw predictability delta from adding criticality is partly a scale artefact and
+must not be reported as the headline. The matched-pair test is the decisive evidence,
+and it now has a demonstrated negative control.
+
+**Next step**
+Run detection on the real frames and produce the real numbers.
