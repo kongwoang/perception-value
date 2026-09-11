@@ -231,3 +231,47 @@ claim than the one Phase 0 set out to test.
 Phase 1 as proposed in `docs/cvpr_phase0_findings.md`: factorise the gate into a
 failure-probability head and a criticality head and predict their product, rather than
 regressing `Value_task` end to end.
+
+---
+
+## 2026-09-11 17:05 — Phase 0B opens: is failure the same thing as recoverability?
+
+**Objective**
+Phase 0 established that criticality carries information uncertainty does not, and
+falsified the naive "high stakes → more compute" mechanism. It left a specific,
+testable successor hypothesis, which Phase 0B exists to kill or confirm:
+
+    Value(frame) ≈ sum_i  c(i) · P(cheap fails on i) · P(full recovers i | cheap fails)
+
+The claim is that modelling **recoverability** separately from **failure** generalizes
+better than a monolithic frame-level regressor — and, more sharply, that it beats the
+obvious cheap baseline `uncertainty × criticality`. If that baseline already matches the
+three-factor decomposition, there is no method contribution here and the paper is a
+problem-formulation and benchmark paper instead.
+
+Phase 0 evidence that motivates it: extra compute recovers *distant* objects
+(corr(distance, recovered) = +0.289) while criticality concentrates *near*
+(corr(criticality, recovered) = −0.188). Value therefore lives in an overlap band that
+neither factor alone identifies. Whether a gate can *predict* that band from cheap
+output is exactly what "recoverability" means, and it is unmeasured.
+
+**Execution order (deliberately not parallel)**
+The kill test runs first and entirely on existing KITTI data: object-level fail/recover
+labels, then `uncertainty × criticality` versus `fail × recover × criticality` at matched
+compute. Only if recoverability adds measurable value do moderate fidelity pairs, a
+second detector family and a second dataset follow.
+
+**Open design question to resolve before any modelling**
+A deployed gate scores frames from CHEAP output, so a per-object score has to be anchored
+on something CHEAP produces. Ground-truth objects that CHEAP misses *entirely* — no
+candidate box at any score — are invisible to such an anchor. The fraction of recovered
+risk that sits on those objects is an upper bound on what an object-anchored factorized
+model can ever capture, and it is the first thing to measure.
+
+**Next step**
+Measure that coverage, then build the object-level table.
+
+**Do not claim** (carried forward from Phase 0)
+Uncertainty is real signal, not useless. Critical frames do *not* simply deserve more
+compute. Per-frame criticality signal is weak (matched-pair rho ~ 0.1); the effect is an
+aggregate-allocation effect.
