@@ -275,3 +275,56 @@ Measure that coverage, then build the object-level table.
 Uncertainty is real signal, not useless. Critical frames do *not* simply deserve more
 compute. Per-frame criticality signal is weak (matched-pair rho ~ 0.1); the effect is an
 aggregate-allocation effect.
+
+---
+
+## 2026-09-11 17:40 — Phase 0C opens: is decision value a distinct target from perception value?
+
+**Objective**
+Phase 0B killed the three-factor decomposition (`p_recover` inert, median dEta −0.002,
+p = 0.73) and found the object-anchored formulation structurally blind to ~33% of
+recoverable risk. Generic criticality-aware scheduling also has close prior work. So the
+formulation itself is being replaced rather than patched.
+
+The new question is not "is this frame hard" or "is this frame critical" but:
+
+    if I spend more perception compute on this frame, does the DOWNSTREAM DECISION
+    actually improve?
+
+    V_dec(t) = J(pi(z_cheap), s*) - J(pi(z_full), s*)
+
+**Hypothesis under test**
+`V_dec` is not fully explained by visual uncertainty, scene complexity, task criticality,
+or even by *oracle* perception gain. In short: "better perception" != "better decision".
+
+**Why this might be false, and the honest prior**
+Phase 0 showed extra resolution mainly recovers *distant* objects (mean 33 m) while a
+braking controller is governed by *near* ones, where CHEAP already reaches 0.80 recall.
+The plausible null is therefore that CHEAP and FULL almost never produce different
+actions, which is an explicit NO-GO condition. I expect a low action-change rate and the
+kill test is designed to surface that immediately rather than after a modelling effort.
+
+**Anti-circularity constraint**
+The decision cost must NOT be `sum criticality x detection error` — that is the Phase-0
+metric renamed. The controller emits an ACTION; the action is scored against GT scene
+geometry through an asymmetric cost (under-braking risk vs unnecessary braking, progress,
+jerk). GT geometry appears only in the evaluator, never in the deployed gate.
+
+**Kill test (before anything else, per the plan's execution order)**
+One deterministic longitudinal braking controller, identical code for both modes, run on
+the existing KITTI CHEAP/FULL cache. Report: % frames where perception differs, % where
+the ACTION differs, % where detection improved but the action did not, corr(U, dJ),
+corr(C, dJ), corr(dE, dJ), and eta for uncertainty / criticality / dE-oracle / dJ-oracle.
+
+**Stated NO-GO conditions**
+Stop and report NO-GO if dJ is a monotone function of criticality, or of dE, or if
+cheap/full almost never change the decision, or if the planner is so insensitive that
+extra perception rarely matters. The single decisive comparison is dE-oracle versus
+dJ-oracle at matched compute: if knowing exactly where perception improves already solves
+allocation, this direction closes.
+
+**Note on Phase 0B deliverable**
+`docs/cvpr_phase0b_findings.md` was never written: Phase 0B stopped at its kill test by
+design, and its interim report is `docs/reports/phase0b_killtest.html`. The generalization
+tests in the Phase 0B plan (second dataset, second detector, moderate fidelity pairs)
+remain unrun.
