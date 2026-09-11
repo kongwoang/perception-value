@@ -68,24 +68,28 @@ def _fit_fold(X, y, tr, te, model_name, task, seed):
 
 
 def loso(df: pd.DataFrame, cols: list[str], model_name: str, target: str,
-         task: str = "reg", arm: str = "", seed: int = 0, n_jobs: int = 8) -> OOFResult:
+         task: str = "reg", arm: str = "", seed: int = 0, n_jobs: int = 8,
+         checker=assert_no_leakage, fit_mask: np.ndarray | None = None) -> OOFResult:
     """Out-of-fold predictions, one fold per sequence.
 
     Folds run in separate single-threaded workers: the models are small enough that
     OpenMP's intra-fit threads mostly contend, and fanning out over folds instead is
     ~9x faster on this board for bit-identical output.
     """
-    assert_no_leakage(cols)
+    checker(cols)
     X = df[cols].to_numpy(dtype=np.float64)
     X = np.nan_to_num(X, nan=0.0, posinf=1e6, neginf=-1e6)
     y = df[target].to_numpy(dtype=np.float64)
     groups = df["seq"].to_numpy()
     folds = [(groups == g) for g in np.unique(groups)]
     pred = np.full(len(df), np.nan)
+    # `fit_mask` restricts the TRAINING rows without restricting prediction: it is how
+    # P(full recovers | cheap fails) is fitted on failures only yet scored everywhere.
+    keep = np.ones(len(df), bool) if fit_mask is None else np.asarray(fit_mask, bool)
 
     with parallel_backend("loky", inner_max_num_threads=1):
         outs = Parallel(n_jobs=min(n_jobs, len(folds)))(
-            delayed(_fit_fold)(X, y, ~te, te, model_name, task, seed) for te in folds)
+            delayed(_fit_fold)(X, y, (~te) & keep, te, model_name, task, seed) for te in folds)
     for te, o in zip(folds, outs):
         pred[te] = o
     return OOFResult(arm, model_name, task, target, pred, y, groups)

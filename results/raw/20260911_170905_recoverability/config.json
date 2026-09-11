@@ -1,0 +1,14 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "frames": "/home/kongwoang/research/risk-aware-perception/results/processed/frames_composite.pkl",
+  "model": "gbm",
+  "crit_model": "composite",
+  "op_conf": 0.25,
+  "lat_cheap": 10.145,
+  "lat_full": 16.024,
+  "energy_cheap": 24.45,
+  "energy_full": 39.04,
+  "tag": "recoverability"
+}
