@@ -61,7 +61,8 @@ def heterogeneity(df: pd.DataFrame) -> dict:
 # ----------------------------------------------------------------------------- B/C. predictability
 
 def predictability(df: pd.DataFrame, models=("linear", "tree", "gbm"),
-                   targets=(("value_task", "reg"), ("value_task_pos", "clf"))) -> tuple:
+                   targets=(("value_task", "reg"), ("value_task_pos", "clf"),
+                            ("value_visual", "reg"))) -> tuple:
     df = df.copy()
     df["value_task_pos"] = (df["value_task"] > 1e-9).astype(float)
     rows, oof = [], {}
@@ -85,7 +86,8 @@ def arm_comparisons(rows: list, model: str, target: str) -> pd.DataFrame:
     by_arm = {r["arm"]: r for r in rows if r["model"] == model and r["target"] == target}
     tests = [("A_conf", "B_uncertainty"), ("B_uncertainty", "E_unc_crit"),
              ("C_complexity", "E_unc_crit"), ("F_all_visual", "G_all"),
-             ("B_uncertainty", "D_criticality"), ("F_all_visual", "D_criticality")]
+             ("B_uncertainty", "D_criticality"), ("F_all_visual", "D_criticality"),
+             ("F_all_visual", "H_visual_plus_stakes"), ("H_visual_plus_stakes", "G_all")]
     out = []
     for a, b in tests:
         if a in by_arm and b in by_arm:
@@ -98,6 +100,34 @@ def arm_comparisons(rows: list, model: str, target: str) -> pd.DataFrame:
 
 
 # ----------------------------------------------------------------------------- D. budgeted selection
+
+def specificity(rows: list, model: str) -> pd.DataFrame:
+    """Is the criticality gain about *task risk*, or just about how much is in the scene?
+
+    Value_visual is the same quantity with every criticality set to 1. A feature set
+    that merely senses "busy scene" should help both targets equally; one that senses
+    downstream consequence should help Value_task specifically.
+    """
+    out = []
+    for a, b in [("B_uncertainty", "E_unc_crit"), ("F_all_visual", "G_all"),
+                 ("C_complexity", "D_criticality"),
+                 ("F_all_visual", "H_visual_plus_stakes"),
+                 ("H_visual_plus_stakes", "G_all")]:
+        r = {"baseline": a, "candidate": b, "model": model}
+        for target in ("value_task", "value_visual"):
+            by = {x["arm"]: x for x in rows if x["model"] == model and x["target"] == target}
+            if a not in by or b not in by:
+                break
+            t = predict.paired_test(by[a], by[b])
+            r[f"delta_{target}"] = t["delta_median"]
+            r[f"p_{target}"] = t["wilcoxon_p"]
+            r[f"nbetter_{target}"] = t["n_better"]
+            r[f"n_{target}"] = t["n"]
+        else:
+            r["specificity"] = r["delta_value_task"] - r["delta_value_visual"]
+            out.append(r)
+    return pd.DataFrame(out)
+
 
 def policy_scores(df: pd.DataFrame, oof: dict, model: str, target: str) -> dict:
     s = {
@@ -122,10 +152,10 @@ def policy_scores(df: pd.DataFrame, oof: dict, model: str, target: str) -> dict:
 
 def budget_per_sequence(df: pd.DataFrame, scores: dict, quota: float) -> pd.DataFrame:
     """eta per held-out sequence, so consistency can be checked rather than assumed."""
+    pos = {seq: np.flatnonzero(df["seq"].to_numpy() == seq) for seq in df["seq"].unique()}
     rows = []
-    for seq, sub in df.groupby("seq"):
-        idx = sub.index.to_numpy()
-        sub = sub.reset_index(drop=True)
+    for seq, idx in pos.items():
+        sub = df.iloc[idx].reset_index(drop=True)
         sc = {k: np.asarray(v)[idx] for k, v in scores.items()}
         r = budget.evaluate(sub, sc, [quota], seeds=16, mode="pooled")
         r["seq"] = seq
@@ -137,7 +167,7 @@ def budget_per_sequence(df: pd.DataFrame, scores: dict, quota: float) -> pd.Data
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--table", default=str(PROCESSED / "frames_composite.parquet"))
+    ap.add_argument("--table", default=str(PROCESSED / "frames_composite.pkl"))
     ap.add_argument("--model", default="gbm")
     ap.add_argument("--lat_cheap", type=float, default=np.nan)
     ap.add_argument("--lat_full", type=float, default=np.nan)
@@ -146,7 +176,7 @@ def main():
     ap.add_argument("--tag", default="analysis")
     args = ap.parse_args()
 
-    df = pd.read_parquet(args.table)
+    df = pd.read_pickle(args.table).reset_index(drop=True)
     tables.feature_columns(df)          # leakage guard on the real table
     run = runmeta.new_run(args.tag, vars(args))
     out = {}
@@ -168,6 +198,14 @@ def main():
             cmp_frames.append(arm_comparisons(rows, m, target))
     cmp_df = pd.concat(cmp_frames, ignore_index=True)
     cmp_df.to_csv(run / "arm_comparisons.csv", index=False)
+    spec = pd.concat([specificity(rows, m) for m in ("linear", "gbm")], ignore_index=True)
+    spec.to_csv(run / "specificity.csv", index=False)
+    print("\n  specificity — criticality gain on task risk vs on plain detection value:")
+    for _, r in spec.iterrows():
+        print(f"    [{r.model}] {r.baseline:16s}->{r.candidate:14s} "
+              f"dValue_task={r.delta_value_task:+.3f} (p={r.p_value_task:.3g})  "
+              f"dValue_visual={r.delta_value_visual:+.3f} (p={r.p_value_visual:.3g})  "
+              f"specificity={r.specificity:+.3f}")
     print("\n  paired tests over held-out sequences (gbm, value_task):")
     for _, r in cmp_df[(cmp_df.model == "gbm") & (cmp_df.target == "value_task")].iterrows():
         print(f"    {r.baseline:16s} -> {r.candidate:16s} d={r.delta_median:+.3f} "
@@ -184,7 +222,21 @@ def main():
     bud_df = pd.concat(bud, ignore_index=True)
     bud_df.to_csv(run / "budget.csv", index=False)
     piv = bud_df[bud_df["mode"] == "pooled"].pivot(index="policy", columns="quota", values="eta")
+    print("  eta (share of the oracle's risk reduction captured):")
     print(piv.round(3).to_string())
+
+    std_all_cheap = float(df.err_std_cheap.sum())
+    std_all_full = float(df.err_std_full.sum())
+    pooled = bud_df[bud_df["mode"] == "pooled"].copy()
+    pooled["std_err_captured"] = (std_all_cheap - pooled["std_err_total"]) / \
+        max(std_all_cheap - std_all_full, 1e-12)
+    pooled.to_csv(run / "budget_pooled.csv", index=False)
+    print("\n  same selections scored on the STANDARD detection metric "
+          "(share of full-compute detection gain captured):")
+    print(pooled.pivot(index="policy", columns="quota",
+                       values="std_err_captured").round(3).to_string())
+    out["standard_metric"] = {"std_err_all_cheap": std_all_cheap,
+                              "std_err_all_full": std_all_full}
 
     print("\n== E. per-sequence consistency at 20% quota ==")
     per_seq = budget_per_sequence(df, scores, 0.20)
@@ -205,16 +257,24 @@ def main():
                   f"median deta={d.median():+.3f}")
     out["consistency"] = consist
 
-    print("\n== F. uncertainty-matched pairs ==")
-    unc_cols = F.columns_for("B_uncertainty")
-    pr = pairs.matched_pairs(df, unc_cols)
-    summ = pairs.summarise(pr)
-    out["matched_pairs"] = summ
-    print("  " + json.dumps({k: (round(v, 4) if isinstance(v, float) else v)
-                             for k, v in summ.items()}))
-    ex = pairs.exemplars(df, pr)
-    ex.to_csv(run / "pair_exemplars.csv", index=False)
-    pr.sample(min(len(pr), 200000), random_state=0).to_parquet(run / "matched_pairs.parquet")
+    print("\n== F. matched pairs ==")
+    out["matched_pairs"] = {}
+    for label, arm, caliper in [("uncertainty", "B_uncertainty", 0.25),
+                                ("uncertainty_and_complexity", "F_all_visual", 0.25),
+                                ("uncertainty_tight", "B_uncertainty", 0.12)]:
+        pr = pairs.matched_pairs(df, F.columns_for(arm), caliper=caliper)
+        summ = pairs.summarise(pr)
+        out["matched_pairs"][label] = summ
+        print(f"  matched on {label}: " + json.dumps(
+            {k: (round(v, 4) if isinstance(v, float) else v) for k, v in summ.items()}))
+        if label == "uncertainty":
+            pairs.exemplars(df, pr).to_csv(run / "pair_exemplars.csv", index=False)
+            pr.sample(min(len(pr), 200000), random_state=0).to_pickle(
+                run / "matched_pairs.pkl")
+        # negative control: the same test with a criticality-free scene-scale variable
+        neg = pairs.matched_pairs(df, F.columns_for(arm), crit_col="feat_n_det",
+                                  caliper=caliper)
+        out["matched_pairs"][label + "__control_n_det"] = pairs.summarise(neg)
 
     (run / "summary.json").write_text(json.dumps(out, indent=2, default=float))
     print("\nwrote", run)

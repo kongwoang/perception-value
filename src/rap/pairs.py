@@ -13,16 +13,26 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from scipy import stats
+from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 
 
 def matched_pairs(df: pd.DataFrame, unc_cols: list[str], crit_col: str = "feat_crit_sum",
                   value_col: str = "value_task", caliper: float = 0.25,
-                  k: int = 25, seed: int = 0) -> pd.DataFrame:
-    """Nearest-neighbour pairs in standardised uncertainty space, across sequences."""
+                  k: int = 25, seed: int = 0, n_components: int = 8) -> pd.DataFrame:
+    """Nearest-neighbour pairs in standardised uncertainty space, across sequences.
+
+    Matching runs in a PCA subspace: in 40+ raw dimensions nearest neighbours are all
+    equidistant, and a caliper tight enough to mean anything admits almost no pairs.
+    The components are taken from the matching variables only, so the subspace carries
+    no information about the target.
+    """
     U = StandardScaler().fit_transform(
         np.nan_to_num(df[unc_cols].to_numpy(float), nan=0.0, posinf=1e6, neginf=-1e6))
+    if U.shape[1] > n_components:
+        U = PCA(n_components=n_components, random_state=seed).fit_transform(U)
+        U /= U.std(axis=0, keepdims=True).clip(1e-9)
     U /= np.sqrt(U.shape[1])                       # caliper is per-dimension RMS distance
     seq = df["seq"].to_numpy()
     val = df[value_col].to_numpy()
@@ -44,6 +54,8 @@ def summarise(pairs: pd.DataFrame) -> dict:
     if len(pairs) < 20:
         return {"n_pairs": len(pairs)}
     d_crit, d_value = pairs["d_crit"].to_numpy(), pairs["d_value"].to_numpy()
+    if np.ptp(d_crit) < 1e-12 or np.ptp(d_value) < 1e-12:
+        return {"n_pairs": int(len(pairs)), "degenerate": True}
     informative = np.abs(d_crit) > 1e-9
     agree = np.sign(d_crit[informative]) == np.sign(d_value[informative])
     nonzero = informative & (np.abs(d_value) > 1e-9)

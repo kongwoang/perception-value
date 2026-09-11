@@ -80,3 +80,13 @@ def _stats():
     rng = np.random.default_rng(3)
     a = (rng.random((96, 320)) * 255).astype("uint8")
     return F.image_stats(a, a)
+
+
+def test_registry_is_complete_at_import():
+    """The guard must work on a table loaded from disk, before any feature is computed."""
+    import importlib
+    import rap.features as mod
+    importlib.reload(mod)
+    assert len(mod.registry()) >= 60, len(mod.registry())
+    for arm in mod.ARMS:
+        assert mod.columns_for(arm), arm

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed, parallel_backend
 from scipy import stats
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
@@ -28,18 +29,20 @@ def make_model(name: str, task: str, seed: int = 0):
             "linear": Pipeline([("s", StandardScaler()),
                                 ("m", RidgeCV(alphas=np.logspace(-2, 4, 13)))]),
             "tree": DecisionTreeRegressor(max_depth=3, min_samples_leaf=50, random_state=seed),
-            "gbm": HistGradientBoostingRegressor(max_depth=3, max_iter=250,
-                                                 learning_rate=0.06, min_samples_leaf=40,
-                                                 l2_regularization=1.0, random_state=seed),
+            "gbm": HistGradientBoostingRegressor(max_depth=3, max_iter=200,
+                                                 learning_rate=0.08, min_samples_leaf=40,
+                                                 l2_regularization=1.0, max_bins=64,
+                                                 early_stopping=False, random_state=seed),
             "dummy": DummyRegressor(strategy="mean"),
         }[name]
     return {
         "linear": Pipeline([("s", StandardScaler()),
                             ("m", LogisticRegression(max_iter=2000, C=1.0))]),
         "tree": DecisionTreeClassifier(max_depth=3, min_samples_leaf=50, random_state=seed),
-        "gbm": HistGradientBoostingClassifier(max_depth=3, max_iter=250,
-                                              learning_rate=0.06, min_samples_leaf=40,
-                                              l2_regularization=1.0, random_state=seed),
+        "gbm": HistGradientBoostingClassifier(max_depth=3, max_iter=200,
+                                              learning_rate=0.08, min_samples_leaf=40,
+                                              l2_regularization=1.0, max_bins=64,
+                                              early_stopping=False, random_state=seed),
         "dummy": DummyClassifier(strategy="prior"),
     }[name]
 
@@ -55,29 +58,36 @@ class OOFResult:
     groups: np.ndarray
 
 
+def _fit_fold(X, y, tr, te, model_name, task, seed):
+    ytr = y[tr]
+    if task == "clf" and len(np.unique(ytr)) < 2:
+        return np.full(int(te.sum()), float(ytr.mean()))
+    m = make_model(model_name, task, seed)
+    m.fit(X[tr], ytr)
+    return m.predict_proba(X[te])[:, 1] if task == "clf" else m.predict(X[te])
+
+
 def loso(df: pd.DataFrame, cols: list[str], model_name: str, target: str,
-         task: str = "reg", arm: str = "", seed: int = 0) -> OOFResult:
+         task: str = "reg", arm: str = "", seed: int = 0, n_jobs: int = 8) -> OOFResult:
+    """Out-of-fold predictions, one fold per sequence.
+
+    Folds run in separate single-threaded workers: the models are small enough that
+    OpenMP's intra-fit threads mostly contend, and fanning out over folds instead is
+    ~9x faster on this board for bit-identical output.
+    """
     assert_no_leakage(cols)
     X = df[cols].to_numpy(dtype=np.float64)
     X = np.nan_to_num(X, nan=0.0, posinf=1e6, neginf=-1e6)
     y = df[target].to_numpy(dtype=np.float64)
     groups = df["seq"].to_numpy()
+    folds = [(groups == g) for g in np.unique(groups)]
     pred = np.full(len(df), np.nan)
 
-    for g in np.unique(groups):
-        te = groups == g
-        tr = ~te
-        ytr = y[tr]
-        m = make_model(model_name, task, seed)
-        if task == "clf":
-            if len(np.unique(ytr)) < 2:
-                pred[te] = float(ytr.mean())
-                continue
-            m.fit(X[tr], ytr)
-            pred[te] = m.predict_proba(X[te])[:, 1]
-        else:
-            m.fit(X[tr], ytr)
-            pred[te] = m.predict(X[te])
+    with parallel_backend("loky", inner_max_num_threads=1):
+        outs = Parallel(n_jobs=min(n_jobs, len(folds)))(
+            delayed(_fit_fold)(X, y, ~te, te, model_name, task, seed) for te in folds)
+    for te, o in zip(folds, outs):
+        pred[te] = o
     return OOFResult(arm, model_name, task, target, pred, y, groups)
 
 

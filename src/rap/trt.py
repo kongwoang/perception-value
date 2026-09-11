@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
 import torch
 
 
@@ -25,10 +24,15 @@ class TRTModule:
         self.device = torch.device(device)
         self.stream = torch.cuda.Stream(device=self.device)
 
+        # trt.nptype() touches np.bool, removed in numpy >= 1.24, so map types directly.
+        to_torch = {trt.DataType.FLOAT: torch.float32, trt.DataType.HALF: torch.float16,
+                    trt.DataType.INT8: torch.int8, trt.DataType.INT32: torch.int32,
+                    trt.DataType.BOOL: torch.bool}
+
         self.buffers, self.bindings, self.input_idx, self.output_idx = [], [], [], []
         for i in range(self.engine.num_bindings):
             shape = tuple(self.engine.get_binding_shape(i))
-            dtype = torch.from_numpy(np.zeros(1, trt.nptype(self.engine.get_binding_dtype(i)))).dtype
+            dtype = to_torch[self.engine.get_binding_dtype(i)]
             buf = torch.empty(shape, dtype=dtype, device=self.device)
             self.buffers.append(buf)
             self.bindings.append(int(buf.data_ptr()))

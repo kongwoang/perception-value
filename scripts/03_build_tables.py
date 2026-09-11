@@ -47,8 +47,8 @@ def main():
             full = DetCache(det / args.full / f"{s}.npz")
             frames.append(tables.build_sequence(s, cheap, full, model, cfg, geom_cache[s]))
         df = pd.concat(frames, ignore_index=True)
-        name = f"frames_{mname}{args.suffix}.parquet"
-        df.to_parquet(Path(args.out) / name)
+        name = f"frames_{mname}{args.suffix}.pkl"
+        df.to_pickle(Path(args.out) / name)
         print(f"[{mname}] {len(df)} frames  value_task>0 in {(df.value_task>1e-9).mean():.1%}  "
               f"mean risk_cheap={df.risk_cheap.mean():.3f} risk_full={df.risk_full.mean():.3f}  -> {name}")
     print("wrote", run)

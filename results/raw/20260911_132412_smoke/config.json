@@ -1,0 +1,9 @@
+{
+  "table": "/tmp/rap_smoke/frames_synthetic.pkl",
+  "model": "gbm",
+  "lat_cheap": 6.8,
+  "lat_full": 12.0,
+  "energy_cheap": NaN,
+  "energy_full": NaN,
+  "tag": "smoke"
+}

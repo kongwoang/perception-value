@@ -36,6 +36,15 @@ ARMS = {
     "G_all": ("conf", "unc", "complex", "crit"),
 }
 
+# Value_task is, roughly, stakes x failure-propensity: a frame is worth more compute
+# when more criticality is present AND cheap perception is likely to fail on it.
+# `feat_crit_sum` alone carries the stakes. This arm exists so the report can say
+# whether criticality *structure* (corridor, TTC, risk-weighted uncertainty) adds
+# anything beyond that single scalar.
+STAKES_COLS = ("feat_crit_sum",)
+ARM_EXTRA_COLS = {"H_visual_plus_stakes": STAKES_COLS}
+ARMS["H_visual_plus_stakes"] = ("conf", "unc", "complex")
+
 _REGISTRY: dict[str, tuple[str, str]] = {}
 
 
@@ -61,7 +70,9 @@ def assert_no_leakage(columns) -> None:
 
 def columns_for(arm: str) -> list[str]:
     groups = ARMS[arm]
-    return [c for c, (g, _) in _REGISTRY.items() if g in groups]
+    cols = [c for c, (g, _) in _REGISTRY.items() if g in groups]
+    cols += [c for c in ARM_EXTRA_COLS.get(arm, ()) if c not in cols]
+    return cols
 
 
 # ----------------------------------------------------------------------------- helpers
@@ -230,3 +241,29 @@ def image_stats(small_gray: np.ndarray, prev_small_gray: np.ndarray | None) -> d
         stats.update({"motion_mean": float(d.mean()),
                       "motion_p95": float(np.percentile(d, 95)), "motion_first": 0.0})
     return stats
+
+
+def _prime_registry() -> None:
+    """Populate the registry at import time.
+
+    Provenance is declared next to each computation, which keeps the two from
+    drifting apart — but that means the registry would otherwise only exist after
+    features had been computed, and the leakage guard has to work on a table loaded
+    from disk. Running the extractors once over an empty frame fixes both.
+    """
+    import numpy as _np
+    empty_f = _np.zeros(0, _np.float32)
+    det = {"xyxy": _np.zeros((0, 4), _np.float32), "conf": empty_f,
+           "coarse": _np.array([], dtype="U8"), "entropy": empty_f,
+           "margin": empty_f, "binent": empty_f,
+           "n_cand": 0.0, "n_cand_raw": 0.0, "n_post": 0.0}
+    geo = {k: empty_f for k in ("z", "z_ground", "z_height", "lat_min", "lat_max",
+                                "ttc", "box_h")}
+    stats = {"img_bright_mean": 0.0, "img_bright_std": 0.0, "img_dark_frac": 0.0,
+             "img_bright_frac": 0.0, "img_lap_var": 0.0, "img_edge_density": 0.0,
+             "img_contrast_p95_p5": 0.0, "motion_mean": 0.0, "motion_p95": 0.0,
+             "motion_first": 1.0}
+    frame_features(det, geo, stats, 1.0, CriticalityModel("_prime"), 0.25)
+
+
+_prime_registry()

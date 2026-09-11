@@ -46,6 +46,7 @@ def evaluate(df: pd.DataFrame, scores: dict[str, np.ndarray], quotas, seeds=64,
            (lambda s, q: select_per_sequence(s, groups, q))
     oracle_score = (df[risk_col[0]] - df[risk_col[1]]).to_numpy()
 
+    ec, ef = (df[extra_cols[0]].to_numpy(), df[extra_cols[1]].to_numpy()) if extra_cols else (None, None)
     rows = []
     for q in quotas:
         sel_oracle = pick(oracle_score, q)
@@ -53,16 +54,16 @@ def evaluate(df: pd.DataFrame, scores: dict[str, np.ndarray], quotas, seeds=64,
         span = rc_all - r_oracle
 
         rng = np.random.default_rng(0)
-        rand = [total_risk(df, pick(rng.random(len(df)), q), risk_col) for _ in range(seeds)]
+        rand_sel = [pick(rng.random(len(df)), q) for _ in range(seeds)]
+        rand_risk = [total_risk(df, s, risk_col) for s in rand_sel]
 
-        entries = {"random": (float(np.mean(rand)), float(np.std(rand))), }
+        entries = {"random": (float(np.mean(rand_risk)), float(np.std(rand_risk)), rand_sel)}
         for name, s in scores.items():
-            entries[name] = (total_risk(df, pick(np.asarray(s, float), q), risk_col), 0.0)
-        entries["oracle"] = (r_oracle, 0.0)
+            sel = pick(np.asarray(s, float), q)
+            entries[name] = (total_risk(df, sel, risk_col), 0.0, [sel])
+        entries["oracle"] = (r_oracle, 0.0, [sel_oracle])
 
-        for name, (r, sd) in entries.items():
-            sel = (pick(oracle_score, q) if name == "oracle"
-                   else (None if name == "random" else pick(np.asarray(scores[name], float), q)))
+        for name, (r, sd, sels) in entries.items():
             row = {
                 "quota": q, "policy": name, "mode": mode,
                 "total_risk": r, "risk_sd": sd,
@@ -72,8 +73,8 @@ def evaluate(df: pd.DataFrame, scores: dict[str, np.ndarray], quotas, seeds=64,
                 "frac_of_full_gain": (rc_all - r) / (rc_all - rf_all) if rc_all - rf_all > 1e-12 else np.nan,
                 "n_selected": int(round(q * len(df))),
             }
-            if sel is not None and extra_cols:
-                row["std_err_total"] = float(np.sum(np.where(sel, df[extra_cols[1]], df[extra_cols[0]])))
+            if ec is not None:
+                row["std_err_total"] = float(np.mean([np.sum(np.where(s, ef, ec)) for s in sels]))
             rows.append(row)
     return pd.DataFrame(rows)
 
