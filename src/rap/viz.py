@@ -319,3 +319,36 @@ def mechanism(by_distance: pd.DataFrame, path):
     ax.set_title("B  …but criticality lives close to the ego")
     ax.legend(); _tidy(ax)
     fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def sensitivity_dots(sens: pd.DataFrame, path, controls=("uniform", "proximity")):
+    """Does the budget gain survive every alternative definition of risk?
+
+    Two rows are negative controls by construction and are drawn apart from the rest:
+    `uniform` makes criticality constant (so the target collapses to plain detection
+    value) and `proximity` makes it a pure function of distance, which apparent object
+    size — and therefore visual uncertainty — already encodes.
+    """
+    d = sens.copy()
+    d["d_eta"] = d["eta20_learned_unc_crit"] - d["eta20_learned_uncertainty"]
+    d["label"] = d["axis"].str.replace("_", " ") + " = " + d["value"].astype(str)
+    d["is_control"] = d["value"].astype(str).isin(controls)
+    d = d.sort_values(["is_control", "d_eta"])
+    y = np.arange(len(d))
+
+    fig, ax = plt.subplots(figsize=(8.6, 0.30 * len(d) + 1.6))
+    ax.axvline(0, color=MUTED, lw=1.2)
+    for mask, colour, lab in [(~d.is_control, SERIES[0], "criticality encodes ego-path / TTC"),
+                              (d.is_control, SERIES[1], "negative control")]:
+        m = mask.to_numpy()
+        ax.scatter(d.d_eta[m], y[m], s=64, color=colour, zorder=4, linewidths=0, label=lab)
+        ax.hlines(y[m], 0, d.d_eta[m], color=colour, lw=2, alpha=0.35, zorder=3)
+    ax.set_yticks(y)
+    ax.set_yticklabels(d.label, fontsize=8)
+    ax.set_ylim(-0.8, len(d) - 0.2)
+    ax.set_xlabel("Δη at a 20 % quota  (uncertainty + criticality  −  uncertainty alone)")
+    ax.set_title("The budget gain under every alternative definition of risk")
+    ax.legend(loc="lower right", fontsize=9)
+    ax.grid(True, axis="x")
+    ax.set_axisbelow(True)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)

@@ -149,3 +149,85 @@ and it now has a demonstrated negative control.
 
 **Next step**
 Run detection on the real frames and produce the real numbers.
+
+## 2026-09-11 14:30 — Real data: the hypothesis is wrong in its original form
+
+**Objective**
+Run the full pipeline on all 21 KITTI tracking sequences and decide GO/NO-GO.
+
+**Changes made**
+- `scripts/02b_mode_selection.py`: pick the CHEAP/FULL pair on measured evidence rather
+  than convention. Ran all five modes over 6 sequences.
+- `scripts/08_mechanism.py`: per-object table of which mode detected what, so the
+  *reason* for any result is visible rather than inferred.
+
+**Run IDs**
+`20260911_140226_profile`, `20260911_140836_modesel`, `20260911_142608_detect`,
+`20260911_143838_mechanism`, `20260911_150044_analysis`
+
+**Observations**
+- Chose cheap_320 / full_640: 1.58x end-to-end latency, 2.5x GPU inference, and the
+  largest value heterogeneity of any pair (36 % zero-value frames, top 20 % of frames
+  carrying 86 % of the gain).
+- The mechanism analysis overturned the framing. Over 46 469 objects,
+  `corr(criticality, recovered by FULL) = -0.188` and `corr(distance, recovered) = +0.289`.
+  Extra resolution buys **distant** objects; criticality lives on **near** ones. Inside
+  10 m, FULL adds 4 points of recall; at 45-60 m it adds 54.
+- So "spend compute where the stakes are high" is false as stated. Value lives in the
+  overlap band (~10-45 m, in-corridor, closing) where both gradients are non-trivial.
+
+**Problems encountered**
+- The first profile run was contaminated: a TensorRT engine build was still running and
+  stealing the GPU (p95 spiked to 63 ms, rail power swung 0.7-8 W). Added a contention
+  guard that aborts rather than publishing such a measurement, and a warm-up round that
+  is discarded (round 0 differs from rounds 1-3 by up to 50 % on clock ramp).
+- The rail-power panel was uninformative because the average includes the ~6 ms Python
+  post-process where the GPU idles. Replaced with energy per frame.
+
+**Current interpretation**
+GO looks likely, but the paper's story is the *tension* between the two gradients, not
+the naive stakes hypothesis.
+
+**Next step**
+Sensitivity sweep over every alternative definition of risk.
+
+## 2026-09-11 15:45 — Cache bug found while the sweep was too slow to finish
+
+**Objective**
+The sensitivity sweep was running at 13 minutes per configuration — 6 hours for 25.
+
+**Changes made**
+- Profiled `build_sequence` instead of guessing. 52 s of every 73 s was
+  `numpy.lib.format.read_array`: `DetCache` held a lazy `NpzFile`, and indexing it
+  re-inflates the entire array on **every** access — 49 773 array reads for 1 059 frames.
+  Materialising the arrays once on construction made table building **8.6x** faster
+  (69 -> 8.1 ms/frame) and target-only builds **18x** faster.
+- Verified the change is behaviour-preserving before trusting it: rebuilt the full
+  8 008-frame table and compared against the stored one, max abs difference 0.0 across
+  all 82 numeric columns.
+
+**Run IDs**
+`20260911_155416_sensitivity`
+
+**Observations**
+- Sweep dropped from ~6 h to 35 min, 25 configurations.
+- **23 of 23** non-control configurations show criticality beating uncertainty at a 20 %
+  quota; median deta +0.118, minimum +0.063; F->G significant in 22 of 23.
+- The two negative controls behave exactly as they must: `uniform` (criticality = 1)
+  gives +0.002, `proximity` (criticality = distance only) gives -0.018. The gain appears
+  only where criticality encodes ego-path geometry or TTC — information that apparent
+  object size, and therefore visual uncertainty, cannot carry.
+
+**Problems encountered**
+- Earlier in the session I had assumed feature extraction was the bottleneck and added a
+  feature cache to the sweep on that assumption. The cache is still useful, but it was
+  not the problem; profiling first would have saved an hour.
+
+**Current interpretation**
+GO. The sensitivity result is mechanistic rather than merely robust, which is a stronger
+claim than the one Phase 0 set out to test.
+
+**Next step**
+Phase 1 as proposed in `docs/cvpr_phase0_findings.md`: factorise the gate into a
+failure-probability head and a criticality head and predict their product, rather than
+regressing `Value_task` end to end.

@@ -27,6 +27,7 @@ def main():
     ap.add_argument("--profile", default="", help="run dir; default = latest profile run")
     ap.add_argument("--table", default=str(PROCESSED / "frames_composite.pkl"))
     ap.add_argument("--mechanism", default="", help="run dir; default = latest mechanism run")
+    ap.add_argument("--sensitivity", default="", help="run dir; default = latest sensitivity run")
     ap.add_argument("--out", default=str(FIGURES))
     args = ap.parse_args()
 
@@ -95,6 +96,14 @@ def main():
         made.append("fig0_mechanism.png")
     except FileNotFoundError as e:
         print("skipping mechanism figure:", e)
+
+    try:
+        sens = Path(args.sensitivity) if args.sensitivity else runmeta.latest("sensitivity")
+        viz.sensitivity_dots(pd.read_csv(sens / "sensitivity.csv"),
+                             out / "fig8_sensitivity.png")
+        made.append("fig8_sensitivity.png")
+    except FileNotFoundError as e:
+        print("skipping sensitivity figure:", e)
 
     mp = run / "matched_pairs.pkl"
     if mp.exists():

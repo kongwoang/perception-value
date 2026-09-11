@@ -1,0 +1,42 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "crit_models": [
+    "composite",
+    "uniform",
+    "corridor",
+    "proximity",
+    "ttc",
+    "binary",
+    "composite_wide",
+    "composite_narrow",
+    "composite_near",
+    "composite_far",
+    "composite_ttcheavy",
+    "composite_proxheavy"
+  ],
+  "iou_thrs": [
+    0.3,
+    0.5,
+    0.7
+  ],
+  "op_confs": [
+    0.15,
+    0.25,
+    0.4
+  ],
+  "fp_lambdas": [
+    0.0,
+    0.5,
+    1.0
+  ],
+  "errors": [
+    "miss",
+    "soft_iou"
+  ],
+  "class_aware": [
+    0,
+    1
+  ]
+}
