@@ -1,0 +1,10 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "frames": "/home/kongwoang/research/risk-aware-perception/results/processed/frames_composite.pkl",
+  "planner": "default",
+  "cost": "default",
+  "op_conf": 0.25,
+  "tag": "decision"
+}

@@ -1,0 +1,9 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "frames": "/home/kongwoang/research/risk-aware-perception/results/processed/frames_composite.pkl",
+  "lat_cheap": 10.145,
+  "lat_full": 16.024,
+  "tag": "decision_budget"
+}

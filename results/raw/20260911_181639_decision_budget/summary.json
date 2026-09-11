@@ -1,0 +1,46 @@
+{
+  "comparisons": [
+    {
+      "baseline": "PERCEPTION-GAIN ORACLE",
+      "candidate": "decision sensitivity (learned)",
+      "n_better": 13,
+      "n": 18,
+      "median_delta": 0.2530299388123764,
+      "p": 0.0052032470703125
+    },
+    {
+      "baseline": "criticality",
+      "candidate": "decision sensitivity (learned)",
+      "n_better": 15,
+      "n": 18,
+      "median_delta": 0.24015450089507984,
+      "p": 0.000644683837890625
+    },
+    {
+      "baseline": "uncertainty",
+      "candidate": "decision sensitivity (learned)",
+      "n_better": 17,
+      "n": 18,
+      "median_delta": 0.40497082605424944,
+      "p": 1.9073486328125e-05
+    },
+    {
+      "baseline": "uncertainty x criticality",
+      "candidate": "decision sensitivity (learned)",
+      "n_better": 16,
+      "n": 18,
+      "median_delta": 0.28006935165662783,
+      "p": 0.000209808349609375
+    },
+    {
+      "baseline": "visual+criticality (learned)",
+      "candidate": "decision sensitivity (learned)",
+      "n_better": 14,
+      "n": 18,
+      "median_delta": 0.20775465073713556,
+      "p": 0.013423919677734375
+    }
+  ],
+  "J_all_cheap": 19372.133268518046,
+  "J_all_full": 9653.858434212674
+}

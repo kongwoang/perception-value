@@ -328,3 +328,45 @@ allocation, this direction closes.
 design, and its interim report is `docs/reports/phase0b_killtest.html`. The generalization
 tests in the Phase 0B plan (second dataset, second detector, moderate fidelity pairs)
 remain unrun.
+
+## 2026-09-11 18:30 — Phase 0C result: the problem is real, the mechanism is not
+
+**Run IDs**
+`20260911_181039_decision`, `20260911_181639_decision_budget`
+
+**Observations**
+- 27.3 % of frames get a different braking action from CHEAP vs FULL; 17.0 % beneficial,
+  **10.3 % harmful**. 67 % of frames where detection improved keep the same action.
+- `corr(perception gain, decision gain) = +0.041`, and a shuffle control gives +0.067 —
+  the association is *inside the null*. An oracle on perception gain captures 15.5 % of
+  achievable decision-cost reduction at a 20 % quota, indistinguishable from random.
+- Criticality — the Phase-0 contribution — is worthless at the decision level
+  (eta = 0.009, below random), in all ten planner and cost variants.
+- The proposed mechanism is **false**: rho(distance to action threshold, |dJ|) = +0.006,
+  non-monotonic. Decision margin as a feature is at chance (AUC 0.495).
+- Ablation: removing ego speed collapses the learned model from eta 0.831 to **−0.011**.
+  Ego speed alone reaches 0.787; "cheap detected nothing" alone reaches 0.560.
+- 14.6 % of frames have no CHEAP detection at all and carry **57.9 %** of all positive
+  decision gain. The dominant decision failure is blindness, not degraded localisation.
+
+**Problems encountered**
+- First diagnostic looked too strong, so I checked whether `dJ` was noise before believing
+  it: lag-1 autocorrelation +0.286 (not white), fixed-action control gives V_dec exactly 0,
+  and the shuffle control behaved correctly. It is signal.
+- Monocular range error inflates the effect. Recomputing with GT range for matched
+  detections drops action changes 27.3 % -> 17.2 % and harmful changes 10.3 % -> 4.9 %;
+  `corr(dJ_mono, dJ_oracle_range) = +0.688`. About 40 % of the action churn is range noise.
+- The `confidence (low first)` baseline scored suspiciously high (0.631) because
+  `feat_conf_mean` is 0 on empty frames, so it ranks blind frames first. Ran it down rather
+  than reporting the number: excluding empty frames it drops to 0.121.
+
+**Current interpretation**
+GO on the problem, NO-GO on the method. "Perception metrics do not predict decision value"
+is a clean, quantified, well-controlled result. But the exploitable signal is ego speed and
+an empty-frame indicator, neither of which is a perception contribution, so there is no
+method paper here yet.
+
+**Next step**
+Either a problem/benchmark paper (needs a second downstream task, a second dataset and a
+closed-loop variant), or investigate what predicts *complete* cheap-perception failure —
+the 14.6 % blind frames are where the remaining headroom lives.

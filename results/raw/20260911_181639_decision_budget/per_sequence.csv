@@ -1,0 +1,232 @@
+seq,policy,eta
+0000,random,-0.3685199455854782
+0000,confidence (low first),-0.14632351849871045
+0000,uncertainty,-0.019121765299277487
+0000,scene complexity,-0.019121765299277487
+0000,criticality,-0.054563926048015035
+0000,uncertainty x criticality,0.046813758122006374
+0000,PERCEPTION-GAIN ORACLE,-0.3117589359328697
+0000,DECISION-VALUE ORACLE,1.0
+0000,decision sensitivity (learned),0.4955316229773677
+0000,visual+criticality (learned),-0.4195190596450001
+0000,all cheap-side (learned),0.6150387360415721
+0001,random,-0.3141614988692531
+0001,confidence (low first),-0.004608910398459614
+0001,uncertainty,-0.3975203794661299
+0001,scene complexity,-0.10438871297755392
+0001,criticality,-0.466260995090048
+0001,uncertainty x criticality,-0.6191352159460243
+0001,PERCEPTION-GAIN ORACLE,-0.35971387646663233
+0001,DECISION-VALUE ORACLE,1.0
+0001,decision sensitivity (learned),-0.33786849244882766
+0001,visual+criticality (learned),-0.11260709582394059
+0001,all cheap-side (learned),-0.5525649606963992
+0002,random,0.2954865293908642
+0002,confidence (low first),0.0
+0002,uncertainty,0.3918226764651242
+0002,scene complexity,0.6169496424336766
+0002,criticality,0.7910438723629686
+0002,uncertainty x criticality,0.623423263002048
+0002,PERCEPTION-GAIN ORACLE,0.30960409022860413
+0002,DECISION-VALUE ORACLE,1.0
+0002,decision sensitivity (learned),0.2949327809180159
+0002,visual+criticality (learned),0.0
+0002,all cheap-side (learned),0.2083907365840358
+0003,random,0.1299504089025654
+0003,confidence (low first),0.6320030225760837
+0003,uncertainty,0.1062711155383004
+0003,scene complexity,0.07486006266733544
+0003,criticality,0.0006019176188033087
+0003,uncertainty x criticality,0.0
+0003,PERCEPTION-GAIN ORACLE,0.6454540921309412
+0003,DECISION-VALUE ORACLE,1.0
+0003,decision sensitivity (learned),0.5722203921578426
+0003,visual+criticality (learned),0.8842722646248359
+0003,all cheap-side (learned),0.8546731338018158
+0004,random,0.38661962279002837
+0004,confidence (low first),0.6399661223672549
+0004,uncertainty,0.10312111379918636
+0004,scene complexity,0.09548133264058914
+0004,criticality,0.20512673640860266
+0004,uncertainty x criticality,0.19602881601314343
+0004,PERCEPTION-GAIN ORACLE,0.35502197551159803
+0004,DECISION-VALUE ORACLE,1.0
+0004,decision sensitivity (learned),0.38789710288243034
+0004,visual+criticality (learned),0.6399661223672549
+0004,all cheap-side (learned),0.6676038992930363
+0005,random,0.2327605093009313
+0005,confidence (low first),0.5892464234831428
+0005,uncertainty,0.0012077205413775112
+0005,scene complexity,-0.0006115490742554936
+0005,criticality,0.00047226469958664373
+0005,uncertainty x criticality,0.0011748233253434026
+0005,PERCEPTION-GAIN ORACLE,0.33294160203940004
+0005,DECISION-VALUE ORACLE,1.0
+0005,decision sensitivity (learned),0.7897415047727161
+0005,visual+criticality (learned),0.7459795918526229
+0005,all cheap-side (learned),0.8147459780685059
+0006,random,0.020455759854557058
+0006,confidence (low first),0.008523233272731981
+0006,uncertainty,0.0
+0006,scene complexity,0.0
+0006,criticality,0.42343470354509954
+0006,uncertainty x criticality,0.08335231922690148
+0006,PERCEPTION-GAIN ORACLE,0.0
+0006,DECISION-VALUE ORACLE,1.0
+0006,decision sensitivity (learned),0.5874755095997632
+0006,visual+criticality (learned),0.0
+0006,all cheap-side (learned),0.4319579368178315
+0007,random,0.14750824486081676
+0007,confidence (low first),-0.013001316750952981
+0007,uncertainty,-0.04347203868548806
+0007,scene complexity,-0.16491552205640286
+0007,criticality,0.021464678605296272
+0007,uncertainty x criticality,0.004279077642079618
+0007,PERCEPTION-GAIN ORACLE,-0.2960909867912379
+0007,DECISION-VALUE ORACLE,1.0
+0007,decision sensitivity (learned),0.16316651299727664
+0007,visual+criticality (learned),-0.013001316750952981
+0007,all cheap-side (learned),0.2959998392691163
+0008,random,0.3071992287928227
+0008,confidence (low first),0.5222467142341419
+0008,uncertainty,0.0664758155608071
+0008,scene complexity,0.05991860645351417
+0008,criticality,0.0794403701007005
+0008,uncertainty x criticality,0.057424742169311815
+0008,PERCEPTION-GAIN ORACLE,0.5344532173626559
+0008,DECISION-VALUE ORACLE,1.0
+0008,decision sensitivity (learned),0.2301539352593265
+0008,visual+criticality (learned),0.48456204937439407
+0008,all cheap-side (learned),0.3106047098363422
+0009,random,0.11228573204770735
+0009,confidence (low first),0.0
+0009,uncertainty,-0.05749999517851295
+0009,scene complexity,-0.05171223024547624
+0009,criticality,-0.058197163590290424
+0009,uncertainty x criticality,-0.03953050809001757
+0009,PERCEPTION-GAIN ORACLE,0.16604717086252763
+0009,DECISION-VALUE ORACLE,1.0
+0009,decision sensitivity (learned),0.23934147172604153
+0009,visual+criticality (learned),0.0
+0009,all cheap-side (learned),0.19200905082388273
+0010,random,0.42769742682812395
+0010,confidence (low first),0.7920935396938745
+0010,uncertainty,0.10417292635074425
+0010,scene complexity,0.013120656767930769
+0010,criticality,0.06510772421874747
+0010,uncertainty x criticality,0.10413525249199279
+0010,PERCEPTION-GAIN ORACLE,0.41325371996708427
+0010,DECISION-VALUE ORACLE,1.0
+0010,decision sensitivity (learned),0.7990877493557972
+0010,visual+criticality (learned),0.7780285397067561
+0010,all cheap-side (learned),0.7787471079219556
+0011,random,0.16693200501147615
+0011,confidence (low first),0.13041108439272614
+0011,uncertainty,0.061461591709935454
+0011,scene complexity,0.06192631413293391
+0011,criticality,0.37542094979106416
+0011,uncertainty x criticality,0.20747820765873645
+0011,PERCEPTION-GAIN ORACLE,0.3614903488374052
+0011,DECISION-VALUE ORACLE,1.0
+0011,decision sensitivity (learned),0.4817161970734451
+0011,visual+criticality (learned),0.22705417612117093
+0011,all cheap-side (learned),0.5050359723284928
+0012,random,
+0012,confidence (low first),
+0012,uncertainty,
+0012,scene complexity,
+0012,criticality,
+0012,uncertainty x criticality,
+0012,PERCEPTION-GAIN ORACLE,
+0012,DECISION-VALUE ORACLE,
+0012,decision sensitivity (learned),
+0012,visual+criticality (learned),
+0012,all cheap-side (learned),
+0013,random,-0.01555772528848799
+0013,confidence (low first),-0.7519607891649445
+0013,uncertainty,-1.9726823308343682
+0013,scene complexity,-1.6065927475026793
+0013,criticality,-1.2226904103759229
+0013,uncertainty x criticality,-1.394978397678959
+0013,PERCEPTION-GAIN ORACLE,-1.132990439192469
+0013,DECISION-VALUE ORACLE,1.0
+0013,decision sensitivity (learned),0.5659963861949153
+0013,visual+criticality (learned),-0.8678392385587137
+0013,all cheap-side (learned),-1.3657714352976282
+0014,random,-0.577017631633706
+0014,confidence (low first),0.0
+0014,uncertainty,-0.9583450498119109
+0014,scene complexity,-0.5373822701392398
+0014,criticality,-0.5066966180957081
+0014,uncertainty x criticality,-0.4344490014470804
+0014,PERCEPTION-GAIN ORACLE,-0.1367888208547339
+0014,DECISION-VALUE ORACLE,1.0
+0014,decision sensitivity (learned),0.9133028600216468
+0014,visual+criticality (learned),-0.44520784639158356
+0014,all cheap-side (learned),0.8826172079781152
+0015,random,-0.07151066276141302
+0015,confidence (low first),-0.011584616841844418
+0015,uncertainty,0.4043903476151921
+0015,scene complexity,0.5553388564141432
+0015,criticality,0.4933158567275388
+0015,uncertainty x criticality,0.5920720547449243
+0015,PERCEPTION-GAIN ORACLE,0.15248850585495444
+0015,DECISION-VALUE ORACLE,1.0
+0015,decision sensitivity (learned),0.7940773943601813
+0015,visual+criticality (learned),-0.019454307560918666
+0015,all cheap-side (learned),0.3855893747385401
+0016,random,
+0016,confidence (low first),
+0016,uncertainty,
+0016,scene complexity,
+0016,criticality,
+0016,uncertainty x criticality,
+0016,PERCEPTION-GAIN ORACLE,
+0016,DECISION-VALUE ORACLE,
+0016,decision sensitivity (learned),
+0016,visual+criticality (learned),
+0016,all cheap-side (learned),
+0017,random,
+0017,confidence (low first),
+0017,uncertainty,
+0017,scene complexity,
+0017,criticality,
+0017,uncertainty x criticality,
+0017,PERCEPTION-GAIN ORACLE,
+0017,DECISION-VALUE ORACLE,
+0017,decision sensitivity (learned),
+0017,visual+criticality (learned),
+0017,all cheap-side (learned),
+0018,random,0.027045997732391393
+0018,confidence (low first),0.11326552701282482
+0018,uncertainty,-0.0623851441451032
+0018,scene complexity,-0.0703466173633947
+0018,criticality,0.22528759028922918
+0018,uncertainty x criticality,0.05831045735242309
+0018,PERCEPTION-GAIN ORACLE,0.5115465812178382
+0018,DECISION-VALUE ORACLE,1.0
+0018,decision sensitivity (learned),0.08986983332181636
+0018,visual+criticality (learned),0.08349959108007247
+0018,all cheap-side (learned),0.09852142352584695
+0019,random,-0.2531421754457819
+0019,confidence (low first),0.026334094917886994
+0019,uncertainty,0.058799826731226704
+0019,scene complexity,0.047249686627208264
+0019,criticality,0.14973852288814835
+0019,uncertainty x criticality,0.11408225485434462
+0019,PERCEPTION-GAIN ORACLE,0.14245548409887016
+0019,DECISION-VALUE ORACLE,1.0
+0019,decision sensitivity (learned),0.0846023803328328
+0019,visual+criticality (learned),0.047944898389582366
+0019,all cheap-side (learned),0.14965567802056318
+0020,random,0.06690848042052781
+0020,confidence (low first),0.3359898764571036
+0020,uncertainty,0.1502944078201057
+0020,scene complexity,0.1166299352500407
+0020,criticality,0.08318450552452676
+0020,uncertainty x criticality,0.18350527252310267
+0020,PERCEPTION-GAIN ORACLE,0.07191087241957159
+0020,DECISION-VALUE ORACLE,1.0
+0020,decision sensitivity (learned),0.6378950901597005
+0020,visual+criticality (learned),0.08461295033813666
+0020,all cheap-side (learned),0.5835077996610717

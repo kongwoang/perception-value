@@ -442,3 +442,131 @@ def phase0b_budget(bud: pd.DataFrame, path, policies, labels=None, mode="pooled"
     ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9)
     _tidy(ax)
     fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def decision_vs_signals(df, path):
+    """None of the Phase-0 signals explain decision gain."""
+    from scipy import stats as _st
+    fig, axes = plt.subplots(1, 3, figsize=(12.2, 3.9))
+    panels = [("dE", "perception gain  (detections recovered)", SERIES[0], "A"),
+              ("feat_crit_sum", "estimated criticality", SERIES[1], "B"),
+              ("feat_binent_sum", "visual uncertainty", SERIES[3], "C")]
+    for ax, (col, lab, colr, tag) in zip(axes, panels):
+        x, y = df[col].to_numpy(float), df["dJ"].to_numpy(float)
+        ax.scatter(x, y, s=5, alpha=0.10, color=colr, linewidths=0)
+        q = np.unique(np.quantile(x, np.linspace(0, 1, 13)))
+        idx = np.clip(np.digitize(x, q[1:-1]), 0, len(q) - 2)
+        bx = [x[idx == b].mean() for b in range(len(q) - 1) if (idx == b).sum() > 40]
+        by = [y[idx == b].mean() for b in range(len(q) - 1) if (idx == b).sum() > 40]
+        ax.plot(bx, by, "-o", ms=7, color=INK2, label="binned mean")
+        ax.axhline(0, color=MUTED, lw=1)
+        # a handful of extreme frames otherwise flatten the whole panel; clip the view
+        # (all points are still used for the correlation and the binned means)
+        lo, hi = np.percentile(y, [1, 99])
+        pad = 0.15 * max(hi - lo, 1e-6)
+        ax.set_ylim(lo - pad, hi + pad)
+        r = _st.spearmanr(x, y).correlation
+        xlo, xhi = np.percentile(x, [0.5, 99.5])
+        ax.set_xlim(xlo - 0.05 * abs(xhi - xlo) - 1e-6, xhi + 0.05 * abs(xhi - xlo) + 1e-6)
+        ax.set_xlabel(lab); ax.set_title(f"{tag}  ρ = {r:+.3f}")
+        if tag == "A":
+            ax.set_ylabel("decision gain  ΔJ")
+        ax.legend(fontsize=8); _tidy(ax); ax.grid(True, axis="x")
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def action_invariance(df, path):
+    """How much perception improvement reaches the decision at all."""
+    improved = (df["dE"] > 0).to_numpy()
+    changed = (df["same_action"] == 0).to_numpy()
+    ben = (df["dJ"] > 1e-9).to_numpy()
+    harm = (df["dJ"] < -1e-9).to_numpy()
+    n = len(df)
+    fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.0))
+
+    ax = axes[0]
+    cats = ["same action\n(no decision effect)", "action changes\nfor the better",
+            "action changes\nfor the worse"]
+    vals = [100 * (improved & ~changed).sum() / improved.sum(),
+            100 * (improved & changed & ben).sum() / improved.sum(),
+            100 * (improved & changed & harm).sum() / improved.sum()]
+    ax.bar(np.arange(3), vals, 0.58, color=[SERIES[3], SERIES[2], SERIES[7]], zorder=3)
+    ax.set_xticks(np.arange(3)); ax.set_xticklabels(cats, fontsize=9)
+    ax.set_ylabel("% of frames where detection improved")
+    ax.set_title("A  Most perception gain never reaches the decision")
+    for xi, v in zip(np.arange(3), vals):
+        ax.annotate(f"{v:.0f}%", (xi, v), ha="center", va="bottom", fontsize=10, color=INK2)
+    _tidy(ax)
+
+    ax = axes[1]
+    cats2 = ["perception\ndiffers", "action\ndiffers", "action change\nbeneficial",
+             "action change\nharmful"]
+    vals2 = [100 * ((df["dE"].abs() > 1e-9) | (df.a_req_cheap - df.a_req_full).abs().gt(0.05)).mean(),
+             100 * changed.mean(), 100 * (changed & ben).mean(), 100 * (changed & harm).mean()]
+    ax.bar(np.arange(4), vals2, 0.58,
+           color=[SERIES[0], SERIES[0], SERIES[2], SERIES[7]], zorder=3)
+    ax.set_xticks(np.arange(4)); ax.set_xticklabels(cats2, fontsize=9)
+    ax.set_ylabel("% of all frames")
+    ax.set_title("B  Where the funnel narrows")
+    for xi, v in zip(np.arange(4), vals2):
+        ax.annotate(f"{v:.0f}%", (xi, v), ha="center", va="bottom", fontsize=10, color=INK2)
+    _tidy(ax)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def decision_budget(bud, path, policies, labels=None):
+    assert len(policies) <= len(SERIES), "hues are assigned in fixed order, never cycled"
+    fig, ax = plt.subplots(figsize=(8.2, 4.6))
+    for i, p in enumerate(policies):
+        sub = bud[bud.policy == p].sort_values("quota")
+        if not len(sub):
+            continue
+        oracle = "ORACLE" in p
+        color = MUTED if p == "DECISION-VALUE ORACLE" else SERIES[i]
+        ls = "--" if oracle or p == "random" else "-"
+        ax.plot(sub.quota * 100, sub["eta"], ls, marker="o", ms=7, color=color,
+                label=(labels or {}).get(p, p))
+    ax.set_xlabel("FULL-compute quota (% of frames)")
+    ax.set_ylabel("share of achievable decision-cost reduction captured")
+    ax.set_title("Knowing where perception improves is not knowing where decisions improve")
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9)
+    _tidy(ax)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
+
+
+def failed_mechanism(df, ablation: dict, path):
+    """The proposed decision-boundary mechanism does not hold; report it plainly."""
+    from scipy import stats as _st
+    fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.0))
+    ax = axes[0]
+    b = df["feat_bdist"].to_numpy(); adj = df["dJ"].abs().to_numpy()
+    edges = [0, 0.1, 0.25, 0.5, 1.0, 2.0, 10]
+    xs, ys, ns = [], [], []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        m = (b >= lo) & (b < hi)
+        if m.sum() < 50:
+            continue
+        xs.append(f"{lo}–{hi if hi < 10 else '∞'}"); ys.append(adj[m].mean()); ns.append(int(m.sum()))
+    x = np.arange(len(xs))
+    ax.bar(x, ys, 0.58, color=SERIES[3], zorder=3)
+    ax.set_xticks(x); ax.set_xticklabels(xs, rotation=12, ha="right")
+    ax.set_xlabel("|required decel − nearest action threshold|")
+    ax.set_ylabel("mean |ΔJ|")
+    r = _st.spearmanr(b, adj).correlation
+    ax.set_title(f"A  No concentration near the boundary (ρ = {r:+.3f})")
+    for xi, v, nn in zip(x, ys, ns):
+        ax.annotate(f"n={nn:,}", (xi, 0.05), ha="center", fontsize=7.5, color=INK2)
+    _tidy(ax)
+
+    ax = axes[1]
+    names = list(ablation); vals = [ablation[k] for k in names]
+    colors = [SERIES[7] if v < 0.05 else SERIES[0] for v in vals]
+    y = np.arange(len(names))[::-1]
+    ax.barh(y, vals, 0.6, color=colors, zorder=3)
+    ax.set_yticks(y); ax.set_yticklabels(names, fontsize=9)
+    ax.set_xlabel("η at a 20% quota")
+    ax.set_title("B  Ego speed carries it, not decision margin")
+    for yi, v in zip(y, vals):
+        ax.annotate(f"{v:+.3f}", (max(v, 0) + 0.02, yi), va="center", fontsize=9, color=INK2)
+    ax.grid(True, axis="x"); ax.set_axisbelow(True)
+    fig.tight_layout(); fig.savefig(path, bbox_inches="tight"); plt.close(fig)
