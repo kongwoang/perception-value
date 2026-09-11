@@ -1,0 +1,16 @@
+{
+  "n_objects": 46469,
+  "recall_cheap": 0.47463900664959435,
+  "recall_full": 0.7171447631754503,
+  "n_recovered": 11948,
+  "n_lost": 679,
+  "mean_crit_all": 0.16360006381132203,
+  "mean_crit_recovered": 0.09795470564284822,
+  "mean_crit_missed_by_both": 0.08981348760966079,
+  "mean_dist_all": 25.118523842617623,
+  "mean_dist_recovered": 33.16117921493172,
+  "corr_crit_recovered": -0.18771911069815544,
+  "corr_dist_recovered": 0.2890555897043543,
+  "share_risk_recovered_within_30m": 0.7108132315120818,
+  "share_crit_mass_within_30m": 0.8929923065294711
+}

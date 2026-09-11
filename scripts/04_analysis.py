@@ -191,6 +191,10 @@ def main():
     print("\n== B/C. predictability of Value_task from cheap-only features ==")
     pred_df, rows, oof = predictability(df)
     pred_df.to_csv(run / "predictability.csv", index=False)
+    pd.DataFrame([{"arm": r["arm"], "model": r["model"], "target": r["target"],
+                   "seq": k, "score": v}
+                  for r in rows for k, v in r["_per_seq"].items()]
+                 ).to_csv(run / "predictability_per_seq.csv", index=False)
 
     cmp_frames = []
     for target in ("value_task", "value_task_pos"):
@@ -268,7 +272,9 @@ def main():
         print(f"  matched on {label}: " + json.dumps(
             {k: (round(v, 4) if isinstance(v, float) else v) for k, v in summ.items()}))
         if label == "uncertainty":
-            pairs.exemplars(df, pr).to_csv(run / "pair_exemplars.csv", index=False)
+            pairs.exemplars(df, pr, agree=True).to_csv(run / "pair_exemplars.csv", index=False)
+            pairs.exemplars(df, pr, agree=False).to_csv(
+                run / "pair_counterexamples.csv", index=False)
             pr.sample(min(len(pr), 200000), random_state=0).to_pickle(
                 run / "matched_pairs.pkl")
         # negative control: the same test with a criticality-free scene-scale variable

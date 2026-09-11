@@ -62,10 +62,10 @@ def render(seq, frame, cheap_dir, full_dir, model, cfg, op_conf):
     return img
 
 
-def banner(img, lines, height=58):
+def banner(img, lines, height=64):
     bar = np.full((height, img.shape[1], 3), 252, np.uint8)
     for i, (txt, col) in enumerate(lines):
-        cv2.putText(bar, txt, (10, 22 + i * 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55,
+        cv2.putText(bar, txt, (12, 26 + i * 26), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                     col, 1, cv2.LINE_AA)
     return np.vstack([bar, img])
 
@@ -79,10 +79,16 @@ def main():
     ap.add_argument("--op_conf", type=float, default=0.25)
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--out", default=str(FIGURES / "fig7_exemplar_pairs.png"))
+    ap.add_argument("--counterexamples", action="store_true",
+                    help="render the pairs criticality gets wrong instead")
     args = ap.parse_args()
 
     run = Path(args.analysis) if args.analysis else runmeta.latest("analysis")
-    ex = pd.read_csv(run / "pair_exemplars.csv").head(args.n)
+    # sequence ids are zero-padded strings; csv round-trips them to integers
+    src = "pair_counterexamples.csv" if args.counterexamples else "pair_exemplars.csv"
+    ex = pd.read_csv(run / src, dtype={"hi_seq": str, "lo_seq": str}).head(args.n)
+    for c in ("hi_seq", "lo_seq"):
+        ex[c] = ex[c].str.zfill(4)
     cfg, model = RiskConfig(op_conf=args.op_conf), G.PRIMARY
     cheap_dir, full_dir = Path(args.det) / args.cheap, Path(args.det) / args.full
 
@@ -90,14 +96,16 @@ def main():
     for _, r in ex.iterrows():
         panels = []
         for side in ("hi", "lo"):
-            img = render(r[f"{side}_seq"], int(r[f"{side}_frame"]), cheap_dir, full_dir,
+            img = render(str(r[f"{side}_seq"]), int(r[f"{side}_frame"]), cheap_dir, full_dir,
                          model, cfg, args.op_conf)
             tag = "FULL IS WORTH IT" if side == "hi" else "FULL IS WASTED"
             panels.append(banner(img, [
-                (f"{tag}   seq {r[f'{side}_seq']} frame {int(r[f'{side}_frame'])}",
+                (f"{tag}   seq {r[f'{side}_seq']} frame {int(r[f'{side}_frame'])}"
+                 f"   -   pair matched to uncertainty distance {r['unc_dist']:.3f}",
                  _bgr(SERIES[1]) if side == "hi" else (90, 90, 90)),
-                (f"Value_task={r[f'{side}_value']:.2f}   predicted criticality={r[f'{side}_crit']:.2f}"
-                 f"   mean conf={r[f'{side}_conf_mean']:.2f}   entropy sum={r[f'{side}_ent_sum']:.2f}",
+                (f"Value_task={r[f'{side}_value']:+.2f}   predicted criticality={r[f'{side}_crit']:.2f}"
+                 f"   |   mean conf={r[f'{side}_conf_mean']:.2f}"
+                 f"   entropy sum={r[f'{side}_ent_sum']:.2f}",
                  (60, 60, 60))]))
         h = max(p.shape[0] for p in panels)
         w = max(p.shape[1] for p in panels)
@@ -109,10 +117,12 @@ def main():
     rows = [cv2.copyMakeBorder(r, 0, 14, 0, w - r.shape[1], cv2.BORDER_CONSTANT,
                                value=(252, 252, 252)) for r in rows]
     canvas = np.vstack(rows)
-    legend = np.full((34, canvas.shape[1], 3), 252, np.uint8)
-    for i, (txt, col) in enumerate([("cheap detections", CHEAP_C), ("full detections", FULL_C),
-                                    ("GT missed by cheap (thickness = criticality)", MISS_C)]):
-        cv2.putText(legend, txt, (10 + i * 430, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, col, 2,
+    legend = np.full((38, canvas.shape[1], 3), 252, np.uint8)
+    items = [("CHEAP detections", CHEAP_C), ("FULL detections", FULL_C),
+             ("GT missed by CHEAP (box thickness = criticality)", MISS_C)]
+    step = max(canvas.shape[1] // len(items), 240)
+    for i, (txt, col) in enumerate(items):
+        cv2.putText(legend, txt, (12 + i * step, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.52, col, 2,
                     cv2.LINE_AA)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(args.out, np.vstack([legend, canvas]))

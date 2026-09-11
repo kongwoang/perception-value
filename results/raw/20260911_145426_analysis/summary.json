@@ -1,0 +1,120 @@
+{
+  "heterogeneity": {
+    "n_frames": 8008,
+    "risk_cheap_total": 2289.8879460751723,
+    "risk_full_total": 1265.6403492848162,
+    "risk_reduction_total": 1024.2475967903567,
+    "risk_reduction_rel": 0.4472915797237586,
+    "frac_frames_value_gt0": 0.5975274725274725,
+    "frac_frames_value_lt0": 0.03821178821178821,
+    "frac_frames_value_zero": 0.36426073926073926,
+    "gain_in_top_5pct": 0.39514820750815144,
+    "gain_in_top_10pct": 0.6019874644309774,
+    "gain_in_top_20pct": 0.8552122929772645,
+    "gain_in_top_30pct": 0.9943910400822574,
+    "gini_value_task": 0.7676308478037157,
+    "spearman_value_task_vs_visual": 0.7516672741434602,
+    "std_err_cheap_total": 24413.0,
+    "std_err_full_total": 13144.0,
+    "mean_n_gt": 5.802822177822178,
+    "mean_crit_sum_gt": 0.9493420785774629
+  },
+  "standard_metric": {
+    "std_err_all_cheap": 24413.0,
+    "std_err_all_full": 13144.0
+  },
+  "consistency": [
+    {
+      "baseline": "learned_uncertainty",
+      "candidate": "learned_unc_crit",
+      "n_seq": 21,
+      "n_better": 19,
+      "median_delta": 0.13600958565681076,
+      "wilcoxon_p": 8.058547973632812e-05
+    },
+    {
+      "baseline": "highest_uncertainty",
+      "candidate": "criticality_heuristic",
+      "n_seq": 21,
+      "n_better": 17,
+      "median_delta": 0.0741675713288702,
+      "wilcoxon_p": 0.0002551078796386719
+    },
+    {
+      "baseline": "learned_all_visual",
+      "candidate": "learned_all",
+      "n_seq": 21,
+      "n_better": 20,
+      "median_delta": 0.11538596044130744,
+      "wilcoxon_p": 9.5367431640625e-07
+    }
+  ],
+  "matched_pairs": {
+    "uncertainty": {
+      "n_pairs": 16541,
+      "mean_unc_dist": 0.13502367699213821,
+      "spearman_dcrit_dvalue": 0.08576958570052037,
+      "spearman_p": 2.1795909695083687e-28,
+      "slope": 0.08303323698014624,
+      "slope_p": 1.9132420745957592e-102,
+      "sign_agreement": 0.4225816750026604,
+      "sign_agreement_nonzero": 0.5164191306717536,
+      "n_nonzero_value": 7339
+    },
+    "uncertainty__control_n_det": {
+      "n_pairs": 16541,
+      "mean_unc_dist": 0.13502367699213821,
+      "spearman_dcrit_dvalue": 0.05153245622874281,
+      "spearman_p": 3.320939942758934e-11,
+      "slope": 0.04576236605524548,
+      "slope_p": 8.796611010540048e-16,
+      "sign_agreement": 0.49316277018085575,
+      "sign_agreement_nonzero": 0.5594512195121951,
+      "n_nonzero_value": 1968
+    },
+    "uncertainty_and_complexity": {
+      "n_pairs": 6305,
+      "mean_unc_dist": 0.19210854509140685,
+      "spearman_dcrit_dvalue": 0.09923065581044259,
+      "spearman_p": 2.851272897880287e-15,
+      "slope": 0.07333334264419682,
+      "slope_p": 1.3645981133098307e-21,
+      "sign_agreement": 0.5164728682170543,
+      "sign_agreement_nonzero": 0.5691547749725576,
+      "n_nonzero_value": 1822
+    },
+    "uncertainty_and_complexity__control_n_det": {
+      "n_pairs": 6305,
+      "mean_unc_dist": 0.19210854509140685,
+      "spearman_dcrit_dvalue": 0.02336880605740411,
+      "spearman_p": 0.06353016243612543,
+      "slope": 0.02234716720837091,
+      "slope_p": 7.035452126070012e-05,
+      "sign_agreement": 0.4674657534246575,
+      "sign_agreement_nonzero": 0.5104562737642585,
+      "n_nonzero_value": 1052
+    },
+    "uncertainty_tight": {
+      "n_pairs": 7282,
+      "mean_unc_dist": 0.047953297358911455,
+      "spearman_dcrit_dvalue": 0.02722167183909203,
+      "spearman_p": 0.02018006017299243,
+      "slope": 0.10533487236068294,
+      "slope_p": 1.6748578936899171e-09,
+      "sign_agreement": 0.29444444444444445,
+      "sign_agreement_nonzero": 0.4743276283618582,
+      "n_nonzero_value": 409
+    },
+    "uncertainty_tight__control_n_det": {
+      "n_pairs": 7282,
+      "mean_unc_dist": 0.047953297358911455,
+      "spearman_dcrit_dvalue": -0.008240344129892128,
+      "spearman_p": 0.48200715294768837,
+      "slope": -0.06048495933524014,
+      "slope_p": 0.4183356912694479,
+      "sign_agreement": 0.375,
+      "sign_agreement_nonzero": 0.5,
+      "n_nonzero_value": 6
+    }
+  }
+}

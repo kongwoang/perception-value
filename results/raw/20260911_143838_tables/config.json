@@ -1,0 +1,17 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/det",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "crit_models": [
+    "composite",
+    "uniform"
+  ],
+  "iou_thr": 0.5,
+  "op_conf": 0.25,
+  "error": "miss",
+  "fp_lambda": 0.0,
+  "class_aware": 0,
+  "match_detection_counts": false,
+  "suffix": "",
+  "out": "/home/kongwoang/research/risk-aware-perception/results/processed"
+}

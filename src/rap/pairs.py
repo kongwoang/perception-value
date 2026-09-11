@@ -73,9 +73,26 @@ def summarise(pairs: pd.DataFrame) -> dict:
     }
 
 
-def exemplars(df: pd.DataFrame, pairs: pd.DataFrame, n: int = 6) -> pd.DataFrame:
-    """Closest-matched pairs with the largest value gap — the figure's raw material."""
-    p = pairs[pairs["unc_dist"] < pairs["unc_dist"].quantile(0.25)].copy()
+def exemplars(df: pd.DataFrame, pairs: pd.DataFrame, n: int = 6,
+              agree: bool = True, min_dcrit: float = 0.5, min_dvalue: float = 0.1,
+              caliper_q: float = 0.5, require_detections: bool = True) -> pd.DataFrame:
+    """Closely matched pairs to illustrate the aggregate effect measured in `summarise`.
+
+    `agree=True` picks pairs the criticality signal orders correctly, `agree=False`
+    the ones it gets wrong. Both are worth showing: the figure is an illustration of
+    an effect whose magnitude is reported elsewhere, not evidence in itself.
+
+    Pairs where CHEAP detected nothing in either frame are excluded by default — they
+    are matched trivially (all uncertainty features take their empty-frame value) and
+    the criticality features are blind there by construction.
+    """
+    p = pairs[pairs["unc_dist"] < pairs["unc_dist"].quantile(caliper_q)].copy()
+    p = p[(p["d_crit"].abs() >= min_dcrit) & (p["d_value"].abs() >= min_dvalue)]
+    if require_detections:
+        ndet = df["feat_n_det"].to_numpy()
+        p = p[(ndet[p["i"].to_numpy()] > 0) & (ndet[p["j"].to_numpy()] > 0)]
+    concordant = np.sign(p["d_crit"]) == np.sign(p["d_value"])
+    p = p[concordant if agree else ~concordant].copy()
     p["abs_dvalue"] = p["d_value"].abs()
     p = p.sort_values("abs_dvalue", ascending=False).head(n)
     out = []

@@ -1,0 +1,9 @@
+{
+  "table": "results/processed/frames_composite.pkl",
+  "model": "gbm",
+  "lat_cheap": 10.145,
+  "lat_full": 16.024,
+  "energy_cheap": 24.4,
+  "energy_full": 39.0,
+  "tag": "analysis"
+}
