@@ -457,3 +457,58 @@ deployable predictor is ego speed plus an empty-frame flag.
 **Next step**
 Finish the nuScenes trainval01 blob (~85 scenes, downloading) and re-run Stage 4 on it;
 that is the only criterion currently resting on insufficient data.
+
+---
+
+## 2026-09-12 00:40 — Phase 0E pre-registration: final experimental validation
+
+**Purpose**
+Decide whether *Decision-Conditional Value of Perception Compute* survives the strongest
+reasonable attacks. No paper, no LaTeX, no method, no scheduler. A negative result is
+preferable to a weak paper.
+
+**Claim under attack (unchanged from 0D, restated)**
+
+    dE_t      = E(z_c,t) - E(z_f,t)
+    dJ_t^(q)  = J_q(pi_q(z_c,t), s*) - J_q(pi_q(z_f,t), s*)
+
+    Marginal perception improvement is not a reliable proxy for marginal downstream
+    decision improvement, and the value of extra compute is TASK-CONDITIONAL:
+    V = V(scene, downstream objective) rather than a scalar property of the frame.
+
+**Validation dimensions; no claim may rest on one of them**
+dataset, detector family, fidelity gap, downstream task, perception metric, geometry
+quality, temporal evaluation.
+
+**Eight falsifiers, recorded before the new results exist**
+- F1 a rich multi-metric perception oracle reaches eta@20 > 0.7 consistently.
+- F2 a second detector family eliminates the gap.
+- F3 full-scale nuScenes eliminates it.
+- F4 a moderate fidelity gap eliminates it.
+- F5 temporal evaluation eliminates it.
+- F6 longitudinal and lateral rankings converge (top-20% overlap > 0.8 consistently).
+- F7 one trivial heuristic reaches eta > 0.9 across configurations.
+- F8 better geometry makes dE nearly sufficient (eta_E approaching 1.0).
+
+**What I expect to be the weakest points, stated now**
+(1) The trivial-heuristic margin. On KITTI `speed x empty` already reached 0.732 pooled;
+it fell to 0.563 under speed stratification and 0.297 on nuScenes, but this is the
+narrowest of the 0D margins and Stage 11 may narrow it further.
+(2) The multi-metric perception oracle (Stage 3) is a genuinely new attack that 0D never
+ran. If a rich description of *how* perception changed predicts dJ well, the claim is
+substantially weaker, and I consider this the single most likely way Phase 0E ends in a
+downgrade.
+(3) Better geometry already raised the KITTI per-sequence median eta_E from 0.159 to
+0.405; a detector with better precision might narrow the lateral result too.
+
+**Note on missing prior deliverables**
+`docs/cvpr_phase0b_findings.md` was never written - Phase 0B stopped at its kill test by
+design and its interim report is `docs/reports/phase0b_killtest.html`. `EXPERIMENTS.md`
+has never existed in this repository; per-run provenance lives in `results/raw/*/config.json`
+plus `environment.json`, and the narrative lives here.
+
+**Execution order (not parallel)**
+0D reproduction -> ~85-scene nuScenes -> perception-metric robustness and the multi-metric
+oracle -> Detector-B on KITTI -> Detector-B fidelity pairs -> Detector-B on nuScenes ->
+temporal replay -> geometry/task/fidelity controls -> Jetson profiling -> final matrix and
+statistics -> findings report. Stop and report if a falsifier fires.
