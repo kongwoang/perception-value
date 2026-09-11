@@ -36,7 +36,14 @@ def _dontcare(seq: str, frame: int) -> np.ndarray:
 
 def build_sequence(seq: str, cheap: DetCache, full: DetCache,
                    model: G.CriticalityModel, cfg: RiskConfig,
-                   geom: np.ndarray | None = None) -> pd.DataFrame:
+                   geom: np.ndarray | None = None,
+                   with_features: bool = True) -> pd.DataFrame:
+    """One row per frame: oracle targets, and (optionally) the deployable features.
+
+    Features depend only on the criticality model and the CHEAP operating threshold,
+    so a sweep over matching rules (IoU, error form, false-positive weight, class
+    awareness) can reuse them and recompute targets alone.
+    """
     geom = G.sequence_geometry(seq) if geom is None else geom
     crit = G.criticality_for(geom, model)
     rows = []
@@ -53,15 +60,17 @@ def build_sequence(seq: str, cheap: DetCache, full: DetCache,
         fp_crit_full = model(geo_full["z"], geo_full["lat_min"],
                              geo_full["lat_max"], geo_full["ttc"]) if len(geo_full["z"]) else np.zeros(0)
 
-        rc = frame_risk(gt, dc_cheap, c, cfg, dc, fp_crit_cheap)
-        rf = frame_risk(gt, dc_full, c, cfg, dc, fp_crit_full)
+        rc = frame_risk(gt, dc_cheap, c, cfg, dc, fp_crit_cheap, cfg.op_conf)
+        rf = frame_risk(gt, dc_full, c, cfg, dc, fp_crit_full,
+                        cfg.op_conf_full if cfg.op_conf_full is not None else cfg.op_conf)
 
         sc = cheap.scalars(i)
         img_area = sc.get("img_w", 1242.0) * sc.get("img_h", 375.0)
         img_stats = {k: v for k, v in sc.items()
                      if k.startswith(("img_bright", "img_dark", "img_lap", "img_edge",
                                       "img_contrast", "motion"))}
-        feats = F.frame_features(dc_cheap, geo_cheap, img_stats, img_area, model, cfg.op_conf)
+        feats = (F.frame_features(dc_cheap, geo_cheap, img_stats, img_area, model, cfg.op_conf)
+                 if with_features else {})
 
         rec = {
             "seq": seq, "frame": frame,
@@ -78,6 +87,32 @@ def build_sequence(seq: str, cheap: DetCache, full: DetCache,
         rec.update(feats)
         rows.append(rec)
     return pd.DataFrame(rows)
+
+
+def with_cached_features(targets: pd.DataFrame, features: pd.DataFrame) -> pd.DataFrame:
+    """Attach a previously computed feature table to freshly computed targets."""
+    keys = ["seq", "frame"]
+    cols = keys + [c for c in features.columns if c.startswith("feat_")]
+    out = targets.merge(features[cols], on=keys, how="left", validate="one_to_one")
+    assert len(out) == len(targets), "feature join changed the row count"
+    assert not out[cols[2:]].isna().any().any(), "feature join left holes"
+    return out
+
+
+def match_detection_counts(caches_cheap, caches_full, op_conf: float) -> float:
+    """Threshold for FULL that makes it emit as many detections as CHEAP does.
+
+    Without this, part of FULL's advantage is simply that a higher-resolution pass
+    puts more boxes above a shared threshold — a confound between "sees more" and
+    "scores higher". Uses only detector output, never ground truth.
+    """
+    cheap_n = sum(int((c.z["conf"] >= op_conf).sum()) for c in caches_cheap)
+    full_conf = np.concatenate([c.z["conf"] for c in caches_full]) if caches_full else np.zeros(0)
+    if cheap_n == 0 or len(full_conf) == 0:
+        return op_conf
+    if cheap_n >= len(full_conf):
+        return float(full_conf.min())
+    return float(np.partition(full_conf, -cheap_n)[-cheap_n])
 
 
 def feature_columns(df: pd.DataFrame) -> list[str]:

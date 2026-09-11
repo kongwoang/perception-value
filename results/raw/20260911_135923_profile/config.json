@@ -1,0 +1,17 @@
+{
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "modes": [
+    "cheap_320",
+    "cheap_384",
+    "cheap_512",
+    "full_640",
+    "full_960"
+  ],
+  "reps": 400,
+  "warmup": 60,
+  "half": 1,
+  "backend": "trt",
+  "images": "/home/kongwoang/datasets/kitti_tracking/training/image_02/0000",
+  "rounds": 3,
+  "allow_contention": false
+}

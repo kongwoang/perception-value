@@ -1,0 +1,13 @@
+{
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "backend": "trt",
+  "cheap": "cheap_320",
+  "full": "full_640",
+  "extra_modes": [
+    "cheap_384",
+    "full_960"
+  ],
+  "sequences": null,
+  "limit": 0,
+  "out": "data/cache/det"
+}

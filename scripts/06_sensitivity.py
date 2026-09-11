@@ -26,10 +26,10 @@ KEY_ARMS = ["B_uncertainty", "C_complexity", "D_criticality", "E_unc_crit",
             "F_all_visual", "G_all"]
 
 
-def build(seqs, det_dir, cheap, full, model, cfg, geom_cache):
+def build(seqs, det_dir, cheap, full, model, cfg, geom_cache, with_features=True):
     frames = [tables.build_sequence(
         s, DetCache(det_dir / cheap / f"{s}.npz"), DetCache(det_dir / full / f"{s}.npz"),
-        model, cfg, geom_cache[s]) for s in seqs]
+        model, cfg, geom_cache[s], with_features=with_features) for s in seqs]
     return pd.concat(frames, ignore_index=True)
 
 
@@ -109,9 +109,20 @@ def main():
     for ca in args.class_aware:
         configs.append(("class_aware", ca, "composite", RiskConfig(class_aware=bool(ca))))
 
+    feat_cache: dict[tuple, pd.DataFrame] = {}
     rows = []
     for axis, value, mname, cfg in configs:
-        df = build(seqs, det, args.cheap, args.full, G.CRITICALITY_MODELS[mname], cfg, geom_cache)
+        key = (mname, round(cfg.op_conf, 6))
+        if key in feat_cache:
+            df = tables.with_cached_features(
+                build(seqs, det, args.cheap, args.full, G.CRITICALITY_MODELS[mname], cfg,
+                      geom_cache, with_features=False),
+                feat_cache[key])
+        else:
+            df = build(seqs, det, args.cheap, args.full, G.CRITICALITY_MODELS[mname], cfg,
+                       geom_cache)
+            feat_cache[key] = df[["seq", "frame"] + [c for c in df.columns
+                                                     if c.startswith("feat_")]].copy()
         r = {"axis": axis, "value": value, "crit_model": mname,
              "iou_thr": cfg.iou_thr, "op_conf": cfg.op_conf, "error": cfg.error,
              "fp_lambda": cfg.fp_lambda, "class_aware": int(cfg.class_aware)}

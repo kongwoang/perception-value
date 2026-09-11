@@ -40,6 +40,10 @@ class TRTModule:
 
         self.input_shape = tuple(self.buffers[self.input_idx[0]].shape)
         self.input_dtype = self.buffers[self.input_idx[0]].dtype
+        # TensorRT allocates its scratch outside the torch caching allocator, so this
+        # is the only figure that reflects what the engine actually costs on device.
+        self.device_mem_mb = (self.engine.device_memory_size
+                              + sum(b.numel() * b.element_size() for b in self.buffers)) / 2**20
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         inp = self.buffers[self.input_idx[0]]

@@ -23,7 +23,8 @@ from .mono import box_iou
 @dataclass(frozen=True)
 class RiskConfig:
     iou_thr: float = 0.5
-    op_conf: float = 0.25            # operating confidence threshold
+    op_conf: float = 0.25            # operating confidence threshold (CHEAP)
+    op_conf_full: float | None = None  # if set, FULL uses its own threshold
     error: str = "miss"              # miss | soft_iou
     fp_lambda: float = 0.0           # weight on risk-weighted false positives
     class_aware: bool = False        # class-agnostic matching by default
@@ -67,14 +68,15 @@ def per_object_error(best_iou: np.ndarray, cfg: RiskConfig) -> np.ndarray:
 
 def frame_risk(gt: dict, det: dict, crit: np.ndarray, cfg: RiskConfig,
                dontcare: np.ndarray | None = None,
-               fp_crit: np.ndarray | None = None) -> dict:
+               fp_crit: np.ndarray | None = None,
+               op_conf: float | None = None) -> dict:
     """Risk of one frame under one perception mode.
 
     `gt` supplies xyxy/cls for evaluable objects, `crit` their criticality.
     `fp_crit` is the criticality *estimated from the detection itself* (there is no
     GT for a false positive), used only when cfg.fp_lambda > 0.
     """
-    keep = det["conf"] >= cfg.op_conf
+    keep = det["conf"] >= (cfg.op_conf if op_conf is None else op_conf)
     det_xyxy, det_conf = det["xyxy"][keep], det["conf"][keep]
     det_cls = det["coarse"][keep]
 

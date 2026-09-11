@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -27,6 +28,8 @@ def main():
     ap.add_argument("--error", default="miss", choices=["miss", "soft_iou"])
     ap.add_argument("--fp_lambda", type=float, default=0.0)
     ap.add_argument("--class_aware", type=int, default=0)
+    ap.add_argument("--match_detection_counts", action="store_true",
+                    help="give FULL its own threshold so both modes emit equally many boxes")
     ap.add_argument("--suffix", default="")
     ap.add_argument("--out", default=str(PROCESSED))
     args = ap.parse_args()
@@ -37,6 +40,13 @@ def main():
     det = Path(args.det)
     seqs = [p.stem for p in sorted((det / args.cheap).glob("*.npz"))]
     assert seqs, f"no detection cache under {det/args.cheap}"
+
+    if args.match_detection_counts:
+        thr = tables.match_detection_counts(
+            [DetCache(det / args.cheap / f"{s}.npz") for s in seqs],
+            [DetCache(det / args.full / f"{s}.npz") for s in seqs], cfg.op_conf)
+        cfg = replace(cfg, op_conf_full=thr)
+        print(f"count-matched FULL threshold: {thr:.4f} (CHEAP {cfg.op_conf})")
 
     geom_cache = {s: G.sequence_geometry(s) for s in seqs}
     for mname in args.crit_models:

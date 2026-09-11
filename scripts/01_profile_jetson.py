@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import os
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -47,14 +48,25 @@ class RailSampler(threading.Thread):
         return out
 
 
+def _load_check() -> dict:
+    """Anything else using this board invalidates the measurement; record it."""
+    import subprocess
+    try:
+        busy = subprocess.check_output(["pgrep", "-c", "trtexec"], text=True).strip()
+    except Exception:
+        busy = "0"
+    return {"loadavg_1m": os.getloadavg()[0], "trtexec_running": int(busy or 0)}
+
+
 def profile_mode(det, mode, images, warmup, reps, idle_baseline):
     torch.cuda.empty_cache()
     torch.cuda.reset_peak_memory_stats()
+    free_before, total_gpu = torch.cuda.mem_get_info()
     for i in range(warmup):
         det.detect(images[i % len(images)], mode)
     torch.cuda.synchronize()
 
-    e2e, fwd = [], []
+    e2e, fwd, pre, post = [], [], [], []
     sampler = RailSampler()
     sampler.start()
     t_start = time.time()
@@ -71,11 +83,14 @@ def profile_mode(det, mode, images, warmup, reps, idle_baseline):
         torch.cuda.synchronize()
         t3 = time.perf_counter()
         e2e.append((t3 - t0) * 1e3)
+        pre.append((t1 - t0) * 1e3)
         fwd.append((t2 - t1) * 1e3)
+        post.append((t3 - t2) * 1e3)
     wall = time.time() - t_start
     sampler.stop()
 
     rails = sampler.summary()
+    free_after, _ = torch.cuda.mem_get_info()
     res = {
         "mode": mode.name, "net_h": mode.net_h, "net_w": mode.net_w,
         "pixels": mode.pixels, "reps": reps,
@@ -85,8 +100,18 @@ def profile_mode(det, mode, images, warmup, reps, idle_baseline):
         "lat_e2e_ms_p99": float(np.percentile(e2e, 99)),
         "lat_fwd_ms_median": float(np.median(fwd)),
         "lat_fwd_ms_p95": float(np.percentile(fwd, 95)),
+        "lat_pre_ms_median": float(np.median(pre)),
+        "lat_post_ms_median": float(np.median(post)),
         "peak_mem_alloc_mb": torch.cuda.max_memory_allocated() / 2**20,
         "peak_mem_reserved_mb": torch.cuda.max_memory_reserved() / 2**20,
+        # torch sees only its own tensors; TensorRT allocates its workspace outside,
+        # so device-wide free memory is the only honest peak-memory figure here.
+        "gpu_mem_free_delta_mb": (free_before - free_after) / 2**20,
+        "gpu_mem_total_mb": total_gpu / 2**20,
+        "engine_device_mem_mb": float(
+            getattr(det.engine_for(mode), "device_mem_mb", float("nan")))
+        if det.backend == "trt" else float("nan"),
+        **_load_check(),
         "throughput_fps": reps / wall,
         **rails,
     }
@@ -112,6 +137,8 @@ def main():
     ap.add_argument("--backend", default="torch", choices=["torch", "trt"])
     ap.add_argument("--images", default="", help="dir of real frames; synthetic if empty")
     ap.add_argument("--rounds", type=int, default=3, help="interleaved repeats of the mode sweep")
+    ap.add_argument("--allow_contention", action="store_true",
+                    help="profile even if something else is using the board")
     args = ap.parse_args()
 
     run = runmeta.new_run("profile", vars(args))
@@ -125,6 +152,11 @@ def main():
         images = [(rng.random((375, 1242, 3)) * 255).astype(np.uint8) for _ in range(8)]
 
     det = TwoFidelityDetector(args.weights, half=bool(args.half), backend=args.backend)
+
+    pre_load = _load_check()
+    if pre_load["trtexec_running"] and not args.allow_contention:
+        raise SystemExit("trtexec is running; a latency profile taken now is meaningless. "
+                         "Wait for engine builds to finish, or pass --allow_contention.")
 
     print("measuring idle baseline (10 s)...")
     idle = RailSampler()
@@ -140,19 +172,25 @@ def main():
             r = profile_mode(det, MODES[name], images, args.warmup, args.reps, idle_baseline)
             r["round"] = rnd
             rows.append(r)
-            print(f"[r{rnd}] {name:10s} e2e={r['lat_e2e_ms_median']:6.2f}ms "
-                  f"p95={r['lat_e2e_ms_p95']:6.2f} fwd={r['lat_fwd_ms_median']:6.2f} "
-                  f"mem={r['peak_mem_alloc_mb']:6.1f}MB "
-                  f"gpu+={r.get('GPU_mw_over_idle', float('nan')):7.0f}mW")
+            print(f"[r{rnd}] {name:10s} e2e={r['lat_e2e_ms_median']:6.2f} "
+                  f"p95={r['lat_e2e_ms_p95']:6.2f} | pre={r['lat_pre_ms_median']:5.2f} "
+                  f"fwd={r['lat_fwd_ms_median']:5.2f} post={r['lat_post_ms_median']:5.2f} | "
+                  f"mem={r['engine_device_mem_mb']:6.1f}MB "
+                  f"gpu+={r.get('GPU_mw_over_idle', float('nan')):7.0f}mW "
+                  f"load={r['loadavg_1m']:.1f}")
 
     (run / "profile_rows.json").write_text(json.dumps(rows, indent=2))
     (run / "idle_baseline.json").write_text(json.dumps(idle_baseline, indent=2))
 
     agg = {}
+    measured = [r for r in rows if r["round"] > 0] or rows
     for name in args.modes:
-        sel = [r for r in rows if r["mode"] == name]
+        sel = [r for r in measured if r["mode"] == name]
         agg[name] = {k: float(np.median([r[k] for r in sel]))
                      for k in sel[0] if isinstance(sel[0][k], (int, float))}
+    agg["_meta"] = {"rounds_kept": sorted({r["round"] for r in measured}),
+                    "rounds_total": args.rounds,
+                    "note": "round 0 discarded as warm-up (clock ramp + lazy engine init)"}
     (run / "profile_summary.json").write_text(json.dumps(agg, indent=2))
     print("\nwrote", run)
     return agg
