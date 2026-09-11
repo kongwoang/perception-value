@@ -33,6 +33,7 @@ class Mode:
     conf: float = 0.10          # low operating threshold; analysis re-thresholds as needed
     iou: float = 0.65
     max_det: int = 100
+    arch: str = "yolo"          # "yolo" (dense head + NMS) or "detr" (set prediction)
 
     @property
     def pixels(self) -> int:
@@ -50,6 +51,12 @@ MODES = {
     # KITTI pair's 4x pixel ratio, so the fidelity gap is comparable across datasets.
     "ns_cheap_320": Mode("ns_cheap_320", 192, 320),
     "ns_full_640": Mode("ns_full_640", 384, 640),
+    # Detector-B. RT-DETR is a set-prediction transformer: no NMS, and ultralytics only
+    # supports square input for it, so these are square and the aspect padding differs
+    # from the YOLO modes. The 4x pixel ratio between the pair is preserved.
+    "rt_cheap_320": Mode("rt_cheap_320", 320, 320, arch="detr", max_det=300),
+    "rt_full_640": Mode("rt_full_640", 640, 640, arch="detr", max_det=300),
+    "rt_mid_480": Mode("rt_mid_480", 480, 480, arch="detr", max_det=300),
 }
 
 
@@ -85,8 +92,8 @@ class TwoFidelityDetector:
         self._engines: dict[str, object] = {}
         self.engine_dir = engine_dir
         if backend == "torch":
-            from ultralytics import YOLO
-            self.yolo = YOLO(weights)
+            from ultralytics import RTDETR, YOLO
+            self.yolo = (RTDETR if "rtdetr" in str(weights).lower() else YOLO)(weights)
             self.net = self.yolo.model.to(self.device).eval()
             if self.half:
                 self.net = self.net.half()
@@ -179,11 +186,64 @@ class TwoFidelityDetector:
             "n_post": n_post,
         }
 
+    # -- set-prediction postprocessing (RT-DETR) -----------------------------
+    def postprocess_detr(self, raw: torch.Tensor, mode: Mode, r: float, pad, img_shape):
+        """raw: (1, num_queries, 4+nc), boxes normalised cxcywh in network-input space.
+
+        No NMS: the decoder already emits a set. Scores are per-class sigmoids, so a box
+        may be kept under several classes; we take its best traffic class, as for YOLO.
+        """
+        p = raw[0].float()
+        boxes, cls_scores = p[:, :4], p[:, 4:]
+        traffic = cls_scores[:, self._keep]
+        best, best_i = traffic.max(1)
+        n_cand_raw = int((cls_scores.max(1).values > mode.conf).sum())
+        keep = best > mode.conf
+        n_cand = int(keep.sum())
+        if n_cand == 0:
+            return _empty_dets(n_cand_raw, 0)
+
+        b = boxes[keep]
+        xy = b[:, :2] * torch.tensor([mode.net_w, mode.net_h], device=b.device)
+        wh = b[:, 2:] * torch.tensor([mode.net_w, mode.net_h], device=b.device)
+        xyxy = torch.cat([xy - wh / 2, xy + wh / 2], dim=1)
+
+        sel = torch.argsort(best[keep], descending=True)[: mode.max_det]
+        xyxy = xyxy[sel]
+        xyxy[:, [0, 2]] -= pad[0]
+        xyxy[:, [1, 3]] -= pad[1]
+        xyxy /= r
+        h0, w0 = img_shape[:2]
+        xyxy[:, [0, 2]] = xyxy[:, [0, 2]].clamp(0, w0 - 1)
+        xyxy[:, [1, 3]] = xyxy[:, [1, 3]].clamp(0, h0 - 1)
+
+        tr = traffic[keep][sel]
+        top2 = tr.topk(min(2, tr.shape[1]), dim=1).values
+        margin = (top2[:, 0] - top2[:, 1]) if top2.shape[1] > 1 else top2[:, 0]
+        fs = cls_scores[keep][sel].clamp_min(1e-9)
+        pnorm = fs / fs.sum(1, keepdim=True)
+        entropy = -(pnorm * pnorm.log()).sum(1)
+        conf = best[keep][sel].clamp(1e-6, 1 - 1e-6)
+        binent = -(conf * conf.log() + (1 - conf) * (1 - conf).log())
+        coarse = np.array([COCO_TRAFFIC[int(c)]
+                           for c in self._keep[best_i[keep][sel]].cpu().numpy()])
+        return {
+            "xyxy": xyxy.cpu().numpy().astype(np.float32),
+            "conf": conf.cpu().numpy().astype(np.float32),
+            "coco_id": self._keep[best_i[keep][sel]].cpu().numpy().astype(np.int16),
+            "coarse": coarse,
+            "entropy": entropy.cpu().numpy().astype(np.float32),
+            "margin": margin.cpu().numpy().astype(np.float32),
+            "binent": binent.cpu().numpy().astype(np.float32),
+            "n_cand_raw": n_cand_raw, "n_cand": n_cand, "n_post": int(len(xyxy)),
+        }
+
     @torch.no_grad()
     def detect(self, img_bgr: np.ndarray, mode: Mode):
         x, r, pad, lb = self.preprocess(img_bgr, mode)
         raw = self.forward(x, mode)
-        det = self.postprocess(raw, mode, r, pad, img_bgr.shape)
+        post = self.postprocess_detr if mode.arch == "detr" else self.postprocess
+        det = post(raw, mode, r, pad, img_bgr.shape)
         return det, lb
 
 

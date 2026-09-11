@@ -1,0 +1,9 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "scenes": 0,
+  "out": "data/cache/nusc_det_tv"
+}

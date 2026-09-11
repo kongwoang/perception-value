@@ -85,7 +85,7 @@ def main():
           f"empty CHEAP {float(base.empty_cheap.mean()):.3f}")
 
     rows = []
-    for cname, d in (("nuScenes mini", base), ("nuScenes mini oracle range", orc)):
+    for cname, d in ((f"nuScenes {args.version}", base), (f"nuScenes {args.version} oracle range", orc)):
         sb = np.digitize(d["v_ego"], SPEED_EDGES[1:-1])
         ne = d[d.empty_cheap == 0].reset_index(drop=True)
         for tname, col in TASKS.items():
@@ -114,7 +114,7 @@ def main():
 
     print("\n=== task conditionality on nuScenes ===")
     ct = []
-    for cname, d in (("nuScenes mini", base), ("nuScenes mini oracle range", orc)):
+    for cname, d in ((f"nuScenes {args.version}", base), (f"nuScenes {args.version} oracle range", orc)):
         jl = (d.J_cheap - d.J_full).to_numpy()
         jt = (d.Jlat_cheap - d.Jlat_full).to_numpy()
         r = {"config": cname, "spearman": float(stats.spearmanr(jl, jt).correlation),
