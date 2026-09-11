@@ -370,3 +370,50 @@ method paper here yet.
 Either a problem/benchmark paper (needs a second downstream task, a second dataset and a
 closed-loop variant), or investigate what predicts *complete* cheap-perception failure —
 the 14.6 % blind frames are where the remaining headroom lives.
+
+---
+
+## 2026-09-11 18:45 — Phase 0D pre-registration: validating the PROBLEM, not a method
+
+**Core claim to test**
+
+    Marginal improvement in perception quality is not a reliable proxy for marginal
+    improvement in downstream decision quality.
+
+    dE_t = E(cheap_t) - E(full_t)
+    dJ_t = J(pi(cheap_t), s*_t) - J(pi(full_t), s*_t)
+
+    Hypothesis: dJ is not reducible to dE, uncertainty, criticality, or trivial
+    operating-state variables.
+
+**Three properties, tested separately. All three must hold.**
+- DISTINCT: dJ differs meaningfully from perception-level quantities.
+- GENERAL: it happens across tasks, planners and datasets.
+- NON-TRIVIAL: it is not explained almost entirely by ego speed, empty detections, or one
+  obvious heuristic.
+
+**Pre-registered falsifiers (recorded before running anything)**
+1. dE-oracle nearly matches dJ-oracle -> better perception *is* better decisions.
+2. Longitudinal and lateral optimal rankings nearly identical -> not task-conditional.
+3. Effect disappears on non-empty frames or a moderate fidelity pair -> cheap-collapse artefact.
+4. Effect disappears with oracle/controlled geometry -> monocular range artefact.
+5. Effect absent on a second dataset -> does not generalize.
+6. Speed + empty indicator explains ~all oracle value everywhere -> trivial.
+
+**Threshold committed in advance**
+STRONG GO needs eta_E@20 <= 0.5 in the main configurations, survival of the speed /
+non-empty / geometry controls, survival at a moderate fidelity pair, replication on a
+second dataset, top-20% overlap between task rankings well below 80%, and no 1-2 variable
+heuristic capturing almost all oracle value.
+
+**Prior expectation, stated now so it cannot be rationalised later**
+Phase 0C already showed ego speed alone reaches eta 0.787 of the learned 0.831, and that
+14.6% empty-CHEAP frames carry 57.9% of positive dJ. My honest prior is that Stage 1 will
+downgrade the problem substantially: I expect the mismatch to survive as a *statement*
+(dE really is uninformative about dJ) but the *allocation opportunity* to shrink a lot once
+speed and empty frames are controlled. The verdict will follow the numbers.
+
+**Execution order**
+Stage 1 on existing KITTI only: reproduction, speed-controlled, non-empty, oracle-range,
+moderate fidelity pair. Interim report before any lateral planner is written. No method
+development anywhere in Phase 0D.
