@@ -1,0 +1,202 @@
+{
+  "matrix": [
+    {
+      "config": "KITTI 320->640",
+      "task": "longitudinal",
+      "n": 8008,
+      "eta_E@20": 0.155092544589673,
+      "oracle_gap": 0.844907455410327,
+      "per_group_median": 0.15926783835874103,
+      "per_group_max": 0.6454540921309412,
+      "groups_above_0.5": 3,
+      "n_groups": 18
+    },
+    {
+      "config": "KITTI 320->640",
+      "task": "lateral",
+      "n": 8008,
+      "eta_E@20": -0.2567998003336294,
+      "oracle_gap": 1.2567998003336294,
+      "per_group_median": -0.3079597712551491,
+      "per_group_max": 0.5803530681010672,
+      "groups_above_0.5": 2,
+      "n_groups": 15
+    },
+    {
+      "config": "KITTI 512->640 (moderate)",
+      "task": "longitudinal",
+      "n": 8008,
+      "eta_E@20": 0.21329548506148446,
+      "oracle_gap": 0.7867045149385156,
+      "per_group_median": -0.016012196662379453,
+      "per_group_max": 0.9797842470868092,
+      "groups_above_0.5": 4,
+      "n_groups": 17
+    },
+    {
+      "config": "KITTI 512->640 (moderate)",
+      "task": "lateral",
+      "n": 8008,
+      "eta_E@20": -0.12963456097642934,
+      "oracle_gap": 1.1296345609764293,
+      "per_group_median": -0.0767657039596785,
+      "per_group_max": 0.4999999999998579,
+      "groups_above_0.5": 0,
+      "n_groups": 14
+    },
+    {
+      "config": "KITTI oracle range",
+      "task": "longitudinal",
+      "n": 8008,
+      "eta_E@20": 0.19796790236129846,
+      "oracle_gap": 0.8020320976387015,
+      "per_group_median": 0.4054221129785732,
+      "per_group_max": 0.996268339220998,
+      "groups_above_0.5": 6,
+      "n_groups": 18
+    },
+    {
+      "config": "KITTI oracle range",
+      "task": "lateral",
+      "n": 8008,
+      "eta_E@20": -0.24311418438032995,
+      "oracle_gap": 1.24311418438033,
+      "per_group_median": -0.2015503875969011,
+      "per_group_max": 0.9166666666666684,
+      "groups_above_0.5": 2,
+      "n_groups": 15
+    },
+    {
+      "config": "nuScenes mini 320->640",
+      "task": "longitudinal",
+      "n": 404,
+      "eta_E@20": 0.058278508240641735,
+      "oracle_gap": 0.9417214917593583,
+      "per_group_median": 0.0,
+      "per_group_max": 1.0,
+      "groups_above_0.5": 2,
+      "n_groups": 7
+    },
+    {
+      "config": "nuScenes mini 320->640",
+      "task": "lateral",
+      "n": 404,
+      "eta_E@20": -0.18073331607480086,
+      "oracle_gap": 1.1807333160748008,
+      "per_group_median": 0.0,
+      "per_group_max": 1.0,
+      "groups_above_0.5": 2,
+      "n_groups": 5
+    },
+    {
+      "config": "nuScenes mini oracle range",
+      "task": "longitudinal",
+      "n": 404,
+      "eta_E@20": 0.2705943278611892,
+      "oracle_gap": 0.7294056721388108,
+      "per_group_median": 0.0,
+      "per_group_max": 1.0,
+      "groups_above_0.5": 1,
+      "n_groups": 5
+    },
+    {
+      "config": "nuScenes mini oracle range",
+      "task": "lateral",
+      "n": 404,
+      "eta_E@20": -0.2772656279628991,
+      "oracle_gap": 1.277265627962899,
+      "per_group_median": 0.0,
+      "per_group_max": 0.0,
+      "groups_above_0.5": 0,
+      "n_groups": 2
+    },
+    {
+      "config": "KITTI non-empty",
+      "task": "longitudinal",
+      "n": 6839,
+      "eta_E@20": 0.10662462898896499,
+      "oracle_gap": 0.893375371011035,
+      "per_group_median": 0.12999225378598134,
+      "per_group_max": 0.629299586311331,
+      "groups_above_0.5": 1,
+      "n_groups": 18
+    },
+    {
+      "config": "KITTI non-empty",
+      "task": "lateral",
+      "n": 6839,
+      "eta_E@20": -0.07116708457390161,
+      "oracle_gap": 1.0711670845739016,
+      "per_group_median": -0.30795977125515817,
+      "per_group_max": 0.5803530681010672,
+      "groups_above_0.5": 1,
+      "n_groups": 15
+    }
+  ],
+  "taxonomy": {
+    "A: large dE, zero decision effect": 0.20754245754245754,
+    "B: dE <= 0 but decision improves": 0.041583416583416584,
+    "C: perception improves, decision worsens": 0.11713286713286714,
+    "D: valuable longitudinally, not laterally": 0.1547202797202797,
+    "E: valuable laterally, not longitudinally": 0.018606393606393608,
+    "F: fast ego and decision improves": 0.13074425574425574,
+    "G: fast ego but escalation wasted": 0.19817682317682317
+  },
+  "examples": [
+    {
+      "type": "A",
+      "seq": "0019",
+      "frame": 123,
+      "dE": 4.0,
+      "dJ_long": 0.0,
+      "dJ_lat": -1.2300163500745334,
+      "v_ego": 3.9380503290505,
+      "n_cheap": 6,
+      "n_full": 13
+    },
+    {
+      "type": "B",
+      "seq": "0019",
+      "frame": 777,
+      "dE": 0.0,
+      "dJ_long": 33.25,
+      "dJ_lat": 0.0,
+      "v_ego": 3.4843443272758,
+      "n_cheap": 6,
+      "n_full": 11
+    },
+    {
+      "type": "C",
+      "seq": "0019",
+      "frame": 83,
+      "dE": 2.0,
+      "dJ_long": -77.88,
+      "dJ_lat": 0.0,
+      "v_ego": 0.81923642134917,
+      "n_cheap": 6,
+      "n_full": 9
+    },
+    {
+      "type": "D",
+      "seq": "0019",
+      "frame": 196,
+      "dE": 7.0,
+      "dJ_long": 78.12,
+      "dJ_lat": 0.0,
+      "v_ego": 2.5448403452097,
+      "n_cheap": 3,
+      "n_full": 15
+    },
+    {
+      "type": "E",
+      "seq": "0004",
+      "frame": 14,
+      "dE": 0.0,
+      "dJ_long": 0.0,
+      "dJ_lat": 0.9999999999999999,
+      "v_ego": 5.7946890665989,
+      "n_cheap": 4,
+      "n_full": 3
+    }
+  ]
+}

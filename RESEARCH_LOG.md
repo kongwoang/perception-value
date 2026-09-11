@@ -417,3 +417,43 @@ speed and empty frames are controlled. The verdict will follow the numbers.
 Stage 1 on existing KITTI only: reproduction, speed-controlled, non-empty, oracle-range,
 moderate fidelity pair. Interim report before any lateral planner is written. No method
 development anywhere in Phase 0D.
+
+## 2026-09-12 00:30 — Phase 0D verdict: STRONG GO on the problem
+
+**Run IDs**
+`20260911_223528_stage1`, `20260911_224615_stage2`, `20260911_233520_nusc_decision`,
+`20260912_002239_final_matrix`
+
+**Observations**
+- Every one of 12 configuration x task rows has eta_E@20 <= 0.271 against a
+  pre-registered threshold of 0.5. Most are below 0.22; the lateral task is negative.
+- Removing the obvious artefacts makes the mismatch *stronger*, not weaker: non-empty
+  frames eta_E 0.107, >=2 candidates 0.061.
+- Partial Spearman(dE, dJ | ego speed) = +0.042, unchanged from raw. Under a
+  speed-stratified budget the speed heuristic falls 0.787 -> 0.285.
+- Second task (lateral avoidance): FULL is more accurate (83.8% vs 81.9%) yet more
+  costly (2437 vs 2170) in all 10 planner/cost variants, because extra detections block
+  clear corridors. eta_E = -0.257: perception-gain ranking is worse than random there.
+- Task conditionality is the strongest novelty signal: top-10% overlap between the two
+  tasks' optimal allocations is 0.03-0.15; the shared-cost control returns exactly 1.000.
+- nuScenes mini replicates and more strongly (eta_E 0.058 / -0.181). The KITTI ego-speed
+  shortcut does NOT replicate (0.210 vs 0.787).
+
+**Problems encountered**
+- nuScenes `sample_annotation.translation` is the box CENTRE, not the bottom-face centre
+  as in KITTI. Treating it as the bottom shifted projected 2D boxes up by h/2 and left
+  0.5% of detections matching ground truth; after the fix, 63.4%. Caught because the
+  oracle-range variant returned numbers identical to mono, which is impossible if
+  matching ever succeeds.
+- The first lateral planner was degenerate (GT chose KEEP on 97% of frames). Parameters
+  were then chosen by measuring the clearance distribution rather than guessing.
+
+**Current interpretation**
+STRONG GO for a problem/benchmark paper. The evidence that perception metrics mis-rank
+compute allocation is strong, controlled, replicated and mechanistically explained. The
+evidence that the gap is *exploitable* is not - Phase 0C already showed the best
+deployable predictor is ego speed plus an empty-frame flag.
+
+**Next step**
+Finish the nuScenes trainval01 blob (~85 scenes, downloading) and re-run Stage 4 on it;
+that is the only criterion currently resting on insufficient data.
