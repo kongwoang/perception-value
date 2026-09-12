@@ -138,7 +138,14 @@ def fig_overlap(d, signals, task, frac=0.20):
 
 
 def main():
-    run = sorted(Path(RESULTS).parent.glob("results/raw/*phase0f_eta*"))[-1]
+    # newest by modification time, not by name: run directories are timestamp-prefixed but
+    # the tags differ in length, so a lexical sort picked a stale run
+    cands = [p for pat in ("*phase0f_stage1*", "*phase0f_eta*")
+             for p in Path(RESULTS).parent.glob(f"results/raw/{pat}")
+             if (p / "phase0f_regret_curves.csv").exists()]
+    if not cands:
+        raise SystemExit("no phase0f eta run with regret curves found")
+    run = max(cands, key=lambda p: p.stat().st_mtime)
     cur = pd.read_csv(run / "phase0f_regret_curves.csv")
     d = pd.read_pickle(run / "joined_frames.pkl")
     print(f"reading {run.name}: {len(d)} frames")
