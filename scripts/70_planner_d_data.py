@@ -104,6 +104,9 @@ def main():
     ap.add_argument("--nchunks", type=int, default=1)
     ap.add_argument("--chunk", type=int, default=0)
     ap.add_argument("--skip_existing", action="store_true")
+    ap.add_argument("--keep_clamped", action="store_true",
+                    help="keep frames whose horizon runs past the end of the scene")
+    ap.add_argument("--max_train_scenes", type=int, default=200)
     ap.add_argument("--tag", default="planner_d_data")
     args = ap.parse_args()
 
@@ -120,6 +123,12 @@ def main():
     loc_of = {sc["name"]: nusc.get("log", sc["log_token"])["location"]
               for sc in nusc.scene if sc["name"] in set(names)}
     ordered = sorted(names, key=lambda n: (loc_of[n], n))
+    if args.split == "train" and args.max_train_scenes:
+        # every k-th scene of the (location, name) ordering: preserves location balance, uses
+        # no RNG, and the cap was fixed by measured render throughput before training
+        step = max(1, len(ordered) // args.max_train_scenes)
+        ordered = ordered[::step][:args.max_train_scenes]
+        print(f"  training scenes capped to {len(ordered)} (every {step}th of the split)")
     if args.nchunks > 1:
         k, r = divmod(len(ordered), args.nchunks)
         lo = args.chunk * k + min(args.chunk, r)
@@ -166,6 +175,10 @@ def main():
             if tk not in gt.boxes:
                 continue
             wp, _, clamped = future_waypoints(ts, xy, yaw, i, HORIZONS)
+            if clamped > 0 and not args.keep_clamped:
+                # the 4 s horizon runs past the end of the scene, so the target would be a
+                # stationary ego rather than a real trajectory (Phase 0G amendment 2026-09-12)
+                continue
             samp = nusc.get("sample", tk)
             r, lo, lw = render(samp, nusc, gt[tk], nusc_maps)
             rec["gt"].append(r)

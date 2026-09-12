@@ -740,3 +740,31 @@ Planner D. But Planner D shares PKL's *input representation* and its training da
 both planners are ultimately predicting where the ego goes — so a high PKL η on Planner D is
 entirely possible, and would mean the planner-conditionality claim is about objectives rather
 than architectures, or is wrong. If D-F1 and D-F2 both fire, the paper is reframed or stopped.
+
+### 2026-09-12 17:20 — Phase 0G amendment, before any training run
+
+Two decisions forced by measurement, recorded before Planner D sees any data.
+
+**1. Frames whose 4 s horizon runs past the end of the scene are excluded.** Measured on two
+validation scenes: **21% of samples**. A nuScenes scene is ~20 s (40 keyframes at 0.5 s), so the
+last eight samples of every scene have less than 4 s of future left. `interp_poses` clamps such
+queries to the final pose, which makes the target a *stationary* ego — training on it would
+teach Planner D to predict stopping, and evaluating on it would compare planners against a
+fabricated trajectory. These frames are dropped from training, from validation and from the
+**primary** Planner D evaluation, and their count is reported.
+
+Consequence for comparability, accepted deliberately: the Planner D test set becomes ~2,670 of
+the 3,376 frames. Planner A and Planner C are therefore **re-evaluated restricted to exactly
+that subset** wherever they are compared with Planner D, so the comparison is like-for-like
+rather than across different frame sets. The full-3,376 Phase 0F numbers remain as published.
+
+**2. Training scenes capped at 200 of the 667, by measured throughput.** Rendering costs
+0.41 s per raster (startup excluded), so the full plan would be ~5 h of rendering before a
+single training step: 26,828 train + 3,945 val + 3,376×3 test rasters. The pre-registration
+permits a cap "decided by measured throughput before training"; this is that decision. The 200
+scenes are taken deterministically as every third scene of the 667 in (location, name) order, so
+location balance is preserved and the choice involves no RNG and no result. That is ~8,000
+training samples for a 0.46 M-parameter network, and validation and test remain complete.
+
+Neither decision is informed by any allocation number, η, or PKL/TIP result; no model has been
+trained at this point.
