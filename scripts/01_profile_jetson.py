@@ -137,6 +137,8 @@ def main():
     ap.add_argument("--backend", default="torch", choices=["torch", "trt"])
     ap.add_argument("--images", default="", help="dir of real frames; synthetic if empty")
     ap.add_argument("--rounds", type=int, default=3, help="interleaved repeats of the mode sweep")
+    ap.add_argument("--engine_stem", default=None,
+                    help="engine filename stem if it differs from the weights stem")
     ap.add_argument("--allow_contention", action="store_true",
                     help="profile even if something else is using the board")
     args = ap.parse_args()
@@ -151,7 +153,8 @@ def main():
     else:
         images = [(rng.random((375, 1242, 3)) * 255).astype(np.uint8) for _ in range(8)]
 
-    det = TwoFidelityDetector(args.weights, half=bool(args.half), backend=args.backend)
+    det = TwoFidelityDetector(args.weights, half=bool(args.half), backend=args.backend,
+                              engine_stem=args.engine_stem)
 
     pre_load = _load_check()
     if pre_load["trtexec_running"] and not args.allow_contention:

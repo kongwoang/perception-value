@@ -1,0 +1,15 @@
+{
+  "weights": "/home/kongwoang/models/yolo/rtdetr-l.pt",
+  "modes": [
+    "rt_cheap_320",
+    "rt_mid_480",
+    "rt_full_640"
+  ],
+  "reps": 200,
+  "warmup": 40,
+  "half": 1,
+  "backend": "trt",
+  "images": "/home/kongwoang/datasets/kitti_tracking/training/image_02/0000",
+  "rounds": 3,
+  "allow_contention": false
+}
