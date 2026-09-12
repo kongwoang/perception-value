@@ -112,7 +112,11 @@ def main():
 
     out = Path(args.out) / args.split
     out.mkdir(parents=True, exist_ok=True)
-    done = out / f"chunk_n{args.nchunks}c{args.chunk:02d}.npz"
+    # the test rasters are geometry-variant specific (CHEAP/FULL come from that variant's
+    # submission), so the variant must be in the filename or a mono run silently overwrites the
+    # oracle rasters that Planner C, Planner D and 74 all read
+    vtag = f"_{args.variant}" if args.split == "test" else ""
+    done = out / f"chunk{vtag}_n{args.nchunks}c{args.chunk:02d}.npz"
     if args.skip_existing and done.exists():
         print(f"  {done.name} exists -- skipping"); return
     run = runmeta.new_run(args.tag, vars(args))

@@ -66,7 +66,7 @@ def main():
     name = Path(args.ckpt).stem.replace("_best", "")
     run = runmeta.new_run(args.tag or f"planner_d_eval_{name}", vars(args))
 
-    files = sorted((Path(args.data) / "test").glob("chunk_*.npz"))
+    files = sorted((Path(args.data) / "test").glob(f"chunk_{args.variant}_*.npz"))
     if not files:
         raise SystemExit("no cached Planner D test data; run 70_planner_d_data.py --split test")
     d = load_test(files)

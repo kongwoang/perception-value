@@ -68,12 +68,13 @@ def main():
     ap.add_argument("--modelpath", default=str(ROOT / "third_party" / "tip" / "planner.pt"))
     ap.add_argument("--mask_json",
                     default=str(ROOT / "third_party" / "tip" / "masks_trainval.json"))
+    ap.add_argument("--variant", default="oracle", help="submission geometry of the rasters")
     ap.add_argument("--bsz", type=int, default=16)
     ap.add_argument("--tag", default="plannerC_vs_truth")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
 
-    files = sorted((Path(args.data) / "test").glob("chunk_*.npz"))
+    files = sorted((Path(args.data) / "test").glob(f"chunk_{args.variant}_*.npz"))
     keys = ("sample_token", "scene", "target", "ego_v",
             "packed_gt", "packed_cheap", "packed_full")
     acc = {k: [] for k in keys}
@@ -107,7 +108,8 @@ def main():
     df = pd.DataFrame(rows)
     df["dJC_ade"] = df.JC_ade_cheap - df.JC_ade_full          # non-circular decision value
     df["dJC_self"] = df.JC_self_cheap - df.JC_self_full       # the Phase 0F construction
-    out = Path(args.data) / "planC_vs_truth.csv"
+    suffix = "" if args.variant == "oracle" else f"_{args.variant}"
+    out = Path(args.data) / f"planC_vs_truth{suffix}.csv"
     df.to_csv(out, index=False); df.to_csv(run / out.name, index=False)
 
     cv_ade, cv_fde = ade_fde(constant_velocity(d["ego_v"]), true)
