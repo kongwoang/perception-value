@@ -87,6 +87,30 @@ def test_clamped_horizons_are_reported():
     assert clamped == int((HORIZONS > 2.0).sum()) > 0
 
 
+def test_ego_velocity_uses_no_future_pose():
+    """The velocity estimate must not see beyond t0.
+
+    A constant-speed run that abruptly accelerates *after* i0 must give the same estimate as
+    one that does not: a central difference would differ, and would leak the target into both
+    the baseline and Planner D's input.
+    """
+    ts = np.arange(0, 5.01, 0.5)
+    slow = np.stack([4.0 * ts, np.zeros_like(ts)], 1)
+    fast = slow.copy()
+    fast[6:, 0] = slow[5, 0] + 20.0 * (ts[6:] - ts[5])       # speeds up strictly after i0=5
+    yaw = np.zeros_like(ts)
+    v_slow = ego_velocity(ts, slow, yaw, 5)
+    v_fast = ego_velocity(ts, fast, yaw, 5)
+    assert np.allclose(v_slow, v_fast, atol=1e-9), "velocity at i0 must ignore the future"
+    assert np.allclose(v_slow, [4.0, 0.0], atol=1e-9)
+
+
+def test_ego_velocity_first_sample_has_no_past():
+    ts = np.arange(0, 3.01, 0.5)
+    xy = np.stack([5.0 * ts, np.zeros_like(ts)], 1)
+    assert np.allclose(ego_velocity(ts, xy, np.zeros_like(ts), 0), 0.0)
+
+
 def test_ego_velocity_forward_and_lateral():
     ts = np.arange(0, 5.01, 0.5)
     xy = np.stack([np.zeros_like(ts), 6.0 * ts], 1)

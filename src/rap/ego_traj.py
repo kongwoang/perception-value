@@ -66,10 +66,16 @@ def future_waypoints(ts: np.ndarray, xy: np.ndarray, yaw: np.ndarray,
 
 
 def ego_velocity(ts: np.ndarray, xy: np.ndarray, yaw: np.ndarray, i0: int) -> np.ndarray:
-    """Current ego-frame velocity (2,) in m/s, from a central difference where possible."""
+    """Current ego-frame velocity (2,) in m/s, from a strictly **backward** difference.
+
+    A central difference would span t0-0.5 s to t0+0.5 s and so read the pose half a second
+    into the future.  That leaks the target: it inflates the constant-velocity baseline, and
+    once ego velocity became an input to Planner D it would have fed the network part of the
+    answer.  Only past poses are used here; the first sample of a scene, which has no past,
+    reports zero.
+    """
     ts = np.asarray(ts, float)
-    n = len(ts)
-    a, b = max(i0 - 1, 0), min(i0 + 1, n - 1)
+    a, b = max(i0 - 1, 0), int(i0)
     if b == a:
         return np.zeros(2)
     v_world = (np.asarray(xy, float)[b] - np.asarray(xy, float)[a]) / (ts[b] - ts[a])
