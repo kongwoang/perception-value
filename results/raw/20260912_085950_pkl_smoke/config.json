@@ -1,0 +1,11 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "oracle",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "bsz": 16,
+  "nworkers": 2,
+  "tag": "pkl_smoke"
+}

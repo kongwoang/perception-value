@@ -1,0 +1,9 @@
+#!/bin/bash
+# Python with libgomp preloaded.
+#
+# nuscenes-devkit imports sklearn late, after other extension modules have consumed the
+# aarch64 static TLS block, and sklearn's bundled libgomp then fails with
+# "cannot allocate memory in static TLS block". Preloading it first fixes the import.
+# Everything that touches nuscenes-devkit, PKL or TIP must go through this wrapper.
+GOMP=$(ls /home/kongwoang/miniforge3/envs/edge/lib/python3.8/site-packages/scikit_learn.libs/libgomp*.so* 2>/dev/null | head -1)
+exec env LD_PRELOAD="$GOMP" /home/kongwoang/miniforge3/envs/edge/bin/python "$@"

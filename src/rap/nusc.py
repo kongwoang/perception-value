@@ -47,6 +47,7 @@ class NuScenesDB:
         cam_tokens = {k for k, v in self._t["sensor"].items() if v["channel"] == "CAM_FRONT"}
         self._cam_sensor = cam_tokens
         self._cam_by_sample = {}
+        self._track_map: dict[str, dict[str, int]] = {}
         for sd in self._t["sample_data"].values():
             if not sd["is_key_frame"]:
                 continue
@@ -170,8 +171,11 @@ class NuScenesDB:
                              foot_ego[:, 1].max(), 0.0, np.inf, False))
         if not rows:
             return np.zeros(0, dtype=GEOM_FIELDS)
-        # track ids must be integers for the shared range-rate routine
+        # track ids must be integers for the shared range-rate routine; the mapping is
+        # kept so annotations can be recovered by track id later (PKL submissions need the
+        # exact 3D box of a matched object)
         inst = {t: i for i, t in enumerate(sorted({r[2] for r in rows}))}
+        self._track_map[self.scene_name(scene)] = inst
         out = np.zeros(len(rows), dtype=GEOM_FIELDS)
         for i, r in enumerate(rows):
             out[i]["seq"], out[i]["frame"], out[i]["track_id"] = r[0], r[1], inst[r[2]]
@@ -182,6 +186,26 @@ class NuScenesDB:
                 out[i][c] = r[4 + j]
             out[i]["ttc"] = np.inf
         _fill_range_rate(out, halfwidth=1, dt=FRAME_DT)   # 2 Hz keyframes, tight window
+        return out
+
+
+    def annotations_for(self, scene: str, frame: int) -> dict:
+        """Raw annotations of one keyframe, keyed by the integer track id used in
+        `sequence_geometry`. Returns {} until that scene's geometry has been built."""
+        name = self.scene_name(scene)
+        inst = self._track_map.get(name)
+        if inst is None:
+            return {}
+        tok = self.samples(scene)[frame]
+        out = {}
+        for a in self._ann_by_sample.get(tok, []):
+            tid = inst.get(a["instance_token"])
+            if tid is None:
+                continue
+            cat = self._t["category"][
+                self._t["instance"][a["instance_token"]]["category_token"]]["name"]
+            out[tid] = {"category": cat, "translation": a["translation"],
+                        "size": a["size"], "rotation": a["rotation"]}
         return out
 
 

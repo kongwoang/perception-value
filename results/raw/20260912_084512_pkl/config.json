@@ -1,0 +1,12 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_det_tv",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "variant": "oracle",
+  "scenes": 3,
+  "bsz": 16,
+  "nworkers": 2,
+  "tag": "pkl"
+}
