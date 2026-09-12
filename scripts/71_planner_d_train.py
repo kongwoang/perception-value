@@ -100,6 +100,15 @@ def main():
     run = runmeta.new_run(tag, vars(args))
 
     torch.manual_seed(args.seed); np.random.seed(args.seed)
+    # Claim the CUDA context and a reusable allocator pool before the raster cache and the
+    # dataloader workers fill host memory.  GPU memory here is the same physical RAM, and three
+    # metric chunks died earlier asking for their first 20-128 MiB after other allocations had
+    # fragmented the largest free block.
+    if torch.cuda.is_available():
+        torch.cuda.init()
+        pool = torch.empty(int(800e6 // 4), dtype=torch.float32, device="cuda:0")
+        del pool
+        print(f"  reserved CUDA pool: {torch.cuda.memory_reserved() / 1e6:.0f} MB")
     data = Path(args.data)
     tr_files = sorted((data / "train").glob("chunk_*.npz"))
     va_files = sorted((data / "val").glob("chunk_*.npz"))
