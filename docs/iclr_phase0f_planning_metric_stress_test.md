@@ -274,3 +274,96 @@ was designed around. If PKL's per-frame score still fails to rank frames by its 
 cost change, the redundancy objection closes completely. That uses their planner as an
 evaluator and builds no method, so it stays inside the pre-registration.
 
+---
+
+## 4. A sign convention that had to be derived, not read
+
+PKL and TIP are both described as divergences of a planner's output from its
+ground-truth-conditioned output, and TIP's code carries the comment *"to conply with PKL's
+definition"*. Taking that at face value — both higher-is-worse — was wrong, and the wiring
+check of §3.5 is what caught it: PKL's per-frame gain correlated **+0.188** with the exact
+perception gain ΔE while TIP's correlated **−0.178**. Two metrics measuring the same kind of
+thing on the same frames cannot disagree in sign about whether the expensive detector helped.
+
+Reading `get_tip` settles it. With `p` the ground-truth-conditioned distribution, `q` the
+predicted one, `A* = argmax p` and `Â = argmin (p − q)`:
+
+```
+TIP_t = [ q(A*) − q(Â) ] − [ p(A*) − p(Â) ]
+```
+
+Because `A*` maximises `p`, the second bracket is ≥ 0. Because `Â` minimises `p − q`,
+`q(Â) − p(Â) ≥ q(A*) − p(A*)`, so the first bracket is ≤ the second. Hence **TIP ≤ 0, and
+more negative is worse**, reaching 0 only when the predicted distribution induces the same
+preference gap as ground truth. This is the *opposite* direction to PKL. The `"comply with
+PKL's definition"` comment sits on a `torch.from_numpy` call and concerns the tensor type.
+
+So the allocation signals are
+
+```
+G_PKL = pkl_cheap − pkl_full          (PKL: higher is worse)
+G_TIP = tip_full  − tip_cheap          (TIP: higher is better)
+```
+
+both positive when the expensive mode helps that frame. After the correction TIP's gain
+correlates **+0.178** with ΔE, matching PKL's **+0.188** — the two published metrics now agree
+about direction, which is the check that the convention is finally right. The gains are
+recomputed from the stored per-mode scores in the analysis step, so fixing a convention never
+requires re-running a metric.
+
+## 5. Stage-1 result
+
+nuScenes trainval01, 85 scenes, 3,376 CAM_FRONT keyframes, `ns_cheap_320 → ns_full_640`,
+YOLOv8s, `oracle` geometry, pooled top-quota selection. η with a 95% interval from a
+scene-level bootstrap (400 draws, degenerate draws dropped and counted). **Longitudinal task**
+— the lateral task is reported in the artefacts but is too thin to carry a verdict (§3.6).
+
+| signal | η@10 | **η@20** | 95% CI | cost cut @20% | η@30 | η@50 | ρ vs ΔJ |
+|---|---|---|---|---|---|---|---|
+| random (16 seeds) | +0.039 | +0.078 | [−0.10, +0.22] | 2.0% | +0.126 | +0.239 | — |
+| visual uncertainty | −0.083 | −0.061 | [−0.31, +0.13] | −1.5% | −0.042 | +0.088 | −0.034 |
+| downstream criticality | +0.070 | +0.163 | [−0.10, +0.42] | 4.1% | +0.115 | +0.346 | +0.033 |
+| exact perception gain ΔE | +0.069 | +0.147 | [−0.00, +0.26] | 3.7% | +0.163 | +0.437 | +0.046 |
+| **best single ΔE variant** (E6 risk-weighted) | +0.369 | **+0.562** | **[+0.28, +0.75]** | **14.1%** | +0.532 | +0.442 | +0.064 |
+| multi-metric ΔE oracle (GBM, LOSO) | +0.374 | +0.434 | [+0.22, +0.62] | 10.9% | +0.535 | +0.580 | +0.080 |
+| **PKL gain** (CVPR 2020) | +0.195 | **+0.109** | [−0.20, +0.34] | 2.7% | +0.181 | +0.250 | −0.007 |
+| **TIP gain** (ICML 2023) | +0.139 | **+0.070** | [−0.24, +0.33] | 1.8% | +0.092 | +0.144 | −0.031 |
+| decision oracle ΔJ | +1.000 | +1.000 | — | 25.0% | +1.000 | +1.000 | +1.000 |
+
+With the within-scene normalisation of §3.8, which helps the published metrics most:
+
+| signal [scene-z] | η@10 | η@20 | 95% CI | η@30 | η@50 |
+|---|---|---|---|---|---|
+| PKL gain | +0.154 | **+0.224** | [−0.10, +0.42] | +0.295 | +0.344 |
+| TIP gain | +0.128 | +0.155 | [−0.07, +0.40] | +0.269 | +0.229 |
+| exact ΔE | +0.222 | +0.373 | [+0.21, +0.54] | +0.429 | +0.425 |
+| best single ΔE variant | +0.482 | +0.539 | [+0.27, +0.74] | +0.547 | +0.609 |
+| multi-metric ΔE oracle | +0.370 | +0.441 | [+0.26, +0.61] | +0.491 | +0.483 |
+
+### Hard Kill Test 1 — **PASSED, proceed**
+
+The pre-registered rule: stop if η_PKL ≥ 0.8 or η_TIP ≥ 0.8 at a 20% quota, consistently
+across tasks. The maximum η@20 reached by any published planning-aware metric in any form,
+including the normalisation that favours them, is **0.224** (PKL, scene-z, longitudinal).
+That is not close to 0.8, and not in the 0.6–0.8 WEAK GO band either.
+
+### The outcome the pre-registration did not anticipate
+
+The bands were written expecting PKL and TIP to *beat* task-agnostic perception metrics and
+still fall short of the oracle — "STRONG EMPIRICAL GAP if planning-aware scores beat standard
+perception metrics but stay < 0.6". They stay well below 0.6, but they **do not beat the
+standard metrics**: a plain risk-weighted perception error reaches 0.562 [0.28, 0.75] while
+PKL reaches 0.109 [−0.20, +0.34] and TIP 0.070 [−0.24, +0.33], both intervals containing
+random's 0.078. At a 20% quota, neither published planning-aware metric is distinguishable
+from choosing frames at random, and each is beaten by an ordinary perception metric.
+
+That wording is recorded rather than quietly relabelled, because it changes what the paper
+claims. The finding is not "planning-aware metrics get partway there". It is that **being
+planning-aware about which errors matter does not by itself say which frames are worth more
+computation** — and on this evidence it helps less than weighting perception error by risk.
+
+Neither metric is at fault on its own terms: both were designed to score a *detector* over a
+dataset, and both do track error counts frame by frame (§3.5). The gap is between *relevance
+of an error* and *marginal value of one specific extra computation*, and it is not closed by
+making an evaluation metric planning-aware.
+

@@ -54,6 +54,30 @@ from rap.paths import CACHE                                                     
 MAPS = ("singapore-hollandvillage", "singapore-queenstown",
         "boston-seaport", "singapore-onenorth")
 
+# Direction of each published score, derived from the authors' own code.
+#
+# PKL (planning_kl.py) is a BCE divergence of the predicted trajectory heatmap from the
+# ground-truth-conditioned one, so it is >= 0 and **higher is worse**.
+#
+# TIP (ti_planner.py, get_tip) is
+#       TIP_t = [q(A*) - q(Ahat)] - [p(A*) - p(Ahat)]
+# with p the ground-truth-conditioned distribution, q the predicted one, A* = argmax p and
+# Ahat = argmin (p - q).  Because A* maximises p, p(A*) - p(Ahat) >= 0; because Ahat minimises
+# p - q, q(A*) - q(Ahat) <= p(A*) - p(Ahat).  So **TIP <= 0 and more negative is worse**, the
+# opposite of PKL, reaching 0 only when the predicted distribution induces the same preference
+# gap as ground truth.  The comment "to conply with PKL's definition" in ti_planner.py sits on
+# a `torch.from_numpy` call and concerns the tensor type, not the sign.
+#
+# The allocation signal must be positive when the expensive mode helps that frame, so:
+WORSE_IS_HIGHER = {"pkl": True, "tip": False}
+
+
+def gain(metric: str, cheap, full):
+    """Per-frame value of running the expensive mode, positive when it helps."""
+    return (cheap - full) if WORSE_IS_HIGHER[metric] else (full - cheap)
+
+
+
 
 def load_tip():
     """Import TIP lazily: its utils module pulls in seaborn, which PKL does not need."""
@@ -97,13 +121,25 @@ def main():
     # Idempotent: a chunk whose CSV already exists is skipped, so an interrupted sweep can
     # be restarted without recomputing what landed.  One chunk here died of CUDA OOM only
     # because an unrelated job ran alongside it; this board has room for exactly one.
-    suffix = "" if args.nchunks == 1 else f"_c{args.chunk:02d}"
+    suffix = "" if args.nchunks == 1 else f"_n{args.nchunks}c{args.chunk:02d}"
     done = subs / f"{args.metric}_{args.variant}{suffix}.csv"
     if args.skip_existing and done.exists():
         print(f"  {done.name} exists -- skipping")
         return
 
     run = runmeta.new_run(args.tag, vars(args))
+    # Claim the CUDA context and a reusable allocator pool *before* the nuScenes tables, the
+    # ground truth and the map expansions fill host memory.  On this board GPU memory is the
+    # same physical RAM, and one scene slice failed three times in a row asking for its first
+    # 20 MiB after the maps had loaded -- the context could no longer be created, even though
+    # only 33 MiB was allocated.  Reserving early, then freeing into the caching allocator,
+    # lets every later allocation come from a pool that is already ours.
+    if torch.cuda.is_available():
+        torch.cuda.init()
+        pool = torch.empty(int(600e6 // 4), dtype=torch.float32, device="cuda:0")
+        del pool
+        print(f"  reserved CUDA pool: {torch.cuda.memory_reserved() / 1e6:.0f} MB")
+
     man = json.loads((subs / "manifest.json").read_text())
     all_scenes = sorted(man["scenes"])
 
@@ -168,7 +204,7 @@ def main():
     per = pd.DataFrame({"sample_token": tokens,
                         f"{m}_cheap": [out[args.cheap]["full"][t] for t in tokens],
                         f"{m}_full": [out[args.full]["full"][t] for t in tokens]})
-    per[f"G_{m.upper()}"] = per[f"{m}_cheap"] - per[f"{m}_full"]
+    per[f"G_{m.upper()}"] = gain(m, per[f"{m}_cheap"], per[f"{m}_full"])
     per.to_csv(run / f"{m}_{args.variant}{suffix}.csv", index=False)
     per.to_csv(subs / f"{m}_{args.variant}{suffix}.csv", index=False)
     print(f"\n  G_{m.upper()} mean {per[f'G_{m.upper()}'].mean():+.4f}  "

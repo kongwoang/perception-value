@@ -114,9 +114,32 @@ def inversion_rate(a, b, rng, npairs=200_000):
     return float((sa[ok] != sb[ok]).mean()) if ok.any() else np.nan
 
 
+# Direction of each published score, derived from the authors' own code.
+#
+# PKL (planning_kl.py) is a BCE divergence of the predicted trajectory heatmap from the
+# ground-truth-conditioned one, so it is >= 0 and **higher is worse**.
+#
+# TIP (ti_planner.py, get_tip) is
+#       TIP_t = [q(A*) - q(Ahat)] - [p(A*) - p(Ahat)]
+# with p the ground-truth-conditioned distribution, q the predicted one, A* = argmax p and
+# Ahat = argmin (p - q).  Because A* maximises p, p(A*) - p(Ahat) >= 0; because Ahat minimises
+# p - q, q(A*) - q(Ahat) <= p(A*) - p(Ahat).  So **TIP <= 0 and more negative is worse**, the
+# opposite of PKL, reaching 0 only when the predicted distribution induces the same preference
+# gap as ground truth.  The comment "to conply with PKL's definition" in ti_planner.py sits on
+# a `torch.from_numpy` call and concerns the tensor type, not the sign.
+#
+# The allocation signal must be positive when the expensive mode helps that frame, so:
+WORSE_IS_HIGHER = {"pkl": True, "tip": False}
+
+
+def gain(metric: str, cheap, full):
+    """Per-frame value of running the expensive mode, positive when it helps."""
+    return (cheap - full) if WORSE_IS_HIGHER[metric] else (full - cheap)
+
+
 def load_metric(subs: Path, metric: str, variant: str) -> pd.DataFrame | None:
     """One CSV per chunk, or a single unchunked CSV."""
-    parts = sorted(subs.glob(f"{metric}_{variant}_c*.csv"))
+    parts = sorted(subs.glob(f"{metric}_{variant}_n*c*.csv"))
     single = subs / f"{metric}_{variant}.csv"
     if not parts and single.exists():
         parts = [single]
@@ -124,6 +147,9 @@ def load_metric(subs: Path, metric: str, variant: str) -> pd.DataFrame | None:
         return None
     df = pd.concat([pd.read_csv(p) for p in parts], ignore_index=True)
     df = df.drop_duplicates("sample_token", keep="first")
+    # recomputed from the stored per-mode scores rather than trusted from the CSV, so a
+    # sign convention can be corrected without re-running the metric
+    df[f"G_{metric.upper()}"] = gain(metric, df[f"{metric}_cheap"], df[f"{metric}_full"])
     return df
 
 
