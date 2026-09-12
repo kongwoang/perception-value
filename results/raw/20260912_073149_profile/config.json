@@ -1,0 +1,15 @@
+{
+  "weights": "/home/kongwoang/models/yolo/yolov8s.pt",
+  "modes": [
+    "ns_cheap_320",
+    "ns_full_640"
+  ],
+  "reps": 250,
+  "warmup": 40,
+  "half": 1,
+  "backend": "trt",
+  "images": "/home/kongwoang/datasets/nuscenes/trainval/samples/CAM_FRONT",
+  "rounds": 3,
+  "engine_stem": null,
+  "allow_contention": false
+}

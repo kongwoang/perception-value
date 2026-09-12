@@ -147,7 +147,9 @@ def main():
     rng = np.random.default_rng(0)
     if args.images:
         import cv2
-        paths = sorted(Path(args.images).rglob("*.png"))[:32]
+        root = Path(args.images)
+        paths = sorted(p for ext in ("*.png", "*.jpg", "*.jpeg")
+                       for p in root.rglob(ext))[:32]
         images = [cv2.imread(str(p)) for p in paths]
         assert images, f"no images under {args.images}"
     else:

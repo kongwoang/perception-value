@@ -512,3 +512,45 @@ plus `environment.json`, and the narrative lives here.
 oracle -> Detector-B on KITTI -> Detector-B fidelity pairs -> Detector-B on nuScenes ->
 temporal replay -> geometry/task/fidelity controls -> Jetson profiling -> final matrix and
 statistics -> findings report. Stop and report if a falsifier fires.
+
+## 2026-09-12 07:40 — Phase 0E verdict: WEAK GO
+
+**Run IDs**
+`20260912_011500_nusc_tv`, `20260912_012320_percep_metrics`, `20260912_014735_temporal_kitti`,
+`20260912_071140_core_matrix`, `20260912_073405_finalize`
+
+**Observations**
+- 16 configuration x task rows. eta_perception_oracle@20 never exceeds **0.213**; negative
+  in 6 of 16. 60 of 64 sequence-level Wilcoxon tests significant after Holm.
+- F2 does not fire and is the strongest result: RT-DETR-l (set prediction, no NMS, 32.1M
+  params) shows eta_E 0.046 / 0.088 with corr(dE,dJ) ~ 0.005, stronger than YOLOv8s.
+- F3, F4, F5, F8 do not fire. Moderate 512->640 (1.18x GPU compute) still gives 0.213;
+  temporal replay gives 0.162 against 0.155 per-frame.
+- F1 does not fire on its stated condition but is the closest call: the multi-metric
+  perception oracle reaches 0.700 on KITTI/YOLOv8/320->640 longitudinal and 0.832 with
+  oracle range, while staying <= 0.434 in the other fourteen rows.
+- F6 fires in 2 of 16: nuScenes oracle-range top-20 task overlap 0.803 vs a 0.80 threshold.
+- F7 does not fire: best trivial heuristic 0.864 < 0.90, and the winning heuristic changes
+  in every row (six different ones win somewhere).
+- On the lateral task FULL is more accurate but more costly in all 10 planner/cost
+  variants; 11.7% of KITTI frames get a *worse* decision from better perception.
+
+**Problems encountered**
+- The core-matrix run was killed by a session teardown and left an empty run directory;
+  rerun cleanly.
+- An `until ! pgrep -f "01_profile_jetson"` loop deadlocked because the wrapper's own
+  command line contains the pattern - the same self-match class as the earlier
+  `pkill -f firefox`.
+- The profiler only globbed `*.png`, so nuScenes (`.jpg`) profiling failed until fixed.
+- Two counts in the first draft of the report were wrong (negative rows, multi-metric
+  row count); caught by the verification pass and corrected before commit.
+
+**Current interpretation**
+WEAK GO, not STRONG GO. The phenomenon is weakest exactly where the setup is most
+artificial (KITTI + YOLOv8 + aggressive gap + oracle geometry) and strongest in the more
+realistic configurations. That is reassuring scientifically, but it means a paper must lead
+with RT-DETR and the moderate gaps rather than the flagship KITTI configuration.
+
+**Next step**
+No further experiments. If the paper is written, it is a problem-formulation and benchmark
+contribution; the open weakness is that both planners are rule-based and open-loop.
