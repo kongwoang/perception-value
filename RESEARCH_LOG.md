@@ -814,3 +814,68 @@ kinematics — which is the thing "did it learn a planning function" should test
 No allocation metric, η, PKL/TIP score or test-split quantity was inspected in making this
 change; only validation ADE/FDE, as A7 permits. All six training runs restart from scratch with
 the new architecture, which is frozen from here.
+
+### 2026-09-13 03:05 — code review: five defects, and what has to be recomputed
+
+Full audit at the request of the user, before any further runs. Five real defects; three change
+published numbers. Fixes are committed, reruns deferred.
+
+**D1 — an arbitrary tie-break decided the majority of a selection.** `select_pooled` broke ties
+by row order. Count-valued signals have enormous tie groups: at a 20% quota over 3,376 nuScenes
+frames, only **326** frames are strictly above ΔE's cut value while **366** share it, so **349 of
+the 675 selected frames (52%)** were chosen by row order, not by the signal. So η@20 for `dE` and
+`E1_fn_only` was mostly not a property of the signal — this touches ΔE 0.147 (oracle
+longitudinal), 0.047 (mono), 0.317 (Planner C) and the 0.254 attributed to `best_dE_metric
+(E1_fn_only)` under Planner C vs truth. At a 10% quota only 4% of the selection is tied, so those
+numbers are much less affected. Continuous signals (E6, uncertainty, PKL, TIP) had a tie group of
+exactly 1 and are unaffected. Fixed: ties broken by a seeded random key, averaged over 8 seeds,
+with the tie fraction reported next to every η.
+
+*Methodological note worth keeping:* an independent hand-computed pipeline reproduced these same
+numbers exactly, because it shared the same stable-argsort convention. Agreement between two
+implementations cannot detect an arbitrary convention they both use.
+
+**D2 — the same defect, worse, in the score-free cross-target measurement.** The braking
+controller responds on only 219 of 2,655 frames, so its top-q sets are mostly tied at ΔJ = 0:
+18% of the set at a 10% quota, **59% at 20%**, **73% at 30%**. Both systems broke those ties by
+row order and therefore selected the *same early frames*, manufacturing overlap out of nothing.
+That is the likeliest source of **overlap@30 = 0.438 vs chance 0.300, paired +0.139 [+0.044,
++0.238]** — the only apparently significant result in that table. **overlap@10 = 0.105 vs chance
+0.100 is not contaminated** and the "indistinguishable from unrelated at tight budgets"
+conclusion stands on it. Fixed: random tie-breaks with a different seed per system, and the
+responsive fraction of each top-q set is now reported so a statistic computed on mostly-tied sets
+cannot be read as a property of the systems.
+
+**D3 — the monocular lift wrote the near-face range as the box centre.** `geo["z"]` is
+`range_ground(y2)`, the distance to the box's ground contact, i.e. the object's near face;
+nuScenes `translation` is the centre. Every lifted box therefore sat ~L/2 too close — **2.3 m for
+a car, 5.6 m for a bus**, so the error scaled with class. The same `geo["z"]` is *correct* where
+the braking controller consumes it as a gap to the nearest point, which is why it survived four
+phases. Consequence: **every submission on disk is stale** — completely for the `mono` variant,
+and in its false-positive boxes for the `oracle` variant, since matched detections there inherit
+ground-truth boxes and only unmatched ones are lifted.
+
+**D4 — pixel→metre inversion off by half a cell.** `get_grid` returns `bx = lower + dx/2` and the
+forward mapping is `pts = round((poly − lower)/dx)`, so the inverse is `poly = pts·dx + bx − dx/2`.
+Using `bx` left a +0.15 m bias on both axes. It cancels exactly in `66`, which only differences
+two paths on the same grid, but not in `74`, where paths are compared with the real trajectory and
+ADE is a norm.
+
+**D5 — reporting: deployable and diagnostic signals were never separated.** `G_PKL = pkl_cheap −
+pkl_full` needs the expensive output, so PKL and TIP as used here are **diagnostics, not candidate
+allocators**; the same is true of every ΔE variant and the multi-metric oracle. And `crit_sum` in
+the decision table comes from **ground-truth** geometry — a different quantity from the cheap-side
+`feat_crit_sum` in `features.py`, which is correctly labelled `cheap_det`. Presenting them
+side-by-side as comparable heuristics overstated what is deployable. Under mono the best
+*deployable* signal is cheap-detection uncertainty at 0.198 [+0.01, +0.35], the only one whose
+interval excludes zero.
+
+**Lesser notes.** The leakage registry is populated as a side effect of computing features rather
+than statically, so `assert_no_leakage` fails safe but can only catch *unregistered* columns, not
+a column whose source label is wrong. `features.py:66` is dead (registration already asserts
+legality). `75` does not report dropped bootstrap draws, while `62` does.
+
+**Rebuild chain, ~11 h of compute, deferred.** Submissions (~15 min) → PKL/TIP oracle + mono, 24
+chunks (~5 h) → Planner C oracle + mono, 12 chunks (~2.6 h) → Planner D test rasters oracle +
+mono, 12 chunks (~2.4 h) → the η, transfer and cross-target analyses (~1 h). The stale mono test
+rasters built from the old submissions were deleted rather than kept.
