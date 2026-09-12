@@ -367,3 +367,96 @@ dataset, and both do track error counts frame by frame (§3.5). The gap is betwe
 of an error* and *marginal value of one specific extra computation*, and it is not closed by
 making an evaluation metric planning-aware.
 
+---
+
+## 6. Planner C — PKL's own planner as the downstream decision maker
+
+§5 rested on decision costs from planners we wrote. The obvious objection is that a metric
+built around a different planner cannot be expected to predict them. Planner C removes the
+objection by making the downstream decision maker *PKL's own published planner* at its
+released weights (`scripts/66_planner_c_pkl_planner.py`).
+
+That planner emits, for each of 16 future timesteps from 0.25 s to 4.0 s, a heatmap of where
+the ego will be on a 0.3 m BEV grid — the 16 channels are timesteps, not trajectory templates
+— so its decision is the path it intends. The cost of a mode is
+
+```
+J_C(mode) = mean over timesteps of || argmax path given that mode's detections
+                                    − argmax path given ground-truth boxes ||   [metres]
+```
+
+No hand-written cost function, no threshold, units of metres. On the 3,376 frames the signal
+is far denser than either hand-written planner's: **|ΔJ_C| > 0 on 1,523 / 3,376 frames (45%)**,
+against 295 / 3,376 (8.7%) for the longitudinal task. The oracle prize is 15.11% of the
+all-cheap cost at a 20% quota, against 6.76% for uniform full fidelity at 100%.
+
+### The result, and it reverses the ordering
+
+| signal | η@20 | 95% CI | ρ vs ΔJ_C | inversion rate |
+|---|---|---|---|---|
+| random | +0.102 | [+0.00, +0.17] | — | — |
+| visual uncertainty | +0.025 | [−0.12, +0.17] | −0.023 | 0.511 |
+| downstream criticality | +0.227 | [+0.09, +0.34] | +0.056 | 0.478 |
+| exact perception gain ΔE | +0.317 | [+0.18, +0.42] | +0.133 | 0.427 |
+| best single ΔE variant (E6) | +0.420 | [+0.26, +0.56] | +0.175 | 0.413 |
+| multi-metric ΔE oracle | +0.341 | [+0.18, +0.48] | +0.107 | 0.453 |
+| **PKL gain** | **+0.872** | **[+0.823, +0.911]** | **+0.704** | **0.166** |
+| **TIP gain** | **+0.826** | [+0.772, +0.867] | +0.637 | 0.200 |
+| decision oracle ΔJ_C | +1.000 | — | +1.000 | 0.000 |
+
+Side by side with §5, the ordering inverts completely:
+
+| signal | η@20, Planner A (longitudinal) | η@20, Planner C (PKL's own) |
+|---|---|---|
+| best single ΔE variant | **+0.562** [+0.28, +0.75] | +0.420 [+0.26, +0.56] |
+| PKL gain | +0.109 [−0.20, +0.34] | **+0.872** [+0.82, +0.91] |
+| TIP gain | +0.070 [−0.24, +0.33] | **+0.826** [+0.77, +0.87] |
+
+### How much of this is circular — stated before any interpretation
+
+A large part of it. PKL is a divergence between the predicted trajectory heatmap and the
+ground-truth-conditioned one; J_C is the displacement of the **argmax of those same
+heatmaps**. They share the model, the weights, the forward pass, the inputs, *and* the
+functional form (both compare prediction against ground truth). A frame whose heatmap has
+moved a lot will tend to score high on both almost mechanically. η = 0.872 is therefore in
+large part an **internal-consistency** result, not evidence that PKL ranks frames by the
+marginal value of computation for an independent downstream task. When §3.10 called this test
+"maximally favourable to PKL" it understated the point: the test is close to tautological, and
+saying so is part of reporting it.
+
+ρ = +0.704 rather than ≈1 shows the two are not the same functional — the argmax can stay put
+while the distribution shifts, and vice versa — but the shared construction is enough that
+this cell cannot carry a claim about PKL solving allocation in general.
+
+What it *does* establish, and what no weaker check could: **PKL and TIP are wired correctly
+here.** Neither could reach 0.87 and 0.83 on 3,376 frames if converting our 2D monocular
+detections into a 3D submission had damaged them. That closes the "these authors broke PKL"
+reading of §5 far more firmly than the ρ = +0.29 level check of §3.5.
+
+### Hard Kill Test 1, re-evaluated honestly
+
+The pre-registered rule stops the project if η_PKL ≥ 0.8 or η_TIP ≥ 0.8 at a 20% quota
+**consistently across downstream tasks**. Observed: 0.109 (longitudinal), 0.107 (lateral),
+0.872 (Planner C) for PKL. That is as far from consistent as the data could be, so the rule
+does not fire — but that is a technicality about the wording, and it is not the reason to
+continue. The substantive reasons are that the one cell above 0.8 is the near-circular one,
+and that the cells using independent planners sit at random.
+
+### What the claim has to become
+
+Not "planning-aware perception metrics fail at compute allocation" — §6 refutes that as
+stated. Not "they solve it" either — §5 refutes that. What the evidence supports is:
+
+> **Which signal allocates compute best is determined by which planner defines the downstream
+> cost, and no signal transfers.** PKL is near-optimal for the planner it was built around
+> (η = 0.87) and indistinguishable from random for an independent one (η = 0.11). A plain
+> risk-weighted perception error is the reverse (0.56 vs 0.42). Allocation value is a property
+> of the perception–planner pair, not of the perception system alone.
+
+This is a weaker claim than the project set out with and a more defensible one, and it stacks
+with the two findings that survive unchanged: the frame-level value of extra compute is
+**sign-varying** — on Planner C, 643 of the 1,523 affected frames (42%) are made *worse* by the
+expensive detector, matching 48.5% under Planner A — and **selective allocation at a 20% quota
+beats uniform full fidelity at 100%** in every cell measured, including this one (15.11% vs
+6.76%).
+
