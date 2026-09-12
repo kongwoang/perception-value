@@ -554,3 +554,60 @@ with RT-DETR and the moderate gaps rather than the flagship KITTI configuration.
 **Next step**
 No further experiments. If the paper is written, it is a problem-formulation and benchmark
 contribution; the open weakness is that both planners are rule-based and open-loop.
+
+---
+
+## 2026-09-12 08:20 — Phase 0F pre-registration: literature-aware validation
+
+**Why this phase exists**
+Phase 0E returned WEAK GO against *task-agnostic* perception metrics. That is no longer the
+right bar. Several ideas this project treated as its own are prior knowledge:
+
+- selective perception / active vision (Reece & Shafer 1995, Ulysses-2)
+- Value of Computation / rational metareasoning
+- PKL, planner-centric perception evaluation (CVPR 2020)
+- planning-aware prediction/detection evaluation (Ivanovic & Pavone, IV 2022)
+- TIP, expected-utility planner-aware decomposition (ICML 2023)
+- task-aware risk estimation (Antonante et al., RSS 2023, PERSEVERE)
+- adaptive perception compute (DNN-SAM, Self-Cueing, CA-MOT, EneAD, VLA pruning)
+
+**Claims this project must NOT make**: first to make perception task-aware; introducing
+decision-aware perception; introducing value of computation; "perception accuracy does not
+imply planning quality". All prior.
+
+**The narrow claim actually under test**
+
+    Planning-aware *evaluation* and adaptive *inference* have been studied separately.
+    When choosing WHICH INPUTS receive additional neural perception compute, even exact
+    perception improvement -- and possibly existing planning-aware scores -- may fail to
+    rank inputs by marginal downstream decision benefit.
+
+    relevance of an error  !=  marginal value of correcting it with a particular computation
+
+**The kill test, stated before any result**
+Hard Kill Test 1: if eta_PKL >= 0.8 or eta_TIP >= 0.8 at a 20% quota consistently across
+downstream tasks, the thesis is substantially redundant. STOP and report, do not proceed to
+closed loop.
+
+Stage-1 verdict bands, fixed now: NO-GO if a planning-aware metric consistently reaches
+>= 0.8 of the decision oracle; WEAK GO at ~0.6-0.8; STRONG EMPIRICAL GAP if planning-aware
+scores beat standard perception metrics but stay < 0.6 under held-out scenes and moderate
+fidelity.
+
+**Honest prior expectation**
+PKL and TIP are built to score how much a perception error matters to a planner. That is a
+*relevance* question, and my Phase 0C-0E results say relevance and marginal-value-of-a-
+specific-computation come apart. So I expect them to beat standard dE and still fall short
+of the decision oracle. But they were designed by people who thought carefully about
+exactly this, and Phase 0E already showed a rich perception-only oracle reaching 0.70-0.83
+in the flagship KITTI cell, so a PKL/TIP score landing above 0.8 on nuScenes is entirely
+plausible. If it does, the project stops.
+
+**Execution priority**
+P0 PKL on existing nuScenes detections; P0 TIP on the same; P0 the diagnostic table against
+existing decision targets; P0 ranking/regret analysis. P1 independent Planner B, good
+geometry, operating-point control. P2 closed loop. No method development at any point.
+
+**Rule for prior code**: use official implementations, never reimplement from memory; record
+repository URL, commit, dependency versions, pretrained weights, split, and any modification;
+do not alter their scoring definitions; document every sign convention explicitly.
