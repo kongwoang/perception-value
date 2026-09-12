@@ -25,9 +25,11 @@ from rap.paths import RESULTS                       # noqa: E402
 from rap.viz import GRID, INK, INK2, MUTED, SERIES, _tidy   # noqa: E402
 
 OUT = Path(RESULTS) / "final" / "figures"
-TASKS = ["longitudinal", "lateral"]
+TASKS = ["longitudinal", "lateral", "plannerC_path_dev"]
 
 # one stable colour per signal family, so the three figures read together
+LABEL_TASK = {"plannerC_path_dev": "Planner C (PKL's own planner), path deviation"}
+
 STYLE = {
     "random":                 (MUTED,     "--", 1.4),
     "uncertainty":            (SERIES[4], "-",  1.6),
@@ -64,8 +66,11 @@ def save(fig, name):
 
 
 def fig_eta_vs_quota(cur):
-    fig, axes = plt.subplots(1, len(TASKS), figsize=(11.4, 4.3), sharey=True)
-    for ax, t in zip(np.atleast_1d(axes), TASKS):
+    tasks = [t for t in TASKS if (cur.task == t).any()]
+    fig, axes = plt.subplots(1, max(len(tasks), 1), figsize=(5.7 * max(len(tasks), 1), 4.3),
+                             sharey=True, squeeze=False)
+    axes = axes[0]
+    for ax, t in zip(axes, tasks):
         s = cur[cur.task == t]
         if s.eta.notna().sum() == 0:
             ax.text(0.5, 0.5, f"{t}: oracle gain is zero on this subset",
@@ -84,7 +89,7 @@ def fig_eta_vs_quota(cur):
                     color=INK2, fontsize=8.5)
         ax.axhline(0.6, color=GRID, lw=1)
         ax.set_xlabel("compute quota (% of frames run at full fidelity)")
-        ax.set_title(t)
+        ax.set_title(LABEL_TASK.get(t, t))
         _tidy(ax)
     np.atleast_1d(axes)[0].set_ylabel("η  (share of decision-oracle gain captured)")
     np.atleast_1d(axes)[-1].legend(frameon=False, fontsize=8.5, loc="upper left",
@@ -93,6 +98,7 @@ def fig_eta_vs_quota(cur):
 
 
 def fig_signal_vs_dj(d, signals, task):
+    d = d[d[f"_dJ_{task}"].notna()].reset_index(drop=True)
     dj = d[f"_dJ_{task}"].to_numpy()
     cols = [c for c in signals if c in d.columns]
     fig, axes = plt.subplots(1, len(cols), figsize=(3.2 * len(cols), 3.4), sharey=True)
@@ -112,6 +118,7 @@ def fig_signal_vs_dj(d, signals, task):
 
 
 def fig_overlap(d, signals, task, frac=0.20):
+    d = d[d[f"_dJ_{task}"].notna()].reset_index(drop=True)
     cols = [c for c in signals if c in d.columns] + [f"_dJ_{task}"]
     k = int(round(frac * len(d)))
     top = {c: set(np.argsort(-d[c].to_numpy(), kind="stable")[:k]) for c in cols}

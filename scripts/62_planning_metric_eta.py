@@ -30,7 +30,14 @@ from importlib import import_module                                             
 _pm = import_module("50_percep_metrics")
 
 QUOTAS = [0.10, 0.20, 0.30, 0.50]
+# Planner C is PKL's own published planner used as the downstream decision maker: the cost of
+# a mode is the metre displacement between the path that planner intends given that mode's
+# detections and the path it intends given ground-truth boxes (see 66_planner_c_pkl_planner).
+# It is a third task rather than a separate analysis so that every signal, quota, bootstrap
+# and ranking statistic is computed by exactly the same code as for the two hand-written
+# planners.
 TASKS = {"longitudinal": ("J_cheap", "J_full"), "lateral": ("Jlat_cheap", "Jlat_full")}
+PLANNER_C_TASK = {"plannerC_path_dev": ("JC_cheap", "JC_full")}
 NOCHK = lambda c: None
 
 
@@ -192,6 +199,8 @@ def main():
     ap.add_argument("--tag", default="phase0f_eta")
     ap.add_argument("--skip_multimetric", action="store_true")
     ap.add_argument("--nboot", type=int, default=300)
+    ap.add_argument("--no_planner_c", dest="planner_c", action="store_false",
+                    help="skip the Planner C task even if its CSVs exist")
     ap.add_argument("--coverage", default="per_metric", choices=["per_metric", "intersect"],
                     help="evaluate on each metric's own frames, or only where all overlap")
     args = ap.parse_args()
@@ -210,6 +219,20 @@ def main():
                 on=["seq", "frame"],
                 how="left", validate="one_to_one")
     assert d.sample_token.notna().all(), "unmapped frames"
+
+    # Planner C's per-frame costs, if computed
+    pc = sorted(subs.glob(f"planC_{args.variant}_n*c*.csv"))
+    if pc and args.planner_c:
+        g = pd.concat([pd.read_csv(x) for x in pc], ignore_index=True)
+        g = g.drop_duplicates("sample_token", keep="first")
+        keep = ["sample_token", "JC_cheap", "JC_full", "dJC", "dJC_soft"]
+        d = d.merge(g[[c for c in keep if c in g.columns]], on="sample_token", how="left")
+        cov = float(d.JC_cheap.notna().mean())
+        print(f"  Planner C: {len(g)} samples, coverage {cov:.3f}")
+        if cov > 0:
+            TASKS.update(PLANNER_C_TASK)
+    elif args.planner_c:
+        print("  Planner C: no CSV yet -- skipped")
 
     have = {}
     for m in ("pkl", "tip"):
@@ -239,6 +262,7 @@ def main():
 
     for tname, col in TASKS.items():
         d[f"_dJ_{tname}"] = (d[col[0]] - d[col[1]]).to_numpy()
+    dmask = {t: (d[c[0]].notna() & d[c[1]].notna()).to_numpy() for t, c in TASKS.items()}
 
     # Wiring validation.  Before believing a low eta, check the metrics are connected the
     # way their papers define them: the per-frame *level* must rise with that frame's error
@@ -267,22 +291,25 @@ def main():
     print("\n=== how much is there to allocate (eta's denominator, in absolute terms) ===")
     stakes = []
     for tname, col in TASKS.items():
-        dj = (d[col[0]] - d[col[1]]).to_numpy()
-        act = "same_action" if tname == "longitudinal" else "lat_same_action"
-        allc, allf = float(d[col[0]].sum()), float(d[col[1]].sum())
-        orc = budget.total_risk(d, budget.select_pooled(dj, 0.20), col)
+        dsel = d[dmask[tname]]
+        dj = (dsel[col[0]] - dsel[col[1]]).to_numpy()
+        act = ("same_action" if tname == "longitudinal" else
+               "lat_same_action" if tname == "lateral" else None)
+        allc, allf = float(dsel[col[0]].sum()), float(dsel[col[1]].sum())
+        orc = budget.total_risk(dsel, budget.select_pooled(dj, 0.20), col)
         st = {"task": tname, "J_all_cheap": allc, "J_all_full": allf,
               "J_oracle_at_20pct": orc,
               "oracle_reduction_frac": (allc - orc) / max(allc, 1e-9),
               "all_full_reduction_frac": (allc - allf) / max(allc, 1e-9),
               "frames_dJ_nonzero": int((np.abs(dj) > 1e-9).sum()),
               "frames_dJ_pos": int((dj > 1e-9).sum()), "frames_dJ_neg": int((dj < -1e-9).sum()),
-              "action_changes": int((d[act] == 0).sum()), "n_frames": len(d)}
+              "action_changes": (int((dsel[act] == 0).sum()) if act else -1),
+              "n_frames": len(dsel)}
         stakes.append(st)
         print(f"  {tname:13s} oracle@20% cuts {100 * st['oracle_reduction_frac']:5.2f}% of the"
               f" all-cheap cost; all-full at 100% compute cuts"
               f" {100 * st['all_full_reduction_frac']:5.2f}%")
-        print(f"                |dJ|>0 on {st['frames_dJ_nonzero']}/{len(d)} frames"
+        print(f"                |dJ|>0 on {st['frames_dJ_nonzero']}/{len(dsel)} frames"
               f"  (+{st['frames_dJ_pos']} / -{st['frames_dJ_neg']}),"
               f" action changes {st['action_changes']}")
     pd.DataFrame(stakes).to_csv(run / "allocation_stakes.csv", index=False)
@@ -320,10 +347,10 @@ def main():
         for name, sc in signals.items():
             # under per_metric coverage a published metric is scored on its own frames only,
             # and so is the oracle it is compared against, so the ratio stays well defined
-            sub = np.ones(len(d), bool)
+            sub = d[col[0]].notna().to_numpy() & d[col[1]].notna().to_numpy()
             for m, gcol in have.items():
                 if name.startswith(m.upper()):
-                    sub = d[gcol].notna().to_numpy()
+                    sub = sub & d[gcol].notna().to_numpy()
             dd = d if sub.all() else d[sub].reset_index(drop=True)
             ss = None if sc is None else np.asarray(sc, float)[sub]
             r = {"task": tname, "variant": args.variant, "signal": name,
@@ -365,6 +392,8 @@ def main():
     pd.set_option("display.width", 200, "display.max_columns", 30)
     for tname in TASKS:
         s = m[m.task == tname]
+        if s.empty:
+            continue
         print(f"\n=== {tname} ({args.variant}) ===")
         s = s.copy()
         s["eta_20_ci"] = [f"[{a:+.2f},{b:+.2f}]" if np.isfinite(a) else "--"
