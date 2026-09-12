@@ -120,3 +120,33 @@ and ΔJ gains. No other transformation is applied.
 - Ranking diagnostics against ΔJ: Spearman ρ, Kendall τ, pairwise inversion rate, and
   top-10% / top-20% frame-set overlap.
 
+### 3.5 Wiring validation — run before believing any low η
+
+A low η is only a finding if the metrics are connected the way their papers define them.
+Two checks, on the first slice of 15 scenes / 595 frames, before looking at any η:
+
+| check | Spearman ρ | expected |
+|---|---|---|
+| `pkl_cheap` vs cheap-mode false negatives | **+0.288** | more missed objects → worse score |
+| `pkl_full` vs full-mode false negatives | **+0.231** | same, independently |
+| `pkl_cheap` vs number of ground-truth objects | **+0.284** | more objects → more to get wrong |
+| **`G_PKL` vs ΔE (exact perception gain)** | **+0.065** | — |
+| `G_PKL` vs downstream criticality | +0.159 | — |
+
+The first three confirm both the direction ("higher is worse") and the frame-level join: the
+PKL **level** tracks that frame's error count. The fourth is the first substantive result
+rather than a check — the **difference** between the cheap and the expensive mode carries
+almost none of that structure. This is the shape the rest of the analysis has to test at
+scale: PKL is informative about *how much a frame's errors matter*, and close to
+uninformative about *how much this particular extra computation reduces them*.
+
+### 3.6 How much decision signal exists at all
+
+On the same slice, ΔJ is non-zero on **32 / 595 frames (5.4%)** longitudinally, with 17
+action changes, and on **0 / 595** laterally — which is why the lateral η is undefined on a
+single slice: the oracle's achievable gain is exactly zero, so η's denominator vanishes.
+This sparsity is the standing weakness carried over from Phase 0E, it is a property of the
+scenario mix rather than of the metrics, and it applies identically to every signal
+compared. It is stated here so the full-split numbers are read with it in mind: η on
+nuScenes rests on a small minority of frames.
+

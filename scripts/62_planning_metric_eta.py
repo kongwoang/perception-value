@@ -176,6 +176,38 @@ def main():
     for tname, col in TASKS.items():
         d[f"_dJ_{tname}"] = (d[col[0]] - d[col[1]]).to_numpy()
 
+    # Wiring validation.  Before believing a low eta, check the metrics are connected the
+    # way their papers define them: the per-frame *level* must rise with that frame's error
+    # count.  If it does and the cheap-minus-full *difference* still fails to rank frames by
+    # dJ, the failure is in the signal, not in the plumbing.
+    wire = []
+    for m, gcol in have.items():
+        for a, b, why in [(f"{m}_cheap", "cheap_fn", "more missed objects -> worse score"),
+                          (f"{m}_full", "full_fn", "more missed objects -> worse score"),
+                          (f"{m}_cheap", "n_gt", "more objects present -> more to get wrong"),
+                          (f"{m}_cheap", "cheap_fp", "more false positives -> worse score"),
+                          (gcol, "dE", "does the gain track the exact perception gain"),
+                          (gcol, "crit_sum", "does the gain track downstream criticality")]:
+            if a in d.columns and b in d.columns:
+                wire.append({"metric": m, "x": a, "y": b, "expect": why,
+                             "spearman": float(stats.spearmanr(d[a], d[b]).correlation)})
+    if wire:
+        w = pd.DataFrame(wire)
+        w.to_csv(run / "wiring_validation.csv", index=False)
+        print("\n=== wiring validation (levels must track error counts) ===")
+        print(w[["x", "y", "spearman", "expect"]].to_string(
+            index=False, float_format=lambda v: f"{v:+.3f}"))
+
+    # How much signal there is to recover at all: dJ is zero wherever the cheap and the
+    # expensive mode lead to the same action and the same cost.
+    print("\n=== decision-signal density ===")
+    for tname, col in TASKS.items():
+        dj = (d[col[0]] - d[col[1]]).to_numpy()
+        act = "same_action" if tname == "longitudinal" else "lat_same_action"
+        print(f"  {tname:13s} |dJ|>0 on {int((np.abs(dj) > 1e-9).sum())}/{len(d)} frames"
+              f"  ({float((np.abs(dj) > 1e-9).mean()):.3f})"
+              f"   action changes {int((d[act] == 0).sum())}")
+
     rows, curves = [], []
     for tname, col in TASKS.items():
         dj = d[f"_dJ_{tname}"].to_numpy()
