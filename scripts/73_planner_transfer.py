@@ -32,11 +32,19 @@ from rap.paths import CACHE, RESULTS                                           #
 QUOTAS = [0.10, 0.20, 0.30, 0.50]
 
 
-def topk(v: np.ndarray, q: float) -> np.ndarray:
+def topk(v: np.ndarray, q: float, seed: int = 0) -> np.ndarray:
+    """Top-q set with ties broken at random, not by row order.
+
+    Decision values are zero wherever a downstream system does not react, so a top-q set can be
+    mostly one tie group; breaking that tie by row order makes two systems select the same early
+    frames and manufactures agreement.  See the 2026-09-13 review entry in RESEARCH_LOG.
+    """
+    v = np.asarray(v, float)
     k = int(round(q * len(v)))
     sel = np.zeros(len(v), bool)
     if k > 0:
-        sel[np.argsort(-np.asarray(v, float), kind="stable")[:k]] = True
+        jitter = np.random.default_rng(seed).random(len(v))
+        sel[np.lexsort((jitter, -v))[:k]] = True
     return sel
 
 
@@ -100,7 +108,7 @@ def main():
              "inversion_rate": inversion_rate(va, vb, rng)}
         for q in QUOTAS:
             k = int(q * 100)
-            sa, sb = topk(va, q), topk(vb, q)
+            sa, sb = topk(va, q), topk(vb, q, seed=10_000)
             r[f"top{k}_overlap"] = float((sa & sb).sum() / max(sa.sum(), 1))
             r[f"eta_q1_to_q2_{k}"] = cross_eta(va, vb, q)
             r[f"eta_q2_to_q1_{k}"] = cross_eta(vb, va, q)

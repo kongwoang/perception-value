@@ -195,7 +195,11 @@ class NuScenesDB:
         name = self.scene_name(scene)
         inst = self._track_map.get(name)
         if inst is None:
-            return {}
+            # Returning {} here would send every detection down the monocular-lift branch, so
+            # an "oracle" submission would silently become a "mono" one with no error anywhere.
+            raise RuntimeError(
+                f"no track map for {name}: call adapter.geometry({name!r}) before "
+                "annotations_for, or the oracle variant degrades to the monocular lift")
         tok = self.samples(scene)[frame]
         out = {}
         for a in self._ann_by_sample.get(tok, []):

@@ -121,7 +121,13 @@ def fig_overlap(d, signals, task, frac=0.20):
     d = d[d[f"_dJ_{task}"].notna()].reset_index(drop=True)
     cols = [c for c in signals if c in d.columns] + [f"_dJ_{task}"]
     k = int(round(frac * len(d)))
-    top = {c: set(np.argsort(-d[c].to_numpy(), kind="stable")[:k]) for c in cols}
+    # random tie-breaks, a different seed per column: a stable sort would make two
+    # mostly-tied columns select the same early rows and show spurious overlap
+    def _top(col, seed):
+        v = d[col].to_numpy(float)
+        j = np.random.default_rng(seed).random(len(v))
+        return set(np.lexsort((j, -v))[:k])
+    top = {c: _top(c, i) for i, c in enumerate(cols)}
     M = np.array([[len(top[a] & top[b]) / max(k, 1) for b in cols] for a in cols])
     fig, ax = plt.subplots(figsize=(0.72 * len(cols) + 3.2, 0.72 * len(cols) + 2.6))
     im = ax.imshow(M, cmap="Blues", vmin=0, vmax=1)
