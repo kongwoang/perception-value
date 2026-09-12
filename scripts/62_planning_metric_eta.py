@@ -38,6 +38,10 @@ QUOTAS = [0.10, 0.20, 0.30, 0.50]
 # planners.
 TASKS = {"longitudinal": ("J_cheap", "J_full"), "lateral": ("Jlat_cheap", "Jlat_full")}
 PLANNER_C_TASK = {"plannerC_path_dev": ("JC_cheap", "JC_full")}
+# Phase 0G: the same PKL planner scored against the REAL future trajectory instead of against
+# its own ground-truth-conditioned output.  This is the non-circular version of Planner C --
+# the target is external to the planner, so PKL and the cost no longer share a functional form.
+PLANNER_C_TRUTH_TASK = {"plannerC_ade_truth": ("JC_ade_cheap", "JC_ade_full")}
 NOCHK = lambda c: None
 
 
@@ -199,6 +203,8 @@ def main():
     ap.add_argument("--tag", default="phase0f_eta")
     ap.add_argument("--skip_multimetric", action="store_true")
     ap.add_argument("--nboot", type=int, default=300)
+    ap.add_argument("--planner_c_truth",
+                    default=str(CACHE / "planner_d" / "planC_vs_truth.csv"))
     ap.add_argument("--no_planner_c", dest="planner_c", action="store_false",
                     help="skip the Planner C task even if its CSVs exist")
     ap.add_argument("--coverage", default="per_metric", choices=["per_metric", "intersect"],
@@ -233,6 +239,16 @@ def main():
             TASKS.update(PLANNER_C_TASK)
     elif args.planner_c:
         print("  Planner C: no CSV yet -- skipped")
+
+    truth = Path(args.planner_c_truth)
+    if args.planner_c and truth.exists():
+        g = pd.read_csv(truth).drop_duplicates("sample_token", keep="first")
+        keep = ["sample_token", "JC_ade_cheap", "JC_ade_full"]
+        d = d.merge(g[keep], on="sample_token", how="left")
+        cov = float(d.JC_ade_cheap.notna().mean())
+        print(f"  Planner C vs truth: {len(g)} samples, coverage {cov:.3f}")
+        if cov > 0:
+            TASKS.update(PLANNER_C_TRUTH_TASK)
 
     have = {}
     for m in ("pkl", "tip"):
