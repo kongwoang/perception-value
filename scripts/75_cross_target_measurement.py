@@ -38,21 +38,42 @@ from rap.paths import CACHE, RESULTS                                           #
 QUOTAS = [0.10, 0.20, 0.30]
 
 
-def topk_mask(v: np.ndarray, q: float) -> np.ndarray:
+def topk_mask(v: np.ndarray, q: float, seed: int = 0) -> np.ndarray:
+    """Top-q set with ties broken at random rather than by row order.
+
+    This matters more here than anywhere else.  The braking controller responds on only 219 of
+    2,655 frames, so at a 20% quota 312 of the 531 selected frames are tied at dJ = 0 and at a
+    30% quota 578 of 797 are.  With a stable argsort both systems break those ties by row order
+    and therefore select the *same* early frames, manufacturing overlap out of nothing -- which
+    is the likeliest source of the one apparently significant result in the oracle-geometry
+    table, overlap@30 = +0.139 above chance.
+    """
+    v = np.asarray(v, float)
     k = max(int(round(q * len(v))), 1)
     sel = np.zeros(len(v), bool)
-    sel[np.argsort(-np.asarray(v, float), kind="stable")[:k]] = True
+    jitter = np.random.default_rng(seed).random(len(v))
+    sel[np.lexsort((jitter, -v))[:k]] = True
     return sel
 
 
-def cross_eta(v_from: np.ndarray, v_to: np.ndarray, q: float) -> float:
-    best = float(np.asarray(v_to, float)[topk_mask(v_to, q)].sum())
-    got = float(np.asarray(v_to, float)[topk_mask(v_from, q)].sum())
+def responsive_fraction(v: np.ndarray, q: float) -> float:
+    """Share of the top-q set that the signal actually distinguishes (non-zero value)."""
+    sel = topk_mask(v, q)
+    return float((np.abs(np.asarray(v, float)[sel]) > 1e-9).mean())
+
+
+def cross_eta(v_from: np.ndarray, v_to: np.ndarray, q: float, seeds: int = 8) -> float:
+    """Averaged over tie-break seeds, so a mostly-tied ranking is not scored by row order."""
+    vt = np.asarray(v_to, float)
+    best = float(np.mean([vt[topk_mask(vt, q, sd)].sum() for sd in range(seeds)]))
+    got = float(np.mean([vt[topk_mask(np.asarray(v_from, float), q, sd)].sum()
+                         for sd in range(seeds)]))
     return got / best if abs(best) > 1e-12 else np.nan
 
 
 def random_eta(v_to: np.ndarray, q: float, rng, reps: int = 8) -> float:
-    best = float(np.asarray(v_to, float)[topk_mask(v_to, q)].sum())
+    best = float(np.mean([np.asarray(v_to, float)[topk_mask(v_to, q, sd)].sum()
+                          for sd in range(reps)]))
     if abs(best) <= 1e-12:
         return np.nan
     vals = [float(np.asarray(v_to, float)[topk_mask(rng.random(len(v_to)), q)].sum()) / best
@@ -120,14 +141,27 @@ def main():
                      "paired_diff": r, "lo": lo, "hi": hi, "n": int(mask.sum())})
         print(f"  spearman, {name:13s} {r:+.3f} [{lo:+.3f},{hi:+.3f}]   kendall {k:+.3f}")
 
+    # how much of each top-q set the signal actually distinguishes; an overlap statistic
+    # computed on sets that are mostly tied at zero measures the tie-break, not the systems
+    for q in QUOTAS:
+        rows.append({"quantity": f"responsive_frac brake @{int(q*100)}",
+                     "value": responsive_fraction(va, q), "baseline": np.nan,
+                     "paired_diff": np.nan, "lo": np.nan, "hi": np.nan, "n": len(d)})
+        rows.append({"quantity": f"responsive_frac plan @{int(q*100)}",
+                     "value": responsive_fraction(vb, q), "baseline": np.nan,
+                     "paired_diff": np.nan, "lo": np.nan, "hi": np.nan, "n": len(d)})
+        print(f"  responsive fraction @{int(q*100):<3d} brake "
+              f"{responsive_fraction(va, q):.3f}  plan {responsive_fraction(vb, q):.3f}")
+
     # ---- oracle-set overlap against chance ---------------------------------------------
     for q in QUOTAS:
         chance = max(int(round(q * len(d))), 1) / len(d)
-        ov = float((topk_mask(va, q) & topk_mask(vb, q)).sum() / topk_mask(va, q).sum())
+        ov = float(np.mean([(topk_mask(va, q, sd) & topk_mask(vb, q, sd + 10_000)).sum()
+                            / max(topk_mask(va, q, sd).sum(), 1) for sd in range(8)]))
         diffs, vals = [], []
-        for take in scene_boot(scenes, args.nboot, rng):
+        for b, take in enumerate(scene_boot(scenes, args.nboot, rng)):
             x, y = va[take], vb[take]
-            sa, sb = topk_mask(x, q), topk_mask(y, q)
+            sa, sb = topk_mask(x, q, b), topk_mask(y, q, b + 10_000)
             o = float((sa & sb).sum() / sa.sum())
             c = sa.sum() / len(x)
             vals.append(o); diffs.append(o - c)

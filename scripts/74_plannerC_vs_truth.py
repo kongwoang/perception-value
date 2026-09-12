@@ -40,7 +40,14 @@ from rap.paths import CACHE                                                    #
 NX = NY = 256
 CELLS = 5 * NX * NY
 DX, BX, _ = get_grid([-17.0, -38.5, 60.0, 38.5], [0.3, 0.3])
-RES, LO = np.asarray(DX)[:2], np.asarray(BX)[:2]
+# get_grid returns bx = lower + dx/2, and raster_render's forward mapping is
+#     pts = round((poly - bx + dx/2) / dx) = round((poly - lower) / dx)
+# so the exact inverse is poly = pts*dx + lower = pts*dx + bx - dx/2.  Using bx directly left a
+# +0.15 m bias on both axes.  It cancels in 66, which only ever takes differences of two paths
+# on the same grid, but not here, where paths are compared against the real trajectory and ADE
+# is a norm rather than a signed offset.
+RES = np.asarray(DX)[:2]
+LO = np.asarray(BX)[:2] - RES / 2.0
 
 
 @torch.no_grad()

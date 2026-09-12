@@ -106,7 +106,14 @@ def build_submission(db, adapter, det_cache, seqs, cfg: RiskConfig,
                     # monocular lift
                     dname = COARSE_TO_NUSC.get(str(d["coarse"][keep][k]), "car")
                     w, l, h = SIZE_PRIOR[dname]
-                    x_ego = float(geo["z"][keep][k])
+                    # geo["z"] is range_ground(y2), the distance to the box's ground contact,
+                    # i.e. the object's NEAR face.  nuScenes `translation` is the box centre, so
+                    # the centre sits half a length further away.  Writing the near-face range
+                    # as the centre put every lifted box ~L/2 too close -- 2.3 m for a car and
+                    # 5.6 m for a bus, so the error was class-dependent.  The same geo["z"] is
+                    # correct where the braking controller consumes it as a gap to the nearest
+                    # point, which is why this was easy to miss.
+                    x_ego = float(geo["z"][keep][k]) + l / 2.0
                     y_ego = float((geo["lat_min"][keep][k] + geo["lat_max"][keep][k]) / 2)
                     centre = _ego_to_global(np.array([[x_ego, y_ego, h / 2]]), R_ego, t_ego)[0]
                     q = Rotation.from_euler("z", yaw_ego).as_quat()      # x,y,z,w

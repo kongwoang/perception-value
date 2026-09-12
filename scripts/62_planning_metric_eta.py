@@ -45,6 +45,9 @@ PLANNER_C_TRUTH_TASK = {"plannerC_ade_truth": ("JC_ade_cheap", "JC_ade_full")}
 NOCHK = lambda c: None
 
 
+TIE_SEEDS = 8      # tie-breaks averaged over this many seeds
+
+
 def eta_parts(df, score, col, quota=0.20):
     """(captured reduction, oracle's achievable reduction, all-cheap cost) at `quota`.
 
@@ -52,10 +55,16 @@ def eta_parts(df, score, col, quota=0.20):
     only tens of frames carrying non-zero dJ, a bootstrap draw can land on a near-zero
     oracle prize and send eta to +-10.  The absolute reduction is always interpretable.
     """
-    pick = lambda s: budget.select_pooled(np.asarray(s, float), quota)
+    def pick(s, seed):
+        return budget.select_pooled(np.asarray(s, float), quota, seed=seed)
+
     allc = float(df[col[0]].sum())
-    orc = budget.total_risk(df, pick((df[col[0]] - df[col[1]]).to_numpy()), col)
-    tot = budget.total_risk(df, pick(np.asarray(score, float)), col)
+    dj = (df[col[0]] - df[col[1]]).to_numpy()
+    sc = np.asarray(score, float)
+    # ties at the cut are broken at random and averaged, so a count-valued signal cannot be
+    # scored by row order; the oracle is averaged the same way for symmetry
+    orc = float(np.mean([budget.total_risk(df, pick(dj, sd), col) for sd in range(TIE_SEEDS)]))
+    tot = float(np.mean([budget.total_risk(df, pick(sc, sd), col) for sd in range(TIE_SEEDS)]))
     return allc - tot, allc - orc, allc
 
 
@@ -382,6 +391,8 @@ def main():
                 v = got / prize if prize > 1e-12 else np.nan
                 r[f"eta_{int(q * 100)}"] = v
                 r[f"reduction_frac_{int(q * 100)}"] = got / allc if allc > 1e-12 else np.nan
+                r[f"tie_frac_{int(q * 100)}"] = (np.nan if ss is None
+                                                else budget.tie_fraction(ss, q))
                 lo, hi, drop = eta_boot(dd, ss, col, q, nboot=args.nboot)
                 r[f"eta_{int(q * 100)}_lo"], r[f"eta_{int(q * 100)}_hi"] = lo, hi
                 r[f"eta_{int(q * 100)}_boot_dropped"] = drop

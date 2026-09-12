@@ -10,12 +10,45 @@ import numpy as np
 import pandas as pd
 
 
-def select_pooled(score: np.ndarray, quota: float) -> np.ndarray:
-    """Top-quota frames over the whole dataset."""
+def tie_fraction(score: np.ndarray, quota: float) -> float:
+    """Share of the selected set that a tie at the cut decides rather than the score.
+
+    Count-valued signals (a false-negative count, an unweighted dE) take few distinct
+    values, so the quota can fall deep inside a tie group: at a 20% quota on 3,376 nuScenes
+    frames only 326 frames are strictly above dE's cut value while 366 share it, leaving 52%
+    of the selection to the tie-break.  Reported so a ranking that is mostly arbitrary can
+    never be read as a property of the signal.
+    """
+    n = len(score)
+    k = int(round(quota * n))
+    if k <= 0 or k >= n:
+        return 0.0
+    cut = np.sort(np.asarray(score, float))[::-1][k - 1]
+    above = int((np.asarray(score, float) > cut).sum())
+    return (k - above) / k
+
+
+def select_pooled(score: np.ndarray, quota: float, seed: int | None = None) -> np.ndarray:
+    """Top-quota frames over the whole dataset, with ties broken at random.
+
+    A stable argsort breaks ties by row order, which is not a property of the score: two
+    signals that tie on most of the selected set would still get a definite, reproducible and
+    meaningless ranking, and two independent implementations sharing the convention would
+    agree with each other while both being arbitrary.  With `seed` given, ties are broken by a
+    seeded random key instead, so callers can average over seeds; `seed=None` keeps the old
+    deterministic order for backward compatibility with published tables.
+    """
+    score = np.asarray(score, float)
     k = int(round(quota * len(score)))
     sel = np.zeros(len(score), dtype=bool)
-    if k > 0:
-        sel[np.argsort(-score, kind="stable")[:k]] = True
+    if k <= 0:
+        return sel
+    if seed is None:
+        order = np.argsort(-score, kind="stable")
+    else:
+        jitter = np.random.default_rng(seed).random(len(score))
+        order = np.lexsort((jitter, -score))
+    sel[order[:k]] = True
     return sel
 
 

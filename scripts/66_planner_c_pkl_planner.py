@@ -56,7 +56,9 @@ MAPS = ("singapore-hollandvillage", "singapore-queenstown",
 # positions on the same grid, so any constant origin offset cancels.
 _DX, _BX, (_NX, _NY) = get_grid([-17.0, -38.5, 60.0, 38.5], [0.3, 0.3])
 GRID_RES = np.asarray(_DX)[:2]
-GRID_LO = np.asarray(_BX)[:2]
+# bx is the first cell centre, so the grid origin is bx - dx/2.  The constant cancels in
+# `deviation`, which differences two paths on the same grid, but keep the mapping exact.
+GRID_LO = np.asarray(_BX)[:2] - GRID_RES / 2.0
 STRETCH, LAYERS, LINES = 70.0, ["road_segment", "lane"], ["road_divider", "lane_divider"]
 
 
