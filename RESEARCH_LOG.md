@@ -611,3 +611,132 @@ geometry, operating-point control. P2 closed loop. No method development at any 
 **Rule for prior code**: use official implementations, never reimplement from memory; record
 repository URL, commit, dependency versions, pretrained weights, split, and any modification;
 do not alter their scoring definitions; document every sign convention explicitly.
+
+---
+
+## 2026-09-12 16:45 — Phase 0G pre-registration: planner-conditionality falsification
+
+Written before any Planner D training and before any Phase 0G allocation number exists.
+Branch `exp/phase0g-planner-conditionality`. Paper title: *The Decision Value of Perception
+Compute*. This is **not** a method phase: no allocator is built.
+
+### The claim under test
+
+> The marginal downstream value of additional perception compute is conditional on the
+> downstream decision maker, and an allocation score that works for one planner need not
+> preserve the valuable-input ranking for another.
+
+with `V_i^q = J_q(pi_q(z_i^cheap), s_i) − J_q(pi_q(z_i^full), s_i)`. The question is whether
+`q` changes the **ordering** of `V_i^q`, not its scale.
+
+Phase 0F left PKL at η@20 = 0.109 for Planner A and 0.872 for Planner C, but Planner C is
+near-circular with PKL (PKL is a divergence of the planner heatmaps; J_C is displacement of
+those same heatmaps' argmax). Phase 0G fills the missing quadrant — a learned planner that is
+*independent* of PKL — and adds external planners we did not write.
+
+### Frozen now: split
+
+`configs/phase0g_scene_split.json`, committed before training. Test = the 85 Phase-0F scenes
+verbatim; the remaining 765 ordered by (location, name) with every 8th within each location to
+validation. No RNG. **train 667 scenes / 26,828 keyframes · val 98 / 3,945 · test 85 / 3,376**,
+verified pairwise disjoint by assertion. The 85 test scenes are never used for training, early
+stopping, architecture selection, augmentation choice, normalisation fitting or
+hyperparameters.
+
+**Distribution shift recorded in advance**: the test scenes are only boston-seaport (26) and
+singapore-onenorth (59) — the trainval01 blob contains no hollandvillage or queenstown test
+scenes — while training is 58% boston-seaport and 16% onenorth. Planner D viability will
+therefore be reported both on all validation scenes **and** restricted to validation scenes in
+those two locations. This is a property of which blob is on disk, not a choice.
+
+### Frozen now: Planner D
+
+Input: the same 5-channel BEV raster the released PKL planner consumes, built by calling
+`planning_centric_metrics.planning_kl`'s own `samp2ego`, `samp2mapname`, `get_local_map`,
+`get_other_objs`, `raster_render` — so C-vs-D is a planner comparison, not a representation
+comparison. No PKL weights, layers, distillation, or PKL/TIP scores are used in training.
+
+Architecture, frozen: four conv blocks (3×3, stride 2, GroupNorm, ReLU) at 32/64/128/256
+channels, adaptive global average pool, MLP 256→256→32, output 16×2 waypoints. No heatmap, no
+classification over cells, no attention or recurrence. Three training seeds.
+
+Target: the **real** future ego trajectory at 0.25…4.00 s in 16 steps, expressed in the current
+ego frame using PKL's own `objects2frame`, from official ego poses with interpolation over
+timestamps. Loss: MSE over the 16×2 coordinates. Never trained against Planner C output.
+
+Two variants, both frozen: **D-GT** (GT rasters only) and **D-Aug** (same rasters with fixed
+corruption — object dropout 0.10, translation jitter σ = 0.50 m, size jitter σ = 0.10
+multiplicative, heading jitter σ = 5°). These corruption values are stipulated, not fitted to
+the Phase-0F test detections, and are not tuned on η. D-Aug exists only to test whether D-GT
+results are an artefact of train/test shift.
+
+Viability gate, checked **before** any cheap/full evaluation: validation ADE at least 10% below
+a constant-velocity / constant-heading predictor; FDE also reported. Architecture may change
+only while looking at validation ADE/FDE, with every change committed. Once cheap/full
+evaluation begins, everything is frozen.
+
+Primary Planner-D cost is error against the **real** future trajectory,
+`J_D^ADE(mode) = mean_t || pi_D(raster_mode)_t − y_true_t ||`, with
+`V^D = J_D^ADE(cheap) − J_D^ADE(full)`. Secondary: FDE, and self-consistency against
+`pi_D(raster_GT)` — secondary because it is planner-internal, the same weakness that makes
+Planner C near-circular.
+
+### Frozen now: quotas, statistics, falsifiers
+
+Quotas 10/20/30/50%, pooled top-quota selection. At least 400 scene-level bootstrap draws,
+never frame-level; degenerate draws dropped and counted. Absolute cost reductions reported
+alongside η. Holm correction on the pre-declared family of paired tests.
+
+Planner D falsifiers: **D-F1** PKL or TIP reaches η@20 ≥ 0.80 on *both* D-GT and D-Aug under
+real-trajectory ADE with a non-degenerate CI → the "PKL is tied to its own planner" argument is
+substantially weakened. **D-F2** C-vs-D top-20 oracle overlap ≥ 0.80 *and* cross-planner η@20 ≥
+0.80 in both directions, for both D variants → controlled evidence for planner conditionality
+fails. **D-F3** fewer than 5% of affected frames have V_D < 0 for both variants → Planner D is
+not evidence for sign-varying value. **D-F4** Planner D fails the constant-velocity baseline →
+its allocation result is not interpreted.
+
+External falsifiers: **B-F1** both external planners have P(V<0 | V≠0) < 0.05 → sign variation
+does not replicate externally. **B-F2** for both planners oracle@20 gains < 10% extra over
+all-FULL relative to the oracle's achievable improvement → selective allocation is weak
+externally. **B-F3** PDM-vs-IDM top-20 overlap ≥ 0.80 and both cross-η@20 ≥ 0.80 → planner
+identity does not alter the valuable-state ranking externally. **B-F4** one published
+planning/task-aware score reaches η@20 ≥ 0.80 for both external planners → benchmark novelty
+downgraded.
+
+A single number will not end the phase: if PKL reaches ~0.85 on Planner D, the decision also
+requires that it holds for both D variants under real-trajectory ADE, that C-D oracle overlap
+is high, that cross-planner η is high, and that the transfer survives an external target.
+
+### Deviation declared in advance: the Track B perception intervention
+
+Track B wants PDM-Closed and IDM driven by a real YOLOv8s 320→640 fidelity pair. Measured
+today: nuPlan mini db + maps is 9.5 GB and downloads in ~26 min at 6.03 MB/s, but the mini
+**camera** blobs are 9 shards of 45–54 GB (~450 GB) against 138 GB of free disk, and shards are
+split by blob rather than by log, so an arbitrary shard may not contain complete 15 s scenario
+windows at all. PDM-Closed and IDM consume tracked objects from the db, not images.
+
+Declared plan, in this order:
+
+1. **Track A first** — it is in-domain, uses the real detector, has 3,376 frames, and changes
+   exactly one variable.
+2. **Track B on all of nuPlan mini with a *measured-transfer* intervention.** Rather than
+   inventing a corruption model, fit `P(detect | range, image-space size, class, truncation)`
+   and the false-positive distribution separately for YOLOv8s at 320 and at 640 from the ~11k
+   KITTI + nuScenes frames already computed, and apply that measured function to nuPlan tracked
+   objects. This is a measurement of the real detector transported to a new domain, not a
+   stipulated corruption. Stated limitation: it assumes the miss profile transfers from
+   nuScenes CAM_FRONT to nuPlan's front camera across different intrinsics, resolution and city.
+3. **Then one camera shard** (~50 GB, ~2.3 h) as a real-detector spot check on whatever subset
+   it covers, if step 2's coverage holds up.
+
+Steps 2 and 3 have *opposite* weaknesses — coverage versus in-domain realism. Agreement between
+them makes the deviation immaterial; disagreement is itself a reportable finding. Neither is
+presented as satisfying B4 as written.
+
+### Honest prior expectation
+
+Planner C's 0.872 is mostly internal consistency, so I expect PKL to fall well below it on
+Planner D. But Planner D shares PKL's *input representation* and its training data domain, and
+both planners are ultimately predicting where the ego goes — so a high PKL η on Planner D is
+entirely possible, and would mean the planner-conditionality claim is about objectives rather
+than architectures, or is wrong. If D-F1 and D-F2 both fire, the paper is reframed or stopped.
