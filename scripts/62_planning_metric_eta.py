@@ -34,13 +34,24 @@ TASKS = {"longitudinal": ("J_cheap", "J_full"), "lateral": ("Jlat_cheap", "Jlat_
 NOCHK = lambda c: None
 
 
-def eta(df, score, col, quota=0.20):
-    """Share of the decision oracle's achievable cost reduction captured at `quota`."""
+def eta_parts(df, score, col, quota=0.20):
+    """(captured reduction, oracle's achievable reduction, all-cheap cost) at `quota`.
+
+    Returned separately because eta is their ratio and the denominator can be tiny: with
+    only tens of frames carrying non-zero dJ, a bootstrap draw can land on a near-zero
+    oracle prize and send eta to +-10.  The absolute reduction is always interpretable.
+    """
     pick = lambda s: budget.select_pooled(np.asarray(s, float), quota)
     allc = float(df[col[0]].sum())
     orc = budget.total_risk(df, pick((df[col[0]] - df[col[1]]).to_numpy()), col)
     tot = budget.total_risk(df, pick(np.asarray(score, float)), col)
-    return (allc - tot) / (allc - orc) if allc - orc > 1e-12 else np.nan
+    return allc - tot, allc - orc, allc
+
+
+def eta(df, score, col, quota=0.20):
+    """Share of the decision oracle's achievable cost reduction captured at `quota`."""
+    got, prize, _ = eta_parts(df, score, col, quota)
+    return got / prize if prize > 1e-12 else np.nan
 
 
 def eta_boot(df, score, col, quota, nboot=300, seed=0):
@@ -51,17 +62,24 @@ def eta_boot(df, score, col, quota, nboot=300, seed=0):
     uniq = np.unique(scenes)
     idx_of = {u: np.flatnonzero(scenes == u) for u in uniq}
     sc = None if score is None else np.asarray(score, float)
-    vals = []
+    _, prize0, _ = eta_parts(df, np.zeros(len(df)), col, quota)
+    vals, dropped = [], 0
     for b in range(nboot):
         take = np.concatenate([idx_of[u] for u in rng.choice(uniq, len(uniq), replace=True)])
         db = df.iloc[take]
         s_ = (np.random.default_rng(1000 + b).random(len(db)) if sc is None else sc[take])
-        v = eta(db, s_, col, quota)
-        if np.isfinite(v):
-            vals.append(v)
+        got, prize, _ = eta_parts(db, s_, col, quota)
+        # A draw whose oracle prize collapses cannot say anything about the *share* of that
+        # prize a signal captures; keeping it would report an interval dominated by division
+        # by almost nothing.  Draws dropped are counted and reported.
+        if prize <= max(1e-12, 0.25 * prize0):
+            dropped += 1
+            continue
+        vals.append(got / prize)
     if len(vals) < nboot // 4:
-        return np.nan, np.nan
-    return float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))
+        return np.nan, np.nan, dropped / max(nboot, 1)
+    return (float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5)),
+            dropped / max(nboot, 1))
 
 
 def scene_z(df, score):
@@ -148,6 +166,8 @@ def main():
     ap.add_argument("--tag", default="phase0f_eta")
     ap.add_argument("--skip_multimetric", action="store_true")
     ap.add_argument("--nboot", type=int, default=300)
+    ap.add_argument("--coverage", default="per_metric", choices=["per_metric", "intersect"],
+                    help="evaluate on each metric's own frames, or only where all overlap")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     subs = Path(args.subs)
@@ -177,14 +197,19 @@ def main():
         print(f"  {m.upper()}: {len(g)} samples, coverage {cov:.3f}")
         have[m] = col
 
-    # A frame with no published-metric score cannot be ranked by it; restricting every
-    # signal to the covered subset keeps the comparison like-for-like.
+    # Two coverage rules, both reported because they answer different questions.
+    #   intersect  -- every signal on the frames where *all* published metrics have a score,
+    #                 which is the only like-for-like comparison between PKL and TIP.
+    #   per_metric -- every signal on all frames, each published metric on the frames it
+    #                 covers, which uses all the data actually computed.
     if have:
-        keep = np.ones(len(d), bool)
+        inter = np.ones(len(d), bool)
         for col in have.values():
-            keep &= d[col].notna().to_numpy()
-        print(f"  common covered subset: {int(keep.sum())}/{len(d)} frames")
-        d = d[keep].reset_index(drop=True)
+            inter &= d[col].notna().to_numpy()
+        print(f"  coverage: intersection {int(inter.sum())}/{len(d)} frames; "
+              + ", ".join(f"{m.upper()} {int(d[c].notna().sum())}" for m, c in have.items()))
+        if args.coverage == "intersect":
+            d = d[inter].reset_index(drop=True)
 
     for tname, col in TASKS.items():
         d[f"_dJ_{tname}"] = (d[col[0]] - d[col[1]]).to_numpy()
@@ -267,26 +292,40 @@ def main():
             signals[f"{name} [scene-z]"] = scene_z(d, sc)
 
         for name, sc in signals.items():
+            # under per_metric coverage a published metric is scored on its own frames only,
+            # and so is the oracle it is compared against, so the ratio stays well defined
+            sub = np.ones(len(d), bool)
+            for m, gcol in have.items():
+                if name.startswith(m.upper()):
+                    sub = d[gcol].notna().to_numpy()
+            dd = d if sub.all() else d[sub].reset_index(drop=True)
+            ss = None if sc is None else np.asarray(sc, float)[sub]
             r = {"task": tname, "variant": args.variant, "signal": name,
                  "scene_normalised": "[scene-z]" in name,
-                 "n_frames": len(d), "n_scenes": int(d.seq.nunique())}
+                 "n_frames": len(dd), "n_scenes": int(dd.seq.nunique())}
             for q in QUOTAS:
-                if sc is None:
-                    v = float(np.mean([eta(d, np.random.default_rng(k).random(len(d)), col, q)
-                                       for k in range(16)]))
+                if ss is None:
+                    vs = [eta_parts(dd, np.random.default_rng(k).random(len(dd)), col, q)
+                          for k in range(16)]
+                    got = float(np.mean([g for g, _, _ in vs])); prize = vs[0][1]; allc = vs[0][2]
                 else:
-                    v = eta(d, sc, col, q)
+                    got, prize, allc = eta_parts(dd, ss, col, q)
+                v = got / prize if prize > 1e-12 else np.nan
                 r[f"eta_{int(q * 100)}"] = v
-                lo, hi = eta_boot(d, sc, col, q, nboot=args.nboot)
+                r[f"reduction_frac_{int(q * 100)}"] = got / allc if allc > 1e-12 else np.nan
+                lo, hi, drop = eta_boot(dd, ss, col, q, nboot=args.nboot)
                 r[f"eta_{int(q * 100)}_lo"], r[f"eta_{int(q * 100)}_hi"] = lo, hi
+                r[f"eta_{int(q * 100)}_boot_dropped"] = drop
                 curves.append({"task": tname, "variant": args.variant, "signal": name,
-                               "quota": q, "eta": v, "eta_lo": lo, "eta_hi": hi})
-            if sc is not None:
-                r["spearman_vs_dJ"] = float(stats.spearmanr(sc, dj).correlation)
-                r["kendall_vs_dJ"] = float(stats.kendalltau(sc, dj).correlation)
-                r["inversion_rate_vs_dJ"] = inversion_rate(sc, dj, rng)
-                r["top10_overlap_vs_dJ"] = topk_overlap(sc, dj, 0.10)
-                r["top20_overlap_vs_dJ"] = topk_overlap(sc, dj, 0.20)
+                               "quota": q, "eta": v, "eta_lo": lo, "eta_hi": hi,
+                               "reduction_frac": r[f"reduction_frac_{int(q * 100)}"]})
+            if ss is not None:
+                dsub = dj[sub]
+                r["spearman_vs_dJ"] = float(stats.spearmanr(ss, dsub).correlation)
+                r["kendall_vs_dJ"] = float(stats.kendalltau(ss, dsub).correlation)
+                r["inversion_rate_vs_dJ"] = inversion_rate(ss, dsub, rng)
+                r["top10_overlap_vs_dJ"] = topk_overlap(ss, dsub, 0.10)
+                r["top20_overlap_vs_dJ"] = topk_overlap(ss, dsub, 0.20)
             rows.append(r)
 
     out = Path(RESULTS) / "final"
@@ -304,9 +343,9 @@ def main():
         s = s.copy()
         s["eta_20_ci"] = [f"[{a:+.2f},{b:+.2f}]" if np.isfinite(a) else "--"
                           for a, b in zip(s.eta_20_lo, s.eta_20_hi)]
-        print(s[["signal", "eta_10", "eta_20", "eta_20_ci", "eta_30", "eta_50",
-                 "spearman_vs_dJ", "kendall_vs_dJ", "inversion_rate_vs_dJ",
-                 "top20_overlap_vs_dJ"]]
+        print(s[["signal", "n_frames", "eta_10", "eta_20", "eta_20_ci",
+                 "reduction_frac_20", "eta_30", "eta_50", "spearman_vs_dJ",
+                 "inversion_rate_vs_dJ", "top20_overlap_vs_dJ"]]
               .to_string(index=False, float_format=lambda v: f"{v:+.3f}"))
 
     # kill test 1: a published planning-aware metric recovering >=0.8 at 20% quota
