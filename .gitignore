@@ -7,3 +7,9 @@ results/raw/**/*.parquet
 *.pt
 *.zip
 logs/*.log
+
+# prior-work checkouts: pinned by commit in third_party/PROVENANCE.md, not vendored
+third_party/pkl/
+third_party/tip/
+third_party/*/planner.pt
+data/cache/nusc_submissions/
