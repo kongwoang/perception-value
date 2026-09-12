@@ -93,11 +93,17 @@ def _simulate(z, lo, hi, ttc, v_ego: float, p: PlannerBParams):
     # current speed: `ttc` encodes the *relative* closing rate, so propagating the obstacle
     # by it would make braking unable to open the gap.  range_rate = v_obs - v_ego, hence
     # v_obs = v_ego + range_rate, and the gap is z_o + v_obs*t - s_ego(t).
-    rate = np.zeros_like(z)
     if p.obstacle_closes:
+        rate = np.zeros_like(z)
         good = np.isfinite(ttc) & (ttc > 1e-3)
         rate[good] = -z[good] / ttc[good]                           # negative = closing
-    v_obs = np.maximum(v_ego + rate, 0.0)                           # (N,) no reversing
+        v_obs = np.maximum(v_ego + rate, 0.0)                       # (N,) no reversing
+    else:
+        # "static" means stationary in the world, so the gap closes at the ego's own speed.
+        # Leaving the *relative* rate at zero instead would make obstacles travel with the
+        # ego, hold the gap constant, and remove every collision -- which is what the first
+        # version of this branch did, and it showed up as exactly 0.0% plan changes.
+        v_obs = np.zeros_like(z)
     zt = z[None, :] + v_obs[None, :] * t[:, None]                   # (n, N) world position
 
     gap = zt[None, None, :, :] - s[:, None, :, None]                # (na,1,n,N)

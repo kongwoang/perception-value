@@ -89,10 +89,21 @@ def main():
     ap.add_argument("--nchunks", type=int, default=1,
                     help="split the scene list into this many chunks (bounds peak memory)")
     ap.add_argument("--chunk", type=int, default=0, help="which chunk to evaluate")
+    ap.add_argument("--skip_existing", action="store_true",
+                    help="return immediately if this chunk's CSV is already written")
     args = ap.parse_args()
 
-    run = runmeta.new_run(args.tag, vars(args))
     subs = Path(args.subs)
+    # Idempotent: a chunk whose CSV already exists is skipped, so an interrupted sweep can
+    # be restarted without recomputing what landed.  One chunk here died of CUDA OOM only
+    # because an unrelated job ran alongside it; this board has room for exactly one.
+    suffix = "" if args.nchunks == 1 else f"_c{args.chunk:02d}"
+    done = subs / f"{args.metric}_{args.variant}{suffix}.csv"
+    if args.skip_existing and done.exists():
+        print(f"  {done.name} exists -- skipping")
+        return
+
+    run = runmeta.new_run(args.tag, vars(args))
     man = json.loads((subs / "manifest.json").read_text())
     all_scenes = sorted(man["scenes"])
 
@@ -158,7 +169,6 @@ def main():
                         f"{m}_cheap": [out[args.cheap]["full"][t] for t in tokens],
                         f"{m}_full": [out[args.full]["full"][t] for t in tokens]})
     per[f"G_{m.upper()}"] = per[f"{m}_cheap"] - per[f"{m}_full"]
-    suffix = "" if args.nchunks == 1 else f"_c{args.chunk:02d}"
     per.to_csv(run / f"{m}_{args.variant}{suffix}.csv", index=False)
     per.to_csv(subs / f"{m}_{args.variant}{suffix}.csv", index=False)
     print(f"\n  G_{m.upper()} mean {per[f'G_{m.upper()}'].mean():+.4f}  "

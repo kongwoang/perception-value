@@ -1,0 +1,6 @@
+#!/bin/bash
+# Compact view of a metrics log: tqdm writes carriage returns, so a naive grep can pull a
+# whole progress bar into one matched line.  Split on \r first, then keep only milestones.
+tr '\r' '\n' < "${1:-logs/metrics_all.log}" \
+  | grep -E "^===============|exists -- skipping|G_PKL|G_TIP|FAILED|RETRY|ALL DONE|chunk [0-9]/" \
+  | tail -"${2:-15}"
