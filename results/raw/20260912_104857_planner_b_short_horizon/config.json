@@ -1,0 +1,6 @@
+{
+  "tag": "planner_b_short_horizon",
+  "params": "short_horizon",
+  "costs": "default",
+  "kitti_only": true
+}

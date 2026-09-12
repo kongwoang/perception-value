@@ -1,0 +1,57 @@
+task,variant,signal,quota,eta
+longitudinal,oracle,random,0.1,0.09394636043498733
+longitudinal,oracle,random,0.2,0.1580746342577103
+longitudinal,oracle,random,0.3,0.10012799605079363
+longitudinal,oracle,random,0.5,0.16386204629204623
+longitudinal,oracle,uncertainty,0.1,0.5791369916996687
+longitudinal,oracle,uncertainty,0.2,0.16765017720048786
+longitudinal,oracle,uncertainty,0.3,0.15647365847554792
+longitudinal,oracle,uncertainty,0.5,0.44503008195425064
+longitudinal,oracle,criticality,0.1,-0.1629421448132068
+longitudinal,oracle,criticality,0.2,-0.41527438778396486
+longitudinal,oracle,criticality,0.3,-0.08816009068659203
+longitudinal,oracle,criticality,0.5,0.21866219610235324
+longitudinal,oracle,perception_oracle_dE,0.1,0.21472021399942956
+longitudinal,oracle,perception_oracle_dE,0.2,0.21767997197936817
+longitudinal,oracle,perception_oracle_dE,0.3,0.4249335921739116
+longitudinal,oracle,perception_oracle_dE,0.5,0.13538376005688194
+longitudinal,oracle,best_dE_metric (E5_combined),0.1,0.152794073363669
+longitudinal,oracle,best_dE_metric (E5_combined),0.2,0.42076226124612065
+longitudinal,oracle,best_dE_metric (E5_combined),0.3,0.45390650423010975
+longitudinal,oracle,best_dE_metric (E5_combined),0.5,0.19457891965565832
+longitudinal,oracle,PKL_gain,0.1,0.3320880362137926
+longitudinal,oracle,PKL_gain,0.2,0.057241923982962344
+longitudinal,oracle,PKL_gain,0.3,0.012845554283880675
+longitudinal,oracle,PKL_gain,0.5,0.22713203203144763
+longitudinal,oracle,decision_oracle_dJ,0.1,1.0
+longitudinal,oracle,decision_oracle_dJ,0.2,1.0
+longitudinal,oracle,decision_oracle_dJ,0.3,1.0
+longitudinal,oracle,decision_oracle_dJ,0.5,1.0
+lateral,oracle,random,0.1,
+lateral,oracle,random,0.2,
+lateral,oracle,random,0.3,
+lateral,oracle,random,0.5,
+lateral,oracle,uncertainty,0.1,
+lateral,oracle,uncertainty,0.2,
+lateral,oracle,uncertainty,0.3,
+lateral,oracle,uncertainty,0.5,
+lateral,oracle,criticality,0.1,
+lateral,oracle,criticality,0.2,
+lateral,oracle,criticality,0.3,
+lateral,oracle,criticality,0.5,
+lateral,oracle,perception_oracle_dE,0.1,
+lateral,oracle,perception_oracle_dE,0.2,
+lateral,oracle,perception_oracle_dE,0.3,
+lateral,oracle,perception_oracle_dE,0.5,
+lateral,oracle,best_dE_metric (E1_fn_only),0.1,
+lateral,oracle,best_dE_metric (E1_fn_only),0.2,
+lateral,oracle,best_dE_metric (E1_fn_only),0.3,
+lateral,oracle,best_dE_metric (E1_fn_only),0.5,
+lateral,oracle,PKL_gain,0.1,
+lateral,oracle,PKL_gain,0.2,
+lateral,oracle,PKL_gain,0.3,
+lateral,oracle,PKL_gain,0.5,
+lateral,oracle,decision_oracle_dJ,0.1,
+lateral,oracle,decision_oracle_dJ,0.2,
+lateral,oracle,decision_oracle_dJ,0.3,
+lateral,oracle,decision_oracle_dJ,0.5,

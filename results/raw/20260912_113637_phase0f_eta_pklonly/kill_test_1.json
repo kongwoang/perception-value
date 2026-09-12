@@ -1,0 +1,87 @@
+{
+  "max_eta20_published": 0.35677402058952834,
+  "threshold": 0.8,
+  "verdict": "PROCEED",
+  "rows": [
+    {
+      "task": "longitudinal",
+      "signal": "PKL_gain",
+      "eta_10": 0.3320880362137926,
+      "eta_20": 0.057241923982962344,
+      "eta_20_lo": -6.11953854273659,
+      "eta_20_hi": 0.5273463430635649,
+      "eta_30": 0.012845554283880675,
+      "eta_50": 0.22713203203144763
+    },
+    {
+      "task": "longitudinal",
+      "signal": "TIP_gain",
+      "eta_10": 0.3141765000314333,
+      "eta_20": 0.3141765000314333,
+      "eta_20_lo": -0.33703169136656363,
+      "eta_20_hi": 0.47722152623820085,
+      "eta_30": 0.22239633289745517,
+      "eta_50": 0.4655606526877249
+    },
+    {
+      "task": "longitudinal",
+      "signal": "PKL_gain [scene-z]",
+      "eta_10": 0.3165358885093243,
+      "eta_20": 0.35677402058952834,
+      "eta_20_lo": -0.10982400866458139,
+      "eta_20_hi": 0.8689454408654561,
+      "eta_30": 0.5823075786608634,
+      "eta_50": 0.4658690969070257
+    },
+    {
+      "task": "longitudinal",
+      "signal": "TIP_gain [scene-z]",
+      "eta_10": 0.3141765000314333,
+      "eta_20": 0.2668203723524122,
+      "eta_20_lo": -1.1664471883889573,
+      "eta_20_hi": 0.4440807506770307,
+      "eta_30": 0.25011794150405803,
+      "eta_50": 0.1956307249173082
+    },
+    {
+      "task": "lateral",
+      "signal": "PKL_gain",
+      "eta_10": NaN,
+      "eta_20": NaN,
+      "eta_20_lo": NaN,
+      "eta_20_hi": NaN,
+      "eta_30": NaN,
+      "eta_50": NaN
+    },
+    {
+      "task": "lateral",
+      "signal": "TIP_gain",
+      "eta_10": NaN,
+      "eta_20": NaN,
+      "eta_20_lo": NaN,
+      "eta_20_hi": NaN,
+      "eta_30": NaN,
+      "eta_50": NaN
+    },
+    {
+      "task": "lateral",
+      "signal": "PKL_gain [scene-z]",
+      "eta_10": NaN,
+      "eta_20": NaN,
+      "eta_20_lo": NaN,
+      "eta_20_hi": NaN,
+      "eta_30": NaN,
+      "eta_50": NaN
+    },
+    {
+      "task": "lateral",
+      "signal": "TIP_gain [scene-z]",
+      "eta_10": NaN,
+      "eta_20": NaN,
+      "eta_20_lo": NaN,
+      "eta_20_hi": NaN,
+      "eta_30": NaN,
+      "eta_50": NaN
+    }
+  ]
+}

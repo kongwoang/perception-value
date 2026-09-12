@@ -1,0 +1,6 @@
+{
+  "tag": "planner_b_narrow_ego",
+  "params": "narrow_ego",
+  "costs": "default",
+  "kitti_only": true
+}

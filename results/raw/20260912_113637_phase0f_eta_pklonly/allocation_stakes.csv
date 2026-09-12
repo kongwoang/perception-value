@@ -1,0 +1,3 @@
+task,J_all_cheap,J_all_full,J_oracle_at_20pct,oracle_reduction_frac,all_full_reduction_frac,frames_dJ_nonzero,frames_dJ_pos,frames_dJ_neg,action_changes,n_frames
+longitudinal,73.24194900680722,66.68802880143159,56.34867586119879,0.23065024039759427,0.08948314858151168,32,11,21,17,595
+lateral,8.299999999999999,8.299999999999999,8.299999999999999,0.0,0.0,0,0,0,0,595

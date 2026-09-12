@@ -1,0 +1,13 @@
+{
+  "python": "3.8.20",
+  "platform": "Linux-5.10.216-tegra-aarch64-with-glibc2.17",
+  "machine": "aarch64",
+  "git_commit": "01a93b55df785e341600edb90cbfb0638dd4fb06",
+  "git_dirty": true,
+  "torch": "2.1.0a0+41361538.nv23.06",
+  "cuda": "11.4",
+  "gpu": "Xavier",
+  "tegra": "# R35 (release), REVISION: 6.5, GCID: 46196569, BOARD: t186ref, EABI: aarch64, DATE: Wed Jul  1 09:42:50 UTC 2026",
+  "gpu_freq_hz": "114750000",
+  "nvpmodel": "NV Power Mode: MAXN\n0\nNVPM ERROR: Error opening /sys/kernel/nvpmodel_emc_cap/emc_iso_cap: 13\nNVPM ERROR: failed to read PARAM EMC: ARG MAX_FREQ: PATH /sys/kernel/nvpmodel_emc_cap/emc_iso_cap"
+}

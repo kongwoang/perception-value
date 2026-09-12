@@ -1,0 +1,17 @@
+{
+  "max_eta20_published": 0.057241923982962344,
+  "threshold": 0.8,
+  "verdict": "PROCEED",
+  "rows": [
+    {
+      "task": "longitudinal",
+      "signal": "PKL_gain",
+      "eta_20": 0.057241923982962344
+    },
+    {
+      "task": "lateral",
+      "signal": "PKL_gain",
+      "eta_20": NaN
+    }
+  ]
+}

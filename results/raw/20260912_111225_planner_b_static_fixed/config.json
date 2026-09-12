@@ -1,0 +1,6 @@
+{
+  "tag": "planner_b_static_fixed",
+  "params": "static_obstacles",
+  "costs": "default",
+  "kitti_only": true
+}

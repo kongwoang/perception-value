@@ -1,0 +1,113 @@
+task,variant,signal,quota,eta,eta_lo,eta_hi
+longitudinal,oracle,random,0.1,0.09394636043498733,-0.5557383825900448,0.4979631154527307
+longitudinal,oracle,random,0.2,0.1580746342577103,-1.2273828697581357,0.6393997302243011
+longitudinal,oracle,random,0.3,0.10012799605079363,-1.7549801477815536,0.7253722458155033
+longitudinal,oracle,random,0.5,0.16386204629204623,-4.0898569761909656,0.7265065724576386
+longitudinal,oracle,uncertainty,0.1,0.5791369916996687,-2.113845520301335,0.8515672115114252
+longitudinal,oracle,uncertainty,0.2,0.16765017720048786,-6.589788066101256,0.67101938938355
+longitudinal,oracle,uncertainty,0.3,0.15647365847554792,-6.676445512767432,0.6734257797744743
+longitudinal,oracle,uncertainty,0.5,0.44503008195425064,-6.889597414743751,0.9042582189521837
+longitudinal,oracle,criticality,0.1,-0.1629421448132068,-2.5097451740516905,0.013833421534132157
+longitudinal,oracle,criticality,0.2,-0.41527438778396486,-6.8412813781263395,0.8482390686763707
+longitudinal,oracle,criticality,0.3,-0.08816009068659203,-6.015646912838794,0.8482390686763707
+longitudinal,oracle,criticality,0.5,0.21866219610235324,-6.238061177526389,0.8482390686763707
+longitudinal,oracle,perception_oracle_dE,0.1,0.21472021399942956,-0.11932384051140121,0.3956295387069709
+longitudinal,oracle,perception_oracle_dE,0.2,0.21767997197936817,-0.7918664791048916,0.3329441686636299
+longitudinal,oracle,perception_oracle_dE,0.3,0.4249335921739116,-1.3143613055542696,0.5500619371951653
+longitudinal,oracle,perception_oracle_dE,0.5,0.13538376005688194,-6.768549951049543,0.7078079585933611
+longitudinal,oracle,best_dE_metric (E5_combined),0.1,0.152794073363669,-1.2176414172110304,0.8058311661059204
+longitudinal,oracle,best_dE_metric (E5_combined),0.2,0.42076226124612065,-1.381620414938679,0.821877559740322
+longitudinal,oracle,best_dE_metric (E5_combined),0.3,0.45390650423010975,-0.902348138328971,0.8571924906321724
+longitudinal,oracle,best_dE_metric (E5_combined),0.5,0.19457891965565832,-6.612993503726601,0.7527886811663298
+longitudinal,oracle,PKL_gain,0.1,0.3320880362137926,-0.424844179434368,0.5343485980118645
+longitudinal,oracle,PKL_gain,0.2,0.057241923982962344,-6.11953854273659,0.5273463430635649
+longitudinal,oracle,PKL_gain,0.3,0.012845554283880675,-6.949487697856745,0.46826095970270604
+longitudinal,oracle,PKL_gain,0.5,0.22713203203144763,-7.0662922079174155,0.49681390684080207
+longitudinal,oracle,TIP_gain,0.1,0.3141765000314333,-0.12064401652128517,0.48065383571318065
+longitudinal,oracle,TIP_gain,0.2,0.3141765000314333,-0.33703169136656363,0.47722152623820085
+longitudinal,oracle,TIP_gain,0.3,0.22239633289745517,-1.5147368396747891,0.4400025013060708
+longitudinal,oracle,TIP_gain,0.5,0.4655606526877249,-1.564349509784411,0.7612792894747352
+longitudinal,oracle,decision_oracle_dJ,0.1,1.0,1.0,1.0
+longitudinal,oracle,decision_oracle_dJ,0.2,1.0,1.0,1.0
+longitudinal,oracle,decision_oracle_dJ,0.3,1.0,1.0,1.0
+longitudinal,oracle,decision_oracle_dJ,0.5,1.0,1.0,1.0
+longitudinal,oracle,uncertainty [scene-z],0.1,-0.049728980454297037,-0.12591369188419393,0.7350655774185766
+longitudinal,oracle,uncertainty [scene-z],0.2,0.21524497551132454,-0.7934663795398517,0.5136669014116344
+longitudinal,oracle,uncertainty [scene-z],0.3,0.5264961914997107,-0.8575947378797208,0.7992318890259021
+longitudinal,oracle,uncertainty [scene-z],0.5,0.4352828601857813,-6.5843410744853195,0.8328226988684431
+longitudinal,oracle,criticality [scene-z],0.1,-0.010090846887669,-0.15824780143845799,0.0
+longitudinal,oracle,criticality [scene-z],0.2,-0.10672131964133356,-0.24165787288154414,0.6746202452170904
+longitudinal,oracle,criticality [scene-z],0.3,-0.08068049580919698,-2.8832632034444883,0.8784676704247719
+longitudinal,oracle,criticality [scene-z],0.5,0.18472959506376327,-5.947876747485989,0.9796652588980599
+longitudinal,oracle,perception_oracle_dE [scene-z],0.1,0.2218236331512829,-0.01934594472060211,0.3881604559825698
+longitudinal,oracle,perception_oracle_dE [scene-z],0.2,0.2065034532544291,-0.25537847559954685,0.334109094751911
+longitudinal,oracle,perception_oracle_dE [scene-z],0.3,0.47228971985293106,-0.7913223504849696,0.8638676021795803
+longitudinal,oracle,perception_oracle_dE [scene-z],0.5,0.40359061857115086,-0.9987613464583337,0.8457301191100027
+longitudinal,oracle,best_dE_metric (E5_combined) [scene-z],0.1,0.2072536201945426,-0.18856809923319115,0.9126493117589947
+longitudinal,oracle,best_dE_metric (E5_combined) [scene-z],0.2,0.1557538313436076,-1.3143613055542696,0.8229914664430796
+longitudinal,oracle,best_dE_metric (E5_combined) [scene-z],0.3,0.45390650423010975,-0.902348138328971,0.8508500150387774
+longitudinal,oracle,best_dE_metric (E5_combined) [scene-z],0.5,0.5059836682300699,-0.42868994203074556,0.91764967984491
+longitudinal,oracle,PKL_gain [scene-z],0.1,0.3165358885093243,-0.06025969838402591,0.4856316205334001
+longitudinal,oracle,PKL_gain [scene-z],0.2,0.35677402058952834,-0.10982400866458139,0.8689454408654561
+longitudinal,oracle,PKL_gain [scene-z],0.3,0.5823075786608634,-0.13082385291262733,0.966634675055177
+longitudinal,oracle,PKL_gain [scene-z],0.5,0.4658690969070257,-1.4223702346999156,0.934900006150291
+longitudinal,oracle,TIP_gain [scene-z],0.1,0.3141765000314333,-0.1722349906934758,0.48273489588734864
+longitudinal,oracle,TIP_gain [scene-z],0.2,0.2668203723524122,-1.1664471883889573,0.4440807506770307
+longitudinal,oracle,TIP_gain [scene-z],0.3,0.25011794150405803,-1.1664471883889573,0.4441739219611782
+longitudinal,oracle,TIP_gain [scene-z],0.5,0.1956307249173082,-1.564349509784411,0.3936063198695942
+lateral,oracle,random,0.1,,,
+lateral,oracle,random,0.2,,,
+lateral,oracle,random,0.3,,,
+lateral,oracle,random,0.5,,,
+lateral,oracle,uncertainty,0.1,,,
+lateral,oracle,uncertainty,0.2,,,
+lateral,oracle,uncertainty,0.3,,,
+lateral,oracle,uncertainty,0.5,,,
+lateral,oracle,criticality,0.1,,,
+lateral,oracle,criticality,0.2,,,
+lateral,oracle,criticality,0.3,,,
+lateral,oracle,criticality,0.5,,,
+lateral,oracle,perception_oracle_dE,0.1,,,
+lateral,oracle,perception_oracle_dE,0.2,,,
+lateral,oracle,perception_oracle_dE,0.3,,,
+lateral,oracle,perception_oracle_dE,0.5,,,
+lateral,oracle,best_dE_metric (E1_fn_only),0.1,,,
+lateral,oracle,best_dE_metric (E1_fn_only),0.2,,,
+lateral,oracle,best_dE_metric (E1_fn_only),0.3,,,
+lateral,oracle,best_dE_metric (E1_fn_only),0.5,,,
+lateral,oracle,PKL_gain,0.1,,,
+lateral,oracle,PKL_gain,0.2,,,
+lateral,oracle,PKL_gain,0.3,,,
+lateral,oracle,PKL_gain,0.5,,,
+lateral,oracle,TIP_gain,0.1,,,
+lateral,oracle,TIP_gain,0.2,,,
+lateral,oracle,TIP_gain,0.3,,,
+lateral,oracle,TIP_gain,0.5,,,
+lateral,oracle,decision_oracle_dJ,0.1,,,
+lateral,oracle,decision_oracle_dJ,0.2,,,
+lateral,oracle,decision_oracle_dJ,0.3,,,
+lateral,oracle,decision_oracle_dJ,0.5,,,
+lateral,oracle,uncertainty [scene-z],0.1,,,
+lateral,oracle,uncertainty [scene-z],0.2,,,
+lateral,oracle,uncertainty [scene-z],0.3,,,
+lateral,oracle,uncertainty [scene-z],0.5,,,
+lateral,oracle,criticality [scene-z],0.1,,,
+lateral,oracle,criticality [scene-z],0.2,,,
+lateral,oracle,criticality [scene-z],0.3,,,
+lateral,oracle,criticality [scene-z],0.5,,,
+lateral,oracle,perception_oracle_dE [scene-z],0.1,,,
+lateral,oracle,perception_oracle_dE [scene-z],0.2,,,
+lateral,oracle,perception_oracle_dE [scene-z],0.3,,,
+lateral,oracle,perception_oracle_dE [scene-z],0.5,,,
+lateral,oracle,best_dE_metric (E1_fn_only) [scene-z],0.1,,,
+lateral,oracle,best_dE_metric (E1_fn_only) [scene-z],0.2,,,
+lateral,oracle,best_dE_metric (E1_fn_only) [scene-z],0.3,,,
+lateral,oracle,best_dE_metric (E1_fn_only) [scene-z],0.5,,,
+lateral,oracle,PKL_gain [scene-z],0.1,,,
+lateral,oracle,PKL_gain [scene-z],0.2,,,
+lateral,oracle,PKL_gain [scene-z],0.3,,,
+lateral,oracle,PKL_gain [scene-z],0.5,,,
+lateral,oracle,TIP_gain [scene-z],0.1,,,
+lateral,oracle,TIP_gain [scene-z],0.2,,,
+lateral,oracle,TIP_gain [scene-z],0.3,,,
+lateral,oracle,TIP_gain [scene-z],0.5,,,

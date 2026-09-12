@@ -1,0 +1,6 @@
+{
+  "tag": "planner_b_kitti",
+  "params": "default",
+  "costs": "default",
+  "kitti_only": true
+}

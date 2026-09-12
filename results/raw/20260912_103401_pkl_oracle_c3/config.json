@@ -1,0 +1,16 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "oracle",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "bsz": 1,
+  "nworkers": 1,
+  "modelpath": "/home/kongwoang/research/risk-aware-perception/third_party/tip/planner.pt",
+  "mask_json": "/home/kongwoang/research/risk-aware-perception/third_party/tip/masks_trainval.json",
+  "metric": "pkl",
+  "tag": "pkl_oracle_c3",
+  "nchunks": 6,
+  "chunk": 3
+}

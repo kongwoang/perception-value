@@ -1,0 +1,7 @@
+dataset,detector,cheap_mode,full_mode,geometry,n_frames,n_seqs,JB_all_cheap,JB_all_full,JB_oracle_at_20pct,oracle_reduction_frac,all_full_reduction_frac,frames_dJB_nonzero,frames_dJB_pos,frames_dJB_neg,plan_change_rate,collision_rate_cheap,collision_rate_full
+KITTI,YOLOv8s,cheap_320,full_640,mono,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
+KITTI,YOLOv8s,cheap_320,full_640,oracle,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
+KITTI,YOLOv8s,cheap_384,full_640,mono,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
+KITTI,YOLOv8s,cheap_512,full_640,mono,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
+KITTI,RT-DETR-l,rt_cheap_320,rt_full_640,mono,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
+KITTI,RT-DETR-l,rt_mid_480,rt_full_640,mono,8008,21,1406.6047270090999,1406.6047270090999,1406.6047270090999,0.0,0.0,0,0,0,0.0,0.0,0.0
