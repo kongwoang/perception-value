@@ -23,8 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from rap import budget, predict, runmeta                                        # noqa: E402
-from rap.nusc import NuScenesDB                                                 # noqa: E402
+from rap import budget, percep_metrics as PM, predict, runmeta                  # noqa: E402
 from rap.paths import CACHE, RESULTS                                            # noqa: E402
 
 from importlib import import_module                                             # noqa: E402
@@ -42,6 +41,27 @@ def eta(df, score, col, quota=0.20):
     orc = budget.total_risk(df, pick((df[col[0]] - df[col[1]]).to_numpy()), col)
     tot = budget.total_risk(df, pick(np.asarray(score, float)), col)
     return (allc - tot) / (allc - orc) if allc - orc > 1e-12 else np.nan
+
+
+def eta_boot(df, score, col, quota, nboot=300, seed=0):
+    """Scene-level bootstrap CI for eta.  Frames within a scene are strongly correlated,
+    so scenes, not frames, are the resampling unit."""
+    rng = np.random.default_rng(seed)
+    scenes = df.seq.to_numpy()
+    uniq = np.unique(scenes)
+    idx_of = {u: np.flatnonzero(scenes == u) for u in uniq}
+    sc = None if score is None else np.asarray(score, float)
+    vals = []
+    for b in range(nboot):
+        take = np.concatenate([idx_of[u] for u in rng.choice(uniq, len(uniq), replace=True)])
+        db = df.iloc[take]
+        s_ = (np.random.default_rng(1000 + b).random(len(db)) if sc is None else sc[take])
+        v = eta(db, s_, col, quota)
+        if np.isfinite(v):
+            vals.append(v)
+    if len(vals) < nboot // 4:
+        return np.nan, np.nan
+    return float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))
 
 
 def topk_overlap(a, b, frac):
@@ -76,20 +96,29 @@ def load_metric(subs: Path, metric: str, variant: str) -> pd.DataFrame | None:
     return df
 
 
-def token_map(seqs) -> pd.DataFrame:
-    """(scene name, frame) -> sample_token.  Cached: loading the trainval tables costs
-    ~3 GB, which the concurrent PKL/TIP runs cannot spare."""
+def token_map(seqs, dataroot, version) -> pd.DataFrame:
+    """(scene name, frame) -> sample_token, in the same temporal order NuScenesDB uses.
+
+    Reads scene.json and sample.json directly rather than instantiating NuScenesDB: the
+    full table set costs ~3 GB, which the concurrent PKL/TIP runs cannot spare.
+    """
     cache = Path(CACHE) / "nusc_token_map.csv"
     if cache.exists():
         df = pd.read_csv(cache)
         if set(seqs) <= set(df.seq.unique()):
             return df[df.seq.isin(set(seqs))].reset_index(drop=True)
-    db = NuScenesDB("/home/kongwoang/datasets/nuscenes/trainval", "v1.0-trainval")
-    name_to_scene = {db.scene_name(s): s for s in db.scenes}
+    t = Path(dataroot) / version
+    scenes = json.loads((t / "scene.json").read_text())
+    samples = {r["token"]: r for r in json.loads((t / "sample.json").read_text())}
+    want = set(seqs)
     rows = []
-    for name in seqs:
-        for fr, tok in enumerate(db.samples(name_to_scene[name])):
-            rows.append((name, fr, tok))
+    for sc in scenes:
+        if sc["name"] not in want:
+            continue
+        tok, fr = sc["first_sample_token"], 0
+        while tok:
+            rows.append((sc["name"], fr, tok))
+            tok, fr = samples[tok]["next"], fr + 1
     df = pd.DataFrame(rows, columns=["seq", "frame", "sample_token"])
     df.to_csv(cache, index=False)
     return df
@@ -101,8 +130,11 @@ def main():
                     help="core_matrix run holding the pickled nuScenes decision tables")
     ap.add_argument("--subs", default=str(CACHE / "nusc_submissions"))
     ap.add_argument("--variant", default="oracle", help="submission geometry variant")
+    ap.add_argument("--dataroot", default="/home/kongwoang/datasets/nuscenes/trainval")
+    ap.add_argument("--version", default="v1.0-trainval")
     ap.add_argument("--tag", default="phase0f_eta")
     ap.add_argument("--skip_multimetric", action="store_true")
+    ap.add_argument("--nboot", type=int, default=300)
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     subs = Path(args.subs)
@@ -115,7 +147,8 @@ def main():
     d = pd.read_pickle(tbl)
     print(f"decision table {tbl.name}: {len(d)} frames, {d.seq.nunique()} scenes")
 
-    d = d.merge(token_map(sorted(d.seq.unique())), on=["seq", "frame"],
+    d = d.merge(token_map(sorted(d.seq.unique()), args.dataroot, args.version),
+                on=["seq", "frame"],
                 how="left", validate="one_to_one")
     assert d.sample_token.notna().all(), "unmapped frames"
 
@@ -143,7 +176,7 @@ def main():
     rows, curves = [], []
     for tname, col in TASKS.items():
         dj = (d[col[0]] - d[col[1]]).to_numpy()
-        best_metric = max(_pm.METRICS, key=lambda m: eta(d, d[f"dE_{m}"], col))
+        best_metric = max(PM.METRICS, key=lambda m: eta(d, d[f"dE_{m}"], col))
 
         signals = {
             "random": None,                                   # averaged over seeds below
@@ -174,8 +207,10 @@ def main():
                 else:
                     v = eta(d, sc, col, q)
                 r[f"eta_{int(q * 100)}"] = v
+                lo, hi = eta_boot(d, sc, col, q, nboot=args.nboot)
+                r[f"eta_{int(q * 100)}_lo"], r[f"eta_{int(q * 100)}_hi"] = lo, hi
                 curves.append({"task": tname, "variant": args.variant, "signal": name,
-                               "quota": q, "eta": v})
+                               "quota": q, "eta": v, "eta_lo": lo, "eta_hi": hi})
             if sc is not None:
                 r["spearman_vs_dJ"] = float(stats.spearmanr(sc, dj).correlation)
                 r["kendall_vs_dJ"] = float(stats.kendalltau(sc, dj).correlation)
@@ -195,13 +230,20 @@ def main():
     for tname in TASKS:
         s = m[m.task == tname]
         print(f"\n=== {tname} ({args.variant}) ===")
-        print(s[["signal", "eta_10", "eta_20", "eta_30", "eta_50", "spearman_vs_dJ",
-                 "kendall_vs_dJ", "inversion_rate_vs_dJ", "top20_overlap_vs_dJ"]]
+        s = s.copy()
+        s["eta_20_ci"] = [f"[{a:+.2f},{b:+.2f}]" if np.isfinite(a) else "--"
+                          for a, b in zip(s.eta_20_lo, s.eta_20_hi)]
+        print(s[["signal", "eta_10", "eta_20", "eta_20_ci", "eta_30", "eta_50",
+                 "spearman_vs_dJ", "kendall_vs_dJ", "inversion_rate_vs_dJ",
+                 "top20_overlap_vs_dJ"]]
               .to_string(index=False, float_format=lambda v: f"{v:+.3f}"))
 
     # kill test 1: a published planning-aware metric recovering >=0.8 at 20% quota
     kill = m[m.signal.str.contains("PKL|TIP")][["task", "signal", "eta_20"]]
     if len(kill):
+        kill = m[m.signal.str.contains("PKL|TIP")][
+            ["task", "signal", "eta_10", "eta_20", "eta_20_lo", "eta_20_hi",
+             "eta_30", "eta_50"]]
         worst = kill.eta_20.max()
         print(f"\nKILL TEST 1  max eta@20 over published planning-aware metrics: {worst:+.3f}"
               f"  -> {'STOP (metrics already solve it)' if worst >= 0.8 else 'gap survives'}")
