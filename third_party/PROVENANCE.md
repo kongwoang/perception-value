@@ -76,3 +76,27 @@ The sweep therefore runs exactly one process at a time, retries a failed chunk, 
 chunks whose CSV already exists. No scoring code is affected: the retried chunks produce the
 same per-sample scores, since PKL and TIP are computed per sample from that sample's own
 boxes.
+
+## Phase 0G Track B — external planners
+- **nuplan-devkit**: https://github.com/motional/nuplan-devkit, commit
+  `e9241677997dd86bfc0bcd44817ab04fe631405b` (2025-08-27), installed with `--no-deps`.
+- **tuPlan Garage** (PDM-Closed): https://github.com/autonomousvision/tuplan_garage, commit
+  `b51d5d04fac1bd4389653b9ab2ff73ea88f435a3` (2024-11-28), installed with `--no-deps`.
+- **Data**: `nuplan-v1.1_mini.zip` (8.0 GB) and `nuplan-maps-v1.1.zip` (927 MB) from the
+  official S3 bucket. The mini **camera** blobs were not downloaded: they are nine shards of
+  45-54 GB (~450 GB) against 138 GB of free disk, and they are split by blob rather than by
+  log, so an arbitrary shard need not contain a single complete scenario window. What replaces
+  them is recorded in the Phase 0G pre-registration.
+
+### Environment deviation, and why it is safe
+The devkit requires Python >= 3.9; this project's `edge` environment is 3.8.20 and is tied to
+NVIDIA's Jetson torch build, which exists only for 3.8. A separate CPU-only `nuplan`
+environment was built with Python 3.9 from conda-forge (448 packages). **No torch is
+installed in it**: nuplan-devkit keeps its torch dependencies in a separate
+`requirements_torch.txt`, and both planners under test are rule-based, so the simulation stack
+runs without it and the Jetson torch build is untouched.
+
+Native dependencies (GDAL through Fiona/rasterio/pyogrio, Shapely 2, rtree, pyarrow, casadi)
+come from conda-forge aarch64 builds. Version pins the devkit requests that conda-forge cannot
+satisfy on aarch64 were not forced; conda resolved compatible versions instead. The planners'
+own code and configuration are unmodified.
