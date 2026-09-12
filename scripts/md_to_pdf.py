@@ -72,7 +72,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("md")
     ap.add_argument("--out", default="")
-    ap.add_argument("--figures", default="results/figures")
+    ap.add_argument("--figures", default="results/figures",
+                    help="comma-separated figure directories; later ones win on name clash")
     args = ap.parse_args()
 
     import markdown
@@ -81,7 +82,8 @@ def main():
     src = Path(args.md)
     text = src.read_text()
     # the markdown links figures relative to docs/; rewrite to the render directory
-    text = re.sub(r"\]\((?:\.\./)*results/figures/", "](figs/", text)
+    # figures may live in several directories; the markdown references them by basename
+    text = re.sub(r"\]\((?:\.\./)*results/(?:final/)?figures/", "](figs/", text)
     title = next((l[2:].strip() for l in text.splitlines() if l.startswith("# ")), src.stem)
 
     html = markdown.markdown(text, extensions=["tables", "attr_list"])
@@ -89,8 +91,9 @@ def main():
 
     work = Path("/tmp/rap_render")
     (work / "figs").mkdir(parents=True, exist_ok=True)
-    for p in Path(args.figures).glob("*.png"):
-        (work / "figs" / p.name).write_bytes(p.read_bytes())
+    for d in args.figures.split(","):
+        for p in Path(d.strip()).glob("*.png"):
+            (work / "figs" / p.name).write_bytes(p.read_bytes())
     (work / "doc.html").write_text(doc)
 
     out = Path(args.out) if args.out else src.with_suffix(".pdf")
