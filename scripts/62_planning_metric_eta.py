@@ -173,9 +173,12 @@ def main():
         print(f"  common covered subset: {int(keep.sum())}/{len(d)} frames")
         d = d[keep].reset_index(drop=True)
 
+    for tname, col in TASKS.items():
+        d[f"_dJ_{tname}"] = (d[col[0]] - d[col[1]]).to_numpy()
+
     rows, curves = [], []
     for tname, col in TASKS.items():
-        dj = (d[col[0]] - d[col[1]]).to_numpy()
+        dj = d[f"_dJ_{tname}"].to_numpy()
         best_metric = max(PM.METRICS, key=lambda m: eta(d, d[f"dE_{m}"], col))
 
         signals = {
@@ -225,6 +228,7 @@ def main():
     m.to_csv(out / "phase0f_planning_metric_eta.csv", index=False)
     m.to_csv(run / "phase0f_planning_metric_eta.csv", index=False)
     pd.DataFrame(curves).to_csv(run / "phase0f_regret_curves.csv", index=False)
+    d.to_pickle(run / "joined_frames.pkl")
 
     pd.set_option("display.width", 200, "display.max_columns", 30)
     for tname in TASKS:
