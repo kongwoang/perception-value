@@ -65,3 +65,14 @@ the map expansions that slice needs. Holding the trainval tables, four map expan
 and predictions at once left the planner 1.3 GB and the first BEV upsample raised CUDA OOM
 even at `bsz=1`. Both metrics are per-sample scores computed from that sample's own boxes,
 so slicing cannot change any frame's score; `bsz=1, nworkers=1` throughout.
+
+## Third deviation: strictly one job at a time
+On this board GPU allocations come out of the same physical RAM as host allocations, and the
+driver needs a large contiguous free block. Twice a metric chunk died with `CUDA out of
+memory` while asking for only 20-128 MiB with 1-3 GiB nominally free, because an unrelated
+process (a Planner B sweep the first time, a 48 MB `git push` the second) had fragmented the
+largest free block. Both chunks succeeded unchanged on a retry with the board otherwise idle.
+The sweep therefore runs exactly one process at a time, retries a failed chunk, and skips
+chunks whose CSV already exists. No scoring code is affected: the retried chunks produce the
+same per-sample scores, since PKL and TIP are computed per sample from that sample's own
+boxes.
