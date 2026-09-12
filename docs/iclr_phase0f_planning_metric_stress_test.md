@@ -200,3 +200,77 @@ requires prior work not be strawmanned:
    additionally evaluated in a **within-scene standardised** form (`[scene-z]`), and the
    published metrics are credited with whichever form does better.
 
+### 3.9 The bar PKL and TIP have to clear, and the baseline that actually threatens the paper
+
+Phase 0E's signals on exactly the cell PKL and TIP are evaluated on, η at a 20% quota:
+
+| signal | nuScenes ns320→640, oracle geom, longitudinal | KITTI 320→640 mono, longitudinal |
+|---|---|---|
+| random (16 seeds) | +0.089 | +0.170 |
+| visual uncertainty | −0.061 | +0.024 |
+| downstream criticality | +0.163 | +0.021 |
+| exact perception gain ΔE | +0.147 | +0.155 |
+| best single ΔE variant | **+0.562** | +0.274 |
+| multi-metric ΔE oracle (GBM, leave-one-scene-out) | +0.434 | **+0.700** |
+| best trivial heuristic | +0.242 (ego speed) | **+0.787** (ego speed) |
+| decision oracle ΔJ | 1.000 | 1.000 |
+
+Two things this table settles before the PKL/TIP numbers arrive.
+
+**A very low η for PKL is a liability, not a victory.** The pre-registered NO-GO threshold is
+0.8 and nothing here exceeds 0.562, so there is room for a published planning-aware metric to
+beat every task-agnostic signal and still fall short. But if PKL lands near random, the
+natural reading is not "planning-aware metrics do not solve allocation" — it is "these authors
+broke PKL when they converted 2D monocular detections into a 3D submission". That reading has
+to be closed off by evidence, not by assertion, which is what §3.5 (the level tracks error
+counts), the `oracle` geometry variant (§3.2) and the within-scene normalisation (§3.8) are
+for. They belong in the main argument, not an appendix.
+
+**The baseline that actually threatens this paper is ego speed.** On the flagship KITTI cell a
+single scalar read off the CAN bus, involving no perception at all, reaches **η = 0.787** —
+essentially the kill threshold. The mechanism is real rather than an artefact: the braking
+requirement goes as v²/2·gap, so both the cost and the room to reduce it grow with speed.
+
+The honest consequence is that this project cannot claim the allocation problem is unsolved.
+What it can claim is that **no signal transfers**: ego speed nearly solves KITTI (0.787) and
+fails on nuScenes (0.242), while the best ΔE variant does the opposite (0.274 → 0.562). A
+practitioner reading either result alone would adopt the wrong allocator for the other
+dataset. That is a weaker headline than "nothing works", and it is the one the data supports.
+
+### 3.10 What survives, stated plainly
+
+For the record, and because the pre-registration requires the negative side be written down:
+
+*Removed by prior work* — first task-aware perception; introducing decision-aware perception;
+introducing value of computation; "accuracy does not imply planning quality"; adaptive
+perception compute. *Removed by our own results* — the recoverability factorisation (Phase
+0B), the criticality contribution (Phase 0C), the lateral task as evidence (§3.6), and the
+"unsolved problem" framing (ego speed, §3.9).
+
+*Surviving, strongest first*
+
+1. **The frame-level value of extra perception compute is sign-varying.** Of the frames whose
+   decision cost the 320→640 step changes at all, close to half get *worse*: 143 / 295
+   (48.5%) on nuScenes under Planner A, 1232 / 3026 (40.7%) on KITTI under Planner A, and
+   504 / 1361 (37.0%) on KITTI under the structurally unrelated Planner B. The adaptive-
+   compute literature assumes more compute is better and trades accuracy against latency;
+   nothing in it reports that the *sign* is not guaranteed per frame. PKL and TIP do not
+   either, because they score a *detector* aggregated over a dataset rather than asking a
+   per-frame ranking question.
+2. **Its quantified consequence:** spending the expensive detector on 20% of frames beats
+   spending it on 100% — 25.0% vs 9.96% cost reduction on nuScenes (Planner A), 28.1% vs
+   15.4% on KITTI (Planner B). Not a paradox: uniform full fidelity also pays for the frames
+   where it hurts.
+3. **No allocation signal transfers across datasets** (§3.9).
+4. **Whether published planning-aware scores rank frames by marginal value of a specific
+   computation** — the question Stage 1 exists to answer, and one the literature has not
+   asked, because it is a per-frame ranking question rather than a detector-evaluation one.
+
+*Still at risk*: both planners are hand-written and open-loop, so errors do not compound.
+Planner B removes the single-controller objection but not the hand-written one. The strongest
+available fix is to use PKL's own published learned planner as a third downstream decision
+maker — maximally favourable to PKL, since ΔJ would then be defined by the very planner PKL
+was designed around. If PKL's per-frame score still fails to rank frames by its own planner's
+cost change, the redundancy objection closes completely. That uses their planner as an
+evaluator and builds no method, so it stays inside the pre-registration.
+
