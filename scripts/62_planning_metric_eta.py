@@ -64,6 +64,19 @@ def eta_boot(df, score, col, quota, nboot=300, seed=0):
     return float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))
 
 
+def scene_z(df, score):
+    """Standardise a signal within each scene.
+
+    PKL and TIP levels differ by 4x between scene groups (14 vs 52 in two slices here), and
+    so do their cheap-minus-full differences, so a pooled top-quota ranking on the raw gain
+    is partly a ranking of scenes rather than of frames.  Giving every signal this variant
+    keeps the comparison from understating prior work.
+    """
+    s = pd.Series(np.asarray(score, float), index=df.index)
+    g = s.groupby(df.seq)
+    return ((s - g.transform("mean")) / g.transform("std").replace(0, np.nan)).fillna(0.0).to_numpy()
+
+
 def topk_overlap(a, b, frac):
     k = int(round(frac * len(a)))
     ia = set(np.argsort(-np.asarray(a), kind="stable")[:k])
@@ -200,13 +213,28 @@ def main():
 
     # How much signal there is to recover at all: dJ is zero wherever the cheap and the
     # expensive mode lead to the same action and the same cost.
-    print("\n=== decision-signal density ===")
+    print("\n=== how much is there to allocate (eta's denominator, in absolute terms) ===")
+    stakes = []
     for tname, col in TASKS.items():
         dj = (d[col[0]] - d[col[1]]).to_numpy()
         act = "same_action" if tname == "longitudinal" else "lat_same_action"
-        print(f"  {tname:13s} |dJ|>0 on {int((np.abs(dj) > 1e-9).sum())}/{len(d)} frames"
-              f"  ({float((np.abs(dj) > 1e-9).mean()):.3f})"
-              f"   action changes {int((d[act] == 0).sum())}")
+        allc, allf = float(d[col[0]].sum()), float(d[col[1]].sum())
+        orc = budget.total_risk(d, budget.select_pooled(dj, 0.20), col)
+        st = {"task": tname, "J_all_cheap": allc, "J_all_full": allf,
+              "J_oracle_at_20pct": orc,
+              "oracle_reduction_frac": (allc - orc) / max(allc, 1e-9),
+              "all_full_reduction_frac": (allc - allf) / max(allc, 1e-9),
+              "frames_dJ_nonzero": int((np.abs(dj) > 1e-9).sum()),
+              "frames_dJ_pos": int((dj > 1e-9).sum()), "frames_dJ_neg": int((dj < -1e-9).sum()),
+              "action_changes": int((d[act] == 0).sum()), "n_frames": len(d)}
+        stakes.append(st)
+        print(f"  {tname:13s} oracle@20% cuts {100 * st['oracle_reduction_frac']:5.2f}% of the"
+              f" all-cheap cost; all-full at 100% compute cuts"
+              f" {100 * st['all_full_reduction_frac']:5.2f}%")
+        print(f"                |dJ|>0 on {st['frames_dJ_nonzero']}/{len(d)} frames"
+              f"  (+{st['frames_dJ_pos']} / -{st['frames_dJ_neg']}),"
+              f" action changes {st['action_changes']}")
+    pd.DataFrame(stakes).to_csv(run / "allocation_stakes.csv", index=False)
 
     rows, curves = [], []
     for tname, col in TASKS.items():
@@ -232,8 +260,15 @@ def main():
             signals[f"{m.upper()}_gain"] = d[gcol].to_numpy()
         signals["decision_oracle_dJ"] = dj
 
+        base = dict(signals)
+        for name, sc in base.items():
+            if sc is None or name == "decision_oracle_dJ":
+                continue
+            signals[f"{name} [scene-z]"] = scene_z(d, sc)
+
         for name, sc in signals.items():
             r = {"task": tname, "variant": args.variant, "signal": name,
+                 "scene_normalised": "[scene-z]" in name,
                  "n_frames": len(d), "n_scenes": int(d.seq.nunique())}
             for q in QUOTAS:
                 if sc is None:

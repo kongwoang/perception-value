@@ -150,3 +150,53 @@ scenario mix rather than of the metrics, and it applies identically to every sig
 compared. It is stated here so the full-split numbers are read with it in mind: η on
 nuScenes rests on a small minority of frames.
 
+### 3.7 η's denominator — is there anything to allocate?
+
+η is a ratio, and a ratio of nothing is meaningless, so the absolute stakes are recorded
+before any η is interpreted. If the 320→640 fidelity step barely moved the planner, a low
+η for PKL or TIP would say nothing about those metrics — no signal can rank noise.
+
+| | | all cheap (320) | all full (640), **100%** compute | decision oracle, **20%** compute | ΔJ ≠ 0 |
+|---|---|---|---|---|---|
+| nuScenes | longitudinal | J = 893.8 | 804.8 (**−9.96%**) | 670.1 (**−25.03%**) | 295 / 3376 (8.7%), +152 / −143 |
+| nuScenes | lateral | J = 154.2 | 150.1 (−2.70%) | 140.7 (−8.79%) | 42 / 3376 (1.2%), +25 / −17 |
+| KITTI | longitudinal | J = 19372.1 | 9653.9 (−50.17%) | 7362.2 (**−62.00%**) | 3026 / 8008 (37.8%), +1794 / −1232 |
+| KITTI | lateral | J = 2170.4 | 2437.2 (**+12.29%**) | 2032.6 (−6.35%) | 1010 / 8008 (12.6%), +400 / −610 |
+
+Three things follow, and they cut in different directions.
+
+**The denominator is real where it matters.** On nuScenes longitudinal the oracle at a 20%
+quota cuts 25.0% of the all-cheap cost, while paying for the expensive mode on *every* frame
+cuts only 10.0%. Allocation at one fifth of the compute beats uniform full fidelity by 2.5×.
+There is a large, genuinely available prize, so a low η there is a statement about the
+signal.
+
+**A near-zero mean gain is not evidence of a near-zero effect.** Of the 295 nuScenes frames
+where the fidelity step changes the decision cost, 152 are helped and **143 are hurt** —
+running the expensive detector makes the decision *worse* on nearly half of the frames it
+affects. Frame-level effects of both signs largely cancel in any average. This is why the
+per-slice PKL summaries read as "640 is not better on average" (slice 1: PKL 52.44 cheap vs
+52.53 full) while the oracle simultaneously finds a 25% cost reduction: the value is
+frame-specific and sign-varying, so a metric's mean says nothing about whether it can *rank*
+frames, which is the only thing an allocator needs.
+
+**The lateral task is too thin to carry a verdict.** On nuScenes, ΔJ is non-zero on 1.2% of
+frames and the oracle prize is 8.79%; on KITTI, uniform full fidelity is 12.3% *worse* than
+uniform cheap and the oracle prize is 6.35%. The lateral column is therefore reported for
+completeness and is **not** used to support the Stage-1 verdict, which rests on the
+longitudinal task. Stating this now, before the numbers, prevents the weaker task from being
+recruited to whichever side it happens to favour.
+
+### 3.8 Giving the published metrics their best shot
+
+Two choices are deliberately in PKL's and TIP's favour, because the pre-registration
+requires prior work not be strawmanned:
+
+1. The **`oracle` geometry variant is primary** (§3.2), so monocular depth and yaw error —
+   irrelevant to the fidelity decision under test — does not depress their scores.
+2. PKL and TIP levels differ roughly fourfold between scene groups (14 vs 52 on two slices),
+   and so do their cheap-minus-full differences. A pooled top-quota ranking on the raw gain
+   is therefore partly a ranking of *scenes* rather than of frames. Every signal is
+   additionally evaluated in a **within-scene standardised** form (`[scene-z]`), and the
+   published metrics are credited with whichever form does better.
+
