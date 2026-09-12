@@ -31,9 +31,28 @@ assert len(HORIZONS) == 16
 
 
 class PlannerD(nn.Module):
-    """Frozen architecture (Phase 0G pre-registration): 4 strided conv blocks -> GAP -> MLP."""
+    """4 strided conv blocks -> global average pool -> MLP, with the ego's own velocity.
 
-    def __init__(self, cin: int = 5, nwp: int = 16, width=(32, 64, 128, 256)):
+    The pre-registered architecture took only the 5-channel BEV raster, and it failed the
+    viability gate decisively: validation ADE plateaued at ~5.0 m against 1.467 m for a
+    constant-velocity predictor, while training MSE kept falling, so the network was fitting
+    what it could see and what it could see was not enough.  The raster has no ego-speed
+    channel -- the ego is a static footprint -- and ego speed alone explains the target almost
+    completely (corr between the 4 s waypoint and 4 s x current speed is 0.961).
+
+    Ego velocity is proprioception, not perception: every real planner reads it off the CAN
+    bus, and Planner A uses it explicitly.  Decisively for this study, it is *identical* under
+    CHEAP and FULL, so it cannot carry information about the perception intervention: it
+    shifts J(cheap) and J(full) together and leaves V_D driven only by the raster difference.
+    The BEV encoder is unchanged, so the perception representation still matches PKL's exactly.
+
+    Giving Planner D the same velocity the baseline uses also makes the viability gate
+    meaningful rather than rigged: beating constant velocity by 10% now means the *scene*
+    contributes at least that much beyond pure kinematics.
+    """
+
+    def __init__(self, cin: int = 5, nwp: int = 16, width=(32, 64, 128, 256),
+                 ego_dim: int = 2):
         super().__init__()
         blocks, c = [], cin
         for w in width:
@@ -43,12 +62,16 @@ class PlannerD(nn.Module):
             c = w
         self.encoder = nn.Sequential(*blocks)
         self.pool = nn.AdaptiveAvgPool2d(1)
-        self.head = nn.Sequential(nn.Linear(c, 256), nn.ReLU(inplace=True),
+        self.head = nn.Sequential(nn.Linear(c + ego_dim, 256), nn.ReLU(inplace=True),
                                   nn.Linear(256, nwp * 2))
-        self.nwp = nwp
+        self.nwp, self.ego_dim = nwp, ego_dim
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, ego: torch.Tensor | None = None) -> torch.Tensor:
         h = self.pool(self.encoder(x)).flatten(1)
+        if self.ego_dim:
+            if ego is None:
+                raise ValueError("this PlannerD expects the ego state")
+            h = torch.cat([h, ego.reshape(len(h), self.ego_dim)], 1)
         return self.head(h).reshape(-1, self.nwp, 2)
 
 

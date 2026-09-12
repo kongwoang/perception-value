@@ -43,13 +43,15 @@ def load_test(files):
 
 
 @torch.no_grad()
-def paths(model, packed, device, bsz=32) -> np.ndarray:
+def paths(model, packed, ego_v, device, bsz=32) -> np.ndarray:
     out = []
     for a in range(0, len(packed), bsz):
         blk = packed[a:a + bsz]
         x = np.stack([np.unpackbits(p)[:CELLS].reshape(5, NX, NY).astype(np.float32)
                       for p in blk])
-        out.append(model(torch.from_numpy(x).to(device)).cpu().numpy())
+        e = np.asarray(ego_v[a:a + len(x)], np.float32)
+        out.append(model(torch.from_numpy(x).to(device),
+                         torch.from_numpy(e).to(device)).cpu().numpy())
     return np.concatenate(out)
 
 
@@ -78,7 +80,10 @@ def main():
     print(f"  {Path(args.ckpt).name}: epoch {ck.get('epoch')}, val ADE "
           f"{ck.get('val_ade', float('nan')):.3f} m")
 
-    p = {k: paths(model, d[f"packed_{k}"], device, args.bsz) for k in ("gt", "cheap", "full")}
+    # the ego's own velocity is identical across modes by construction, so it cannot carry
+    # information about which perception mode produced the raster
+    p = {k: paths(model, d[f"packed_{k}"], d["ego_v"], device, args.bsz)
+         for k in ("gt", "cheap", "full")}
     true = d["target"]
 
     rows = {"sample_token": d["sample_token"], "scene": d["scene"],

@@ -71,7 +71,9 @@ class RasterSet(torch.utils.data.Dataset):
     def __getitem__(self, i):
         rng = (np.random.default_rng((self.seed, i, int(time.time() * 1e3) % 100000))
                if self.corrupt is not None else None)
-        return torch.from_numpy(self.raster(i, rng)), torch.from_numpy(self.target[i])
+        return (torch.from_numpy(self.raster(i, rng)),
+                torch.from_numpy(self.ego_v[i]),
+                torch.from_numpy(self.target[i]))
 
 
 @torch.no_grad()
@@ -79,8 +81,11 @@ def predict(model, ds, device, bsz=32) -> np.ndarray:
     model.eval()
     out = []
     for a in range(0, len(ds), bsz):
-        x = np.stack([ds.raster(i) for i in range(a, min(a + bsz, len(ds)))])
-        out.append(model(torch.from_numpy(x).to(device)).cpu().numpy())
+        idx = range(a, min(a + bsz, len(ds)))
+        x = np.stack([ds.raster(i) for i in idx])
+        e = ds.ego_v[a:a + len(x)]
+        out.append(model(torch.from_numpy(x).to(device),
+                         torch.from_numpy(e).to(device)).cpu().numpy())
     return np.concatenate(out)
 
 
@@ -144,9 +149,9 @@ def main():
     hist, best, bad = [], np.inf, 0
     for ep in range(args.epochs):
         model.train(); tot = n = 0
-        for x, y in dl:
+        for x, e, y in dl:
             opt.zero_grad()
-            loss = lossf(model(x.to(device)), y.to(device))
+            loss = lossf(model(x.to(device), e.to(device)), y.to(device))
             loss.backward(); opt.step()
             tot += float(loss) * len(x); n += len(x)
         sched.step()

@@ -768,3 +768,49 @@ training samples for a 0.46 M-parameter network, and validation and test remain 
 
 Neither decision is informed by any allocation number, η, or PKL/TIP result; no model has been
 trained at this point.
+
+### 2026-09-12 20:35 — Phase 0G: D-F4 fired, architecture changed under the A7 rule
+
+The pre-registered Planner D architecture **failed its viability gate decisively**, and the
+change made in response is recorded here before any allocation number is looked at.
+
+Observed on D-GT seed 0, validation only:
+
+| epoch | train MSE | val ADE | val FDE |
+|---|---|---|---|
+| 0 | 33.79 | 6.363 m | 12.124 m |
+| 4 | 13.79 | 5.222 m | 10.036 m |
+| 8 | 7.88 | 5.076 m | 9.763 m |
+| 13 | 4.83 | 5.043 m | 9.702 m |
+| — constant-velocity baseline — | | **1.467 m** | 3.828 m |
+
+Training MSE fell by 7× while validation ADE plateaued around 5.0 m, three and a half times
+*worse* than constant velocity. The network was fitting what it could see, and what it could
+see was insufficient.
+
+**Debugging came first, as A7 requires, and found no implementation fault.** The extracted
+data was verified independently: monotone-forward fraction 1.000, final-waypoint lateral offset
+symmetric about zero (mean +0.16 m), zero clamped frames retained, and the correlation between
+the 4 s waypoint and 4 s × measured ego speed is **0.961**. The coordinate transform is
+asserted equal to PKL's own `objects2frame` in `tests/test_ego_traj.py`.
+
+That last number is also the diagnosis: **ego speed explains the target almost completely, and
+the 5-channel BEV raster does not contain it.** The ego appears as a static footprint; there is
+no velocity channel. The pre-registered Planner D was asked to regress a trajectory whose
+dominant factor was withheld, while its baseline was handed exactly that factor.
+
+**Change, under A7:** the ego's own velocity (2 numbers, the cached `ego_v`) is concatenated to
+the pooled BEV feature before the MLP head. The convolutional encoder and the raster are
+untouched, so the *perception* representation still matches PKL's exactly; what is added is
+proprioception, which Planner A already uses and which every real planner reads off the CAN bus.
+
+Why this cannot contaminate the study: **ego velocity is identical under CHEAP and FULL.** It
+shifts `J_D(cheap)` and `J_D(full)` together and leaves `V_D = J_D(cheap) − J_D(full)` driven
+only by the difference between the two rasters. It also makes the viability gate meaningful
+instead of rigged: Planner D now has exactly the information the constant-velocity baseline has,
+so beating that baseline by 10% means the *scene* contributes at least that much beyond
+kinematics — which is the thing "did it learn a planning function" should test.
+
+No allocation metric, η, PKL/TIP score or test-split quantity was inspected in making this
+change; only validation ADE/FDE, as A7 permits. All six training runs restart from scratch with
+the new architecture, which is frozen from here.
