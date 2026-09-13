@@ -1,0 +1,8 @@
+{
+  "brake_table": "results/raw/20260913_133004_core_matrix_postreview/nuScenes__YOLOv8s__ns_cheap_320tons_full_640__oracle.pkl",
+  "plan_csv": "data/cache/planner_d/planC_vs_truth.csv",
+  "token_map": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_token_map.csv",
+  "label": "oracle",
+  "nboot": 400,
+  "tag": "cross_target_tierobust_tol_oracle"
+}

@@ -1,0 +1,6 @@
+{
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_det_tv",
+  "mode": "ns_cheap_320",
+  "nboot": 400,
+  "tag": "deployable_gate_checks"
+}

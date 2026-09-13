@@ -1,0 +1,13 @@
+{
+  "tables": "/home/kongwoang/research/risk-aware-perception/results/raw/20260912_071140_core_matrix",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "oracle",
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "tag": "phase0g_eta_fde_oracle",
+  "skip_multimetric": false,
+  "nboot": 400,
+  "planner_c_truth": null,
+  "planner_c": true,
+  "coverage": "per_metric"
+}
