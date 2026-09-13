@@ -385,6 +385,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--nboot", type=int, default=1000)
     ap.add_argument("--tag", default="benchmark_budget")
+    ap.add_argument("--suffix", default="",
+                    help="appended to every output name, so a sensitivity run cannot overwrite the primary one")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     rng = np.random.default_rng(0)
@@ -398,10 +400,11 @@ def main():
 
     out = Path(RESULTS) / "final"
     costs = {t: profile_costs(t) for t in PROFILE}
-    for name, obj in (("benchmark_budget_overheads.json", {"overheads": ov, "costs": costs}),):
+    for name, obj in ((f"benchmark_budget_overheads{args.suffix}.json", {"overheads": ov, "costs": costs}),):
         (out / name).write_text(json.dumps(obj, indent=1, default=float))
         (run / name).write_text(json.dumps(obj, indent=1, default=float))
-    for name, df in (("benchmark_budget_two_level", two), ("benchmark_budget_multifidelity", multi)):
+    for name, df in ((f"benchmark_budget_two_level{args.suffix}", two),
+                     (f"benchmark_budget_multifidelity{args.suffix}", multi)):
         df.to_csv(out / f"{name}.csv", index=False)
         df.to_csv(run / f"{name}.csv", index=False)
         print(f"  wrote {out / (name + '.csv')} ({len(df)} rows)")

@@ -988,3 +988,13 @@ anything computed from FULL or reference tracks.
 The gates will score below their leave-one-scene-out development numbers (braking/mono GBM 0.465):
 they now train on about half the units. Test intervals over 6 KITTI sequences and 9 nuPlan logs will
 be wide, and some cells may not separate anything from random.
+
+### 2026-09-14 00:40 — amendment, after the overhead measurement and before reading any budget result
+
+The measured single-frame GBM inference is **16.1 ms** — 83% of a FULL pass on nuScenes (19.35 ms) —
+with the CPU rail 7.4 W over idle; ridge is 0.40 ms and the cheap-side features 3.6 ms. The GBM number
+is almost certainly scikit-learn's per-call cost (HistGradientBoosting dispatches an OpenMP pool on
+every `predict`), not what a depth-3, 200-tree model costs to evaluate. The primary result keeps the
+measured default, as registered. Declared now, before any budget row has been read: a sensitivity run
+repeats `93_budget_allocation.py` unchanged under `OMP_NUM_THREADS=1` (`--suffix _1thread`), and both
+are reported side by side.
