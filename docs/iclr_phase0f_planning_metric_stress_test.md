@@ -460,3 +460,10 @@ expensive detector, matching 48.5% under Planner A — and **selective allocatio
 beats uniform full fidelity at 100%** in every cell measured, including this one (15.11% vs
 6.76%).
 
+
+---
+
+> **Superseded numbers.** The 2026-09-13 code review found seven defects, three of which
+> changed numbers in this document, and everything downstream of the detection submissions was
+> recomputed. The method and reasoning here stand; for every figure see
+> [`iclr_corrected_results.md`](iclr_corrected_results.md), which takes precedence.

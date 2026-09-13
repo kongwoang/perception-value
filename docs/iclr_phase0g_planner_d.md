@@ -182,3 +182,10 @@ on nuScenes, with one planner hand-written by us and the other a published plann
 the same viability test. **Track B is now the load-bearing evidence, not a nice-to-have**: a
 closed-loop nuPlan planner brakes for detected objects, so unlike open-loop waypoint regression
 it is a downstream system that genuinely depends on perception.
+
+---
+
+> **Superseded numbers.** The 2026-09-13 code review found seven defects, three of which
+> changed numbers in this document, and everything downstream of the detection submissions was
+> recomputed. The method and reasoning here stand; for every figure see
+> [`iclr_corrected_results.md`](iclr_corrected_results.md), which takes precedence.
