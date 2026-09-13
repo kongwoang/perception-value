@@ -71,9 +71,14 @@ decision logic. The corrections moved it slightly **up** (0.496 → 0.514 for Pl
 | braking, oracle geometry | −9.96% | **−25.03%** |
 | braking, mono geometry | −12.99% | **−27.97%** |
 | rollout planner, KITTI | −15.37% | **−28.05%** |
-| PKL's planner, real trajectory | −1.46% | −5.18% |
+| PKL's planner, real trajectory, oracle geometry (ADE) | −0.81% | −4.60% |
+| PKL's planner, real trajectory, mono geometry (ADE) | −1.48% | −5.17% |
+| PKL's planner, real trajectory, oracle geometry (FDE) | −0.67% | −5.60% |
 
 Not a paradox: uniform full fidelity also pays for the frames where it hurts.
+
+*Correction 2026-09-13 21:50: the Planner C row above previously read −1.46% / −5.18%, the pre-review oracle numbers. Values now come from `allocation_stakes.csv` in `*phase0g_eta_fde_oracle` and `*phase0g_eta_mono_fixed`.*
+
 
 ## 4. Do two downstream systems agree about which frames deserve compute?
 
