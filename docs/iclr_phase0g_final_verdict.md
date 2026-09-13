@@ -51,8 +51,7 @@ worse — absent and symmetric decision value.
 no information, so D-F1 and D-F2 can neither pass nor fail.
 
 What Track A did establish instead: scoring PKL's own planner (Planner C) against the real
-trajectory rather than against its own ground-truth-conditioned output lowers PKL's η@20 from
-**0.872 to 0.395** (oracle geometry; 0.420 under mono) — most of the headline was shared functional
+trajectory rather than against its own ground-truth-conditioned output lowers PKL's η@20 from **0.880 to 0.395** (oracle geometry; 0.420 under mono) — most of the headline was shared functional
 form. PKL's released planner is itself 47% worse than constant velocity as a point predictor.
 
 ## 6. D-GT versus D-Aug robustness
@@ -124,7 +123,7 @@ separating planner from objective agrees in every cell, including one planner un
   where neither planner identity nor objective produces disagreement.
 - The "objective-conditionality" reframing proposed during analysis: refuted by one planner agreeing
   with itself across two objectives.
-- Any claim that PKL's advantage on its own planner (0.872) reflects allocation skill.
+- Any claim that PKL's advantage on its own planner (0.880 self-referenced) reflects allocation skill.
 - Any claim resting on Planner D's allocation numbers.
 - "Planning-aware metrics fail at compute allocation": PKL reaches 0.395–0.420 on its own planner.
 - Any closed-loop claim: every evaluation is open-loop at the state level.
