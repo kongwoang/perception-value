@@ -212,8 +212,12 @@ def main():
     ap.add_argument("--tag", default="phase0f_eta")
     ap.add_argument("--skip_multimetric", action="store_true")
     ap.add_argument("--nboot", type=int, default=300)
-    ap.add_argument("--planner_c_truth",
-                    default=str(CACHE / "planner_d" / "planC_vs_truth.csv"))
+    # Derived from --variant, never defaulted to a fixed file.  A fixed default meant the mono
+    # run silently read the *oracle* truth-referenced costs, pairing mono signals with an oracle
+    # target; the giveaway was that plannerC_ade_truth came out identical in both runs, which I
+    # saw and explained away instead of checking the cost columns.
+    ap.add_argument("--planner_c_truth", default=None,
+                    help="default: planC_vs_truth[_<variant>].csv for the chosen variant")
     ap.add_argument("--no_planner_c", dest="planner_c", action="store_false",
                     help="skip the Planner C task even if its CSVs exist")
     ap.add_argument("--coverage", default="per_metric", choices=["per_metric", "intersect"],
@@ -249,7 +253,11 @@ def main():
     elif args.planner_c:
         print("  Planner C: no CSV yet -- skipped")
 
+    if args.planner_c_truth is None:
+        sfx = "" if args.variant == "oracle" else f"_{args.variant}"
+        args.planner_c_truth = str(CACHE / "planner_d" / f"planC_vs_truth{sfx}.csv")
     truth = Path(args.planner_c_truth)
+    print(f"  Planner C truth-referenced costs: {truth.name}")
     if args.planner_c and truth.exists():
         g = pd.read_csv(truth).drop_duplicates("sample_token", keep="first")
         keep = ["sample_token", "JC_ade_cheap", "JC_ade_full"]
