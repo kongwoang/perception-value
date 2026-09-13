@@ -1,0 +1,19 @@
+{
+  "variant": "D-GT",
+  "seed": 0,
+  "best_epoch": 6,
+  "n_train": 6337,
+  "n_val": 3113,
+  "val_ade": 1.9844028949737549,
+  "val_fde": 4.666415214538574,
+  "cv_val_ade": 2.0020792400009784,
+  "cv_val_fde": 4.758704921765051,
+  "ade_improvement_vs_cv": 0.008828993715161215,
+  "viability_pass": false,
+  "n_val_test_locations": 2286,
+  "val_ade_test_locations": 1.9077720642089844,
+  "val_fde_test_locations": 4.493405818939209,
+  "cv_val_ade_test_locations": 1.9029477857494264,
+  "ade_improvement_vs_cv_test_locations": -0.0025351607099708406,
+  "viability_pass_test_locations": false
+}

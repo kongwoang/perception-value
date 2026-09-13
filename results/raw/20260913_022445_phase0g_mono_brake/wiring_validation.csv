@@ -1,0 +1,5 @@
+metric,x,y,expect,spearman
+pkl,G_PKL,dE,does the gain track the exact perception gain,0.01838632217387252
+pkl,G_PKL,crit_sum,does the gain track downstream criticality,0.05103802841587048
+tip,G_TIP,dE,does the gain track the exact perception gain,0.0363599855688892
+tip,G_TIP,crit_sum,does the gain track downstream criticality,0.018728503673418405

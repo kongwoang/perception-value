@@ -1,0 +1,14 @@
+{
+  "split": "val",
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "oracle",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "out": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d",
+  "nchunks": 98,
+  "chunk": 0,
+  "skip_existing": false,
+  "tag": "planner_d_smoke"
+}

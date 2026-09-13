@@ -1,0 +1,8 @@
+{
+  "data": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d",
+  "modelpath": "/home/kongwoang/research/risk-aware-perception/third_party/tip/planner.pt",
+  "mask_json": "/home/kongwoang/research/risk-aware-perception/third_party/tip/masks_trainval.json",
+  "variant": "mono",
+  "bsz": 16,
+  "tag": "plannerC_vs_truth_mono"
+}

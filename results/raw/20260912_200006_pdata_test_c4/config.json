@@ -1,0 +1,16 @@
+{
+  "split": "test",
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "oracle",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "out": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d",
+  "nchunks": 6,
+  "chunk": 4,
+  "skip_existing": true,
+  "keep_clamped": false,
+  "max_train_scenes": 200,
+  "tag": "pdata_test_c4"
+}

@@ -1,0 +1,7 @@
+{
+  "ckpt": "data/cache/planner_d/planner_d_gt_s0_best.pt",
+  "data": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d",
+  "variant": "oracle",
+  "bsz": 32,
+  "tag": null
+}

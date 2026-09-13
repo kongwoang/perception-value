@@ -1,0 +1,8 @@
+{
+  "metric": "pkl",
+  "variant": "oracle",
+  "n": 595,
+  "cheap_mean": 13.643863748126671,
+  "full_mean": 11.792108721793198,
+  "gain_mean": 1.8517550263334723
+}

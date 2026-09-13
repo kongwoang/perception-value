@@ -1,0 +1,14 @@
+{
+  "checkpoint": "planner_d_aug_s2_best.pt",
+  "n_frames": 2655,
+  "test_ade_gt": 2.068624973297119,
+  "test_ade_cheap": 2.067636251449585,
+  "test_ade_full": 2.067413091659546,
+  "test_ade_constant_velocity": 2.401627309219444,
+  "dJD_ade_mean": 0.000223151218960993,
+  "frac_dJD_pos": 0.3080979284369115,
+  "frac_dJD_zero": 0.3747645951035782,
+  "frac_dJD_neg": 0.31713747645951035,
+  "harmful_frac_among_affected": 0.5072289156626506,
+  "frames_clamped_horizon": 0
+}

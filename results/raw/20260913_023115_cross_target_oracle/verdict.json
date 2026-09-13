@@ -1,0 +1,7 @@
+{
+  "geometry": "oracle",
+  "n_frames": 2655,
+  "quantities_whose_paired_difference_excludes_zero": [
+    "overlap@30"
+  ]
+}

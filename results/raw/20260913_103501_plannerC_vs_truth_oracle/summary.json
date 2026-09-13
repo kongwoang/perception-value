@@ -1,0 +1,14 @@
+{
+  "n_frames": 2655,
+  "JC_ade_gt": 3.5357309215343156,
+  "JC_ade_cheap": 3.8296464672240846,
+  "JC_ade_full": 3.7985093349542933,
+  "constant_velocity_ade": 2.401627309219444,
+  "improvement_vs_cv": -0.47222298312533284,
+  "viability_pass": false,
+  "dJC_ade_mean": 0.03113713226979174,
+  "frac_pos": 0.22448210922787193,
+  "frac_neg": 0.23728813559322035,
+  "harmful_among_affected": 0.5138662316476346,
+  "corr_selfcost_vs_truthcost": 0.5961938257204704
+}

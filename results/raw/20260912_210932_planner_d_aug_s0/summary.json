@@ -1,0 +1,19 @@
+{
+  "variant": "D-AUG",
+  "seed": 0,
+  "best_epoch": 6,
+  "n_train": 6337,
+  "n_val": 3113,
+  "val_ade": 1.9852110147476196,
+  "val_fde": 4.657907485961914,
+  "cv_val_ade": 2.0020792400009784,
+  "cv_val_fde": 4.758704921765051,
+  "ade_improvement_vs_cv": 0.008425353460710383,
+  "viability_pass": false,
+  "n_val_test_locations": 2286,
+  "val_ade_test_locations": 1.9115031957626343,
+  "val_fde_test_locations": 4.487911701202393,
+  "cv_val_ade_test_locations": 1.9029477857494264,
+  "ade_improvement_vs_cv_test_locations": -0.004495872181715432,
+  "viability_pass_test_locations": false
+}

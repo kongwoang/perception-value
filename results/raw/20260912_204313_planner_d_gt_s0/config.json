@@ -1,0 +1,11 @@
+{
+  "variant": "gt",
+  "seed": 0,
+  "data": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d",
+  "epochs": 40,
+  "bsz": 24,
+  "lr": 0.001,
+  "nworkers": 2,
+  "patience": 8,
+  "tag": null
+}

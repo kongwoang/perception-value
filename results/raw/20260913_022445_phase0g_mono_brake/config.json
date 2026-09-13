@@ -1,0 +1,13 @@
+{
+  "tables": "/home/kongwoang/research/risk-aware-perception/results/raw/20260912_071140_core_matrix",
+  "subs": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "variant": "mono",
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "tag": "phase0g_mono_brake",
+  "skip_multimetric": false,
+  "nboot": 400,
+  "planner_c_truth": "/home/kongwoang/research/risk-aware-perception/data/cache/planner_d/planC_vs_truth.csv",
+  "planner_c": false,
+  "coverage": "per_metric"
+}
