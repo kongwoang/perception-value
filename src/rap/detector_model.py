@@ -90,6 +90,12 @@ class DetectorMissModel:
     n_train: int = 0
     meta: dict = field(default_factory=dict)
 
+    def probabilities(self, dist, lat, coarse) -> tuple:
+        """(p_cheap, p_rescue, p_lose) -- the three measured conditionals."""
+        X = _design(dist, lat, coarse)
+        sig = lambda w: 1.0 / (1.0 + np.exp(-X @ w))
+        return sig(self.w_cheap), sig(self.w_rescue), sig(self.w_lose)
+
     def p_detect(self, dist, lat, coarse) -> tuple:
         """Marginal detection probability at each fidelity, implied by the conditionals."""
         X = _design(dist, lat, coarse)
@@ -128,6 +134,10 @@ def fit_from_objects(df, hit_cheap: str = "hit_cheap_320", hit_full: str = "hit_
     tr = ~np.isin(seqs, list(val))
 
     X = _design(d, l, coarse)
+    # A class absent from the training data leaves an all-zero dummy column, whose coefficient
+    # then stays at zero and hands that class the reference class's behaviour with no warning.
+    # Record which classes were actually measured so callers can refuse to extrapolate.
+    measured = sorted(set(coarse.tolist()))
     hitc, hitf = yc > 0.5, yf > 0.5
     wc = _fit_logistic(X[tr], yc[tr])
     # rescue is fitted only where the cheap mode missed; loss only where it hit
@@ -143,6 +153,7 @@ def fit_from_objects(df, hit_cheap: str = "hit_cheap_320", hit_full: str = "hit_
         return float(np.mean((p - y[m]) ** 2))
 
     diag = {
+        "measured_classes": measured,
         "n_objects": int(len(df)), "n_train": int(tr.sum()), "n_val": int((~tr).sum()),
         "val_sequences": sorted(str(s) for s in val),
         "recall_cheap_observed": float(yc.mean()), "recall_full_observed": float(yf.mean()),
