@@ -78,7 +78,12 @@ class PerceptionFilter:
         u = np.array([_stable_u(scenario, iteration, str(o.track_token)) for o in objects])
         u2 = np.array([_stable_u(scenario, iteration, str(o.track_token) + "#2") for o in objects])
         hit_cheap = u < pc
-        if mode == "cheap":
+        if mode == "drop_all":
+            # B6 wiring probe, not a fidelity: remove everything the intervention camera sees.
+            # If a planner's trajectory is unchanged by this, the filtered observation is not
+            # reaching it and any V it reports would be meaningless.
+            keep = np.zeros(len(objects), bool)
+        elif mode == "cheap":
             keep = hit_cheap
         elif mode == "full":
             keep = np.where(hit_cheap, u2 >= pl, u2 < pr)

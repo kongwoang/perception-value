@@ -30,8 +30,8 @@ the text.** (i) The mono η run read the *oracle* truth-referenced cost file, be
 mono signals with an oracle target. The giveaway was that `plannerC_ade_truth` came out identical
 in the oracle and mono runs — which I saw, and explained away by noting that the *signals* do not
 depend on the variant, without checking the *cost* columns. The flag is now derived from
-`--variant` and prints the file it uses; the mono `plannerC_ade_truth` row is being recomputed and
-must not be used until it is. The cross-target mono result used the correct file and is unaffected.
+`--variant` and prints the file it uses; the mono `plannerC_ade_truth` row has been recomputed against
+`planC_vs_truth_mono.csv` and now reads 1,531 affected frames against the oracle's 1,226. The cross-target mono result used the correct file and is unaffected.
 (ii) The affected-frame count for the truth-referenced target in §2 was quoted from the *pre-review*
 run (1,251) while everything around it was post-review (1,226). Numbers here now come from
 `allocation_stakes.csv` in the run directories rather than from prose.
@@ -58,7 +58,7 @@ Of the frames whose decision cost the 320→640 step changes at all, close to ha
 | braking controller | mono | 486 / 3,376 | **45.5%** |
 | rollout planner (KITTI) | mono | 1,361 / 8,008 | 37.0% |
 | PKL's own planner, real-trajectory cost | oracle | 1,226 / 2,655 | **51.4%** (630 of 1,226) |
-| PKL's own planner, real-trajectory cost | mono | *pending re-run* | **51.6%** |
+| PKL's own planner, real-trajectory cost | mono | 1,531 / 2,655 | **51.6%** (790 of 1,531) |
 | learned waypoint planner (6 models) | oracle | 62.5% of frames | 47.6–53.6% |
 
 Stable across two datasets, two geometry variants, and four decision systems that share no
