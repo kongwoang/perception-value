@@ -41,7 +41,10 @@ PLANNER_C_TASK = {"plannerC_path_dev": ("JC_cheap", "JC_full")}
 # Phase 0G: the same PKL planner scored against the REAL future trajectory instead of against
 # its own ground-truth-conditioned output.  This is the non-circular version of Planner C --
 # the target is external to the planner, so PKL and the cost no longer share a functional form.
-PLANNER_C_TRUTH_TASK = {"plannerC_ade_truth": ("JC_ade_cheap", "JC_ade_full")}
+PLANNER_C_TRUTH_TASK = {"plannerC_ade_truth": ("JC_ade_cheap", "JC_ade_full"),
+                        # final displacement error, so the robustness of the planner target does
+                        # not rest on ADE alone (an average can hide a divergent endpoint)
+                        "plannerC_fde_truth": ("JC_fde_cheap", "JC_fde_full")}
 NOCHK = lambda c: None
 
 
@@ -260,7 +263,7 @@ def main():
     print(f"  Planner C truth-referenced costs: {truth.name}")
     if args.planner_c and truth.exists():
         g = pd.read_csv(truth).drop_duplicates("sample_token", keep="first")
-        keep = ["sample_token", "JC_ade_cheap", "JC_ade_full"]
+        keep = ["sample_token", "JC_ade_cheap", "JC_ade_full", "JC_fde_cheap", "JC_fde_full"]
         d = d.merge(g[keep], on="sample_token", how="left")
         cov = float(d.JC_ade_cheap.notna().mean())
         print(f"  Planner C vs truth: {len(g)} samples, coverage {cov:.3f}")

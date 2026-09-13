@@ -201,8 +201,8 @@ def main():
 
     d = pd.DataFrame(rows)
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
-    f = out / (f"phase0g_external_{args.planner}"
-               + ("_sanity" if args.sanity else "") + "_raw.csv")
+    tag = "_sanity" if args.sanity else ""
+    f = out / f"phase0g_external_{args.planner}{tag}_raw.csv"
     d.to_csv(f, index=False)
     print(f"\n  {len(d)} states, wrote {f}")
     if len(d):

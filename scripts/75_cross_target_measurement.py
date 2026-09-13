@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from rap import runmeta                                                        # noqa: E402
+from rap.transfer import best_compatible_eta, strict_pairs                     # noqa: E402
 from rap.paths import CACHE, RESULTS                                           # noqa: E402
 
 QUOTAS = [0.10, 0.20, 0.30]
@@ -188,6 +189,40 @@ def main():
                          "n": len(d)})
             print(f"  cross-eta {lab} @{int(q*100):<3d} {e:+.3f}  random {r0:+.3f}  "
                   f"paired diff {e-r0:+.3f} [{lo:+.3f},{hi:+.3f}]")
+
+    # ---- tie-robust measures --------------------------------------------------------------
+    # The quota-based cross-eta above is not tie-robust when a target is sparse: the braking
+    # controller responds on a small minority of frames, so most of a 20% allocation is free
+    # choice and the number depends on how those slots are filled.  Two additions fix that.
+    sp = strict_pairs(va, vb, rng)
+    sp_boot = [strict_pairs(va[t], vb[t], rng, npairs=200_000)
+               for t in scene_boot(scenes, min(args.nboot, 120), rng)]
+    for key in ("disagreement", "gamma"):
+        vals = [x[key] for x in sp_boot]
+        lo, hi = ci(vals)
+        rows.append({"quantity": f"strict_pairs {key}", "value": sp[key],
+                     "baseline": (0.5 if key == "disagreement" else 0.0),
+                     "paired_diff": sp[key] - (0.5 if key == "disagreement" else 0.0),
+                     "lo": lo, "hi": hi, "n": sp["n_pairs_strict"]})
+        print(f"  strict-pair {key:13s} {sp[key]:+.4f} [{lo:+.4f},{hi:+.4f}]  "
+              f"(n={sp['n_pairs_strict']}, baseline "
+              f"{0.5 if key == 'disagreement' else 0.0})")
+
+    for lab, x, y in (("brake-opt->plan", va, vb), ("plan-opt->brake", vb, va)):
+        for q in QUOTAS:
+            e = best_compatible_eta(x, y, q)
+            diffs = []
+            for take in scene_boot(scenes, min(args.nboot, 120), rng):
+                r0 = random_eta(y[take], q, rng)
+                ee = best_compatible_eta(x[take], y[take], q)
+                if np.isfinite(ee) and np.isfinite(r0):
+                    diffs.append(ee - r0)
+            lo, hi = ci(diffs)
+            rows.append({"quantity": f"best_compatible {lab} @{int(q*100)}", "value": e,
+                         "baseline": np.nan, "paired_diff": np.nan, "lo": lo, "hi": hi,
+                         "n": len(d)})
+            print(f"  best-compatible {lab} @{int(q*100):<3d} {e:+.3f}"
+                  f"   (vs random, paired [{lo:+.3f},{hi:+.3f}])")
 
     m = pd.DataFrame(rows)
     m.insert(0, "geometry", args.label)
