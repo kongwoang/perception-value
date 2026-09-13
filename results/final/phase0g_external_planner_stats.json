@@ -40,9 +40,9 @@
       "pdm->idm": 0.997
     },
     "strict_pairs": {
-      "n": 30620,
-      "disagreement": 0.1093,
-      "gamma": 0.7814
+      "n": 30606,
+      "disagreement": 0.1091,
+      "gamma": 0.7819
     }
   }
 }
