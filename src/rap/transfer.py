@@ -61,24 +61,37 @@ def best_compatible_eta(v_from: np.ndarray, v_to: np.ndarray, quota: float) -> f
     return got / best if abs(best) > 1e-12 else np.nan
 
 
-def strict_pairs(a: np.ndarray, b: np.ndarray, rng, npairs: int = 600_000) -> dict:
+def strict_pairs(a: np.ndarray, b: np.ndarray, rng=None, npairs: int = 600_000,
+                 exhaustive_max: int = 8000) -> dict:
     """Disagreement rate and Goodman-Kruskal gamma over pairs both targets rank strictly.
 
     A pair is usable only when neither target is indifferent about it; those are exactly the pairs
     where a quota-based measure would have been free to choose either way.
+
+    Every pair is enumerated when there are at most `exhaustive_max` items, so the pair count is
+    exact and comparable across analyses; random pair sampling is only the fallback beyond that.
     """
     a, b = np.asarray(a, float), np.asarray(b, float)
-    i = rng.integers(0, len(a), npairs)
-    j = rng.integers(0, len(a), npairs)
-    m = i != j
-    i, j = i[m], j[m]
-    sa, sb = np.sign(a[i] - a[j]), np.sign(b[i] - b[j])
-    usable = (sa != 0) & (sb != 0)
-    if not usable.any():
-        return {"n_pairs_strict": 0, "disagreement": np.nan, "gamma": np.nan}
-    conc = int((sa[usable] == sb[usable]).sum())
-    disc = int((sa[usable] != sb[usable]).sum())
+    n = len(a)
+    conc = disc = 0
+    if n <= exhaustive_max:
+        for i in range(n - 1):
+            sa = np.sign(a[i] - a[i + 1:])
+            sb = np.sign(b[i] - b[i + 1:])
+            u = (sa != 0) & (sb != 0)
+            if u.any():
+                same = sa[u] == sb[u]
+                conc += int(same.sum())
+                disc += int((~same).sum())
+    else:
+        rng = rng if rng is not None else np.random.default_rng(0)
+        i = rng.integers(0, n, npairs)
+        j = rng.integers(0, n, npairs)
+        m = i != j
+        sa, sb = np.sign(a[i[m]] - a[j[m]]), np.sign(b[i[m]] - b[j[m]])
+        u = (sa != 0) & (sb != 0)
+        conc, disc = int((sa[u] == sb[u]).sum()), int((sa[u] != sb[u]).sum())
     tot = conc + disc
-    return {"n_pairs_strict": tot,
-            "disagreement": disc / tot,
-            "gamma": (conc - disc) / tot}
+    if tot == 0:
+        return {"n_pairs_strict": 0, "disagreement": np.nan, "gamma": np.nan}
+    return {"n_pairs_strict": tot, "disagreement": disc / tot, "gamma": (conc - disc) / tot}
