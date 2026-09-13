@@ -998,3 +998,38 @@ every `predict`), not what a depth-3, 200-tree model costs to evaluate. The prim
 measured default, as registered. Declared now, before any budget row has been read: a sensitivity run
 repeats `93_budget_allocation.py` unchanged under `OMP_NUM_THREADS=1` (`--suffix _1thread`), and both
 are reported side by side.
+
+## 2026-09-14 01:20 — Benchmark v0 results (pre-registered 2026-09-13 23:55)
+
+Report: `docs/iclr_benchmark.md`; every table at every quota: `docs/benchmark_tables.md`, generated
+from `results/final/benchmark_*.csv` (runs `20260913_233410_benchmark_table`,
+`20260913_233938_benchmark_budget`). Checks that ran before any number was read: exact tie expectation
+against 20,000 random orders; nuPlan track sets regenerated offline match Track B on 1440/1440 states
+for both planners; the multi-fidelity greedy against brute force on 150 instances.
+
+* **Harm on the test split.** Replicates wherever enough frames are affected. D ranges from ~0 (KITTI,
+  oracle geometry: Planner B 0.004, braking 0.09 over all units) to 0.91 (PKL's planner, ADE, oracle,
+  test). A single "22–88%" range overstated how uniform it is. nuPlan test has 11–42 affected states
+  per cell; PDM-Closed safety has none harmed.
+* **Baselines, test split.** No existing score is deployable; the existing scores that beat random are
+  diagnostics (ΔE E6 on nuScenes oracle braking and on nuPlan; exact ΔE on KITTI oracle braking). Across
+  all quotas 21 deployable rows beat random: 20 learned gates (KITTI, nuPlan) and cheap-side criticality
+  on nuScenes braking/mono at 30%. Cheap-detection uncertainty beats random nowhere, and is worse than
+  random on PKL's planner under mono and on KITTI Planner B. **The nuScenes braking/mono gate
+  (LOSO +0.360 over random) does not survive the frozen split: +0.21 [−0.15, +0.49].**
+* **Self-agreement.** All scenes: PKL S = 0.56 (ADE) / 0.67 (FDE) under oracle geometry, 0.48 / 0.61
+  under mono; TIP similar. Test split: S ≈ 0.75–1.04, because truth-referenced η is near zero on those
+  24 scenes.
+* **Measured cost.** Feature extraction 3.6–3.9 ms (≈20% of FULL), ridge 0.39 ms, GBM 16.1 ms per
+  frame. No learned gate escalates anything at a 20% budget; GBM escalates nothing up to 50%. Under
+  measured cost four rows beat random, all at 50% (ridge on nuPlan PDM-Closed; cheap-side criticality
+  on nuScenes braking/mono in ms and in mJ). With 320/384/512/640 on KITTI mono, the best 640-only plan
+  reaches 0.74–0.78 of the multi-level oracle, and for braking the energy-optimal plan overruns the
+  latency budget by 14% while the latency-optimal plan leaves 12% of the energy budget unspent.
+* **Sensitivity run (declared 00:40), `OMP_NUM_THREADS=1`.** GBM single-frame 12.9 ms, CPU rail 1.5 W
+  over idle (7.4 W in the primary run). Latency conclusions unchanged. Energy overheads ~5× lower:
+  ridge becomes feasible under mJ budgets, and rows beating random under measured cost go from four to
+  five (ridge on nuPlan PDM-Closed at 50% gains its mJ rows; cheap-side criticality on nuScenes
+  braking/mono loses its mJ row). A descriptive timing note (`95_gate_inference_batch_timing.py`, feeds
+  no allocation) shows GBM inference is per-call overhead — 16.05 ms single vs 0.021 ms per frame in a
+  1,000-frame batch — so the binding cost is feature extraction (3.6–3.9 ms, ≈20% of FULL).

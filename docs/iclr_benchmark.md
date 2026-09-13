@@ -159,11 +159,27 @@ helps.
 energy budgets the CPU overhead is charged at 7.4 W and ridge becomes infeasible almost everywhere.
 
 What this is and is not. It is the cost of *this* implementation — Python feature extraction and
-scikit-learn's per-call inference path — not an intrinsic cost of a depth-3 tree ensemble; a compiled
-evaluator would be far cheaper, and we did not measure one. The finding that survives the caveat is
-structural: a gate must be cheap *relative to the escalation it buys*, and at tight budgets that
-ratio, not ranking quality, decides whether it helps. A benchmark that charges quota in frames
-cannot see this.
+scikit-learn's per-call inference path. Two follow-ups separate the parts:
+
+* **Inference is almost entirely per-call overhead.** The same fitted GBM costs 16.05 ms on one frame
+  but 0.021 ms per frame inside a 1,000-frame batch; ridge 0.42 ms vs 0.0015 ms
+  (`95_gate_inference_batch_timing.py`, `benchmark_gate_inference_batch_timing.json`). A compiled
+  evaluator would make inference negligible.
+* **Feature extraction is the binding cost, and it does not go away.** 3.6 ms on nuScenes against a
+  20% budget of 3.87 ms leaves room to escalate ~1.4% of frames even with free inference; on KITTI
+  3.9 ms already exceeds the 3.69 ms budget.
+* **Declared sensitivity run, `OMP_NUM_THREADS=1`** (amendment 2026-09-14 00:40, `*_1thread` files):
+  single-frame GBM 12.9 ms, CPU rail 1.5 W over idle instead of 7.4 W. Latency results are
+  essentially unchanged — GBM still escalates nothing up to 50%. Energy overheads fall about fivefold,
+  so under mJ budgets ridge becomes feasible (10.8% of nuScenes frames escalated at 20%). Rows beating
+  random under measured cost go from four to five: ridge on nuPlan PDM-Closed at 50% now also in mJ
+  (paired lower bounds +0.13 for safety and +0.10 for scalar_J), and cheap-side criticality on nuScenes braking/mono keeps
+  its ms row but loses the mJ one, because cheaper energy lets it escalate 46.7% of frames instead of
+  34.1%, close to the 50% random does.
+
+The finding that survives both: a gate must be cheap *relative to the escalation it buys*, and at tight
+budgets that ratio — set mainly by feature extraction here — not ranking quality, decides whether it
+helps. A benchmark that charges quota in frames cannot see this.
 
 ### 5.2 Several fidelity levels: measured cost changes the decision
 
@@ -214,5 +230,6 @@ the intermediate levels: 384 costs 0.78 of 640 in ms but 0.58 in mJ.
   ΔE E6 near-tautological there and makes the nuPlan uncertainty signal privileged (flagged).
 * nuPlan costs are Track B's external cost, not the official nuPlan metrics.
 * PKL's planner fails the viability test; its cells are kept and flagged.
-* Overheads are for this Python/scikit-learn implementation; FULL/CHEAP costs are per-mode medians,
+* Overheads are for this Python/scikit-learn implementation (inference overhead shown to be per-call;
+  feature extraction is not); FULL/CHEAP costs are per-mode medians,
   not per-frame measurements; nuPlan uses the KITTI detector's costs and nuScenes feature timing.
