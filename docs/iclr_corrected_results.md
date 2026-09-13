@@ -74,6 +74,7 @@ decision logic. The corrections moved it slightly **up** (0.496 → 0.514 for Pl
 | PKL's planner, real trajectory, oracle geometry (ADE) | −0.81% | −4.60% |
 | PKL's planner, real trajectory, mono geometry (ADE) | −1.48% | −5.17% |
 | PKL's planner, real trajectory, oracle geometry (FDE) | −0.67% | −5.60% |
+| PKL's planner, real trajectory, mono geometry (FDE) | −1.15% | −6.94% |
 
 Not a paradox: uniform full fidelity also pays for the frames where it hurts.
 
@@ -185,9 +186,24 @@ box-placement error. The reversal survives; its magnitude halved.
 Two further points that survive unchanged. PKL's η on **its own** planner falls from **0.880 to 0.395** (post-review; 0.822 to 0.420 under mono) when the cost is referenced to the real trajectory instead of to the planner's own
 ground-truth-conditioned output — so about half of the self-referenced score — 55% of 0.880 under oracle geometry, 49% of 0.822 under mono — was the shared
 functional form, now measured rather than suspected. Under mono geometry the **braking controller's** signals collapse: the best is
-cheap-detection uncertainty at 0.198, the only deployable signal whose interval excludes zero — but excluding zero is the wrong test: paired against random over the same scene draws it does not separate (+0.091 [−0.062, +0.270]), and nor does GT criticality (+0.087 [−0.060, +0.258]). On the braking controller under mono geometry, no signal is shown to beat random. On **PKL's own planner** they do not: PKL
+cheap-detection uncertainty at 0.198, the only deployable signal whose interval excludes zero — but excluding zero is the wrong test: paired against random over the same scene draws it does not separate (+0.091 [−0.062, +0.270]), and nor does GT criticality (+0.087 [−0.060, +0.258]). On the braking controller under mono geometry, no existing score is shown to beat random (a learned cheap-side gate does; see below). On **PKL's own planner** they do not: PKL
 holds at 0.420 [+0.27, +0.57] and TIP at 0.400, while ΔE falls to 0.153 with an interval
 containing zero, so on that target the reversal is sharper under mono, not weaker.
+
+Against the real trajectory's **final** displacement (FDE) the picture is the same: PKL 0.294 and TIP 0.228 against ΔE 0.141 and random 0.005 under oracle geometry; PKL 0.318 [+0.16, +0.46], TIP 0.260 and ΔE 0.145 against random 0.012 under mono (`*phase0g_eta_fde_{oracle,mono}`).
+
+### A learned cheap-side gate (development result, leave-one-scene-out)
+
+Every signal above that clears random is a diagnostic. `84_deployable_gate.py` predicts V from the 65 cheap-side features in `features.py` (leakage guard on), out of fold by scene; `86_gate_checks.py` refits it (reproducing 84 exactly) and pairs it with random over the same scene draws. η@20, paired difference to random in brackets:
+
+| downstream system | geometry | ridge | GBM |
+|---|---|---|---|
+| braking controller | oracle | 0.165 (+0.083 [−0.067, +0.221]) | 0.175 (+0.103 [−0.063, +0.255]) |
+| braking controller | **mono** | **0.316 (+0.239 [+0.101, +0.400])** | **0.465 (+0.360 [+0.171, +0.556])** |
+| PKL's planner, real trajectory | oracle | 0.016 (−0.017 [−0.142, +0.095]) | 0.134 (+0.096 [−0.031, +0.218]) |
+| PKL's planner, real trajectory | mono | 0.040 (−0.020 [−0.113, +0.068]) | 0.018 (−0.051 [−0.141, +0.043]) |
+
+One cell separates, and it is the one where no existing score did: the braking controller under monocular geometry. It is not leakage — the cached geometry the features use is `mono.predicted_geometry` from the cheap boxes, calibration and the previous frame's cheap boxes (`40_nusc_detect.py`), and the mono decision consumes exactly those arrays. Under mono the gate sees the inputs of the cheap decision itself; under oracle geometry the decision uses GT ranges it cannot see, which is the likeliest reason the same model does not separate there. The gate's `uncertainty (cheap)` row in `phase0g_deployable_gate.csv` is `feat_ent_mean`, **not** the `unc_sum` of the tables above — do not put the two numbers side by side. These are development numbers: the benchmark re-scores every gate on a frozen test split (`benchmark_table.csv`).
 
 ## 6. Phase 0F headline table, corrected (η@20, longitudinal)
 
