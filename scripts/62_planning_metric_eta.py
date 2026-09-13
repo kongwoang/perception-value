@@ -352,13 +352,20 @@ def main():
             f"best_dE_metric ({best_metric})": d[f"dE_{best_metric}"].to_numpy(),
         }
         if not args.skip_multimetric:
+            # Fit only where this task has a target.  The Planner C tasks cover 2,655 of the
+            # 3,376 frames (the rest have no 4 s future), so fitting on the whole table fed the
+            # regressor 721 NaN targets and it raised "Input y contains NaN" after ~18 minutes
+            # of work.  Predictions are written back into a full-length array with NaN outside
+            # the covered set, which the per-signal coverage mask already handles.
             feats = _pm.oracle_features(d)
-            dd2 = d.copy()
+            cov = dmask[tname]
+            dd2 = d[cov].copy().reset_index(drop=True)
             for c in feats:
                 dd2[c] = pd.to_numeric(dd2[c], errors="coerce").fillna(0.0)
-            dd2["_dJ"] = dj
-            signals["multimetric_dE_oracle"] = predict.loso(
-                dd2, feats, "gbm", "_dJ", "reg", checker=NOCHK).pred
+            dd2["_dJ"] = dj[cov]
+            pred = np.full(len(d), np.nan)
+            pred[cov] = predict.loso(dd2, feats, "gbm", "_dJ", "reg", checker=NOCHK).pred
+            signals["multimetric_dE_oracle"] = pred
         for m, gcol in have.items():
             signals[f"{m.upper()}_gain"] = d[gcol].to_numpy()
         signals["decision_oracle_dJ"] = dj
