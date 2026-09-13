@@ -62,7 +62,7 @@ def best_compatible_eta(v_from: np.ndarray, v_to: np.ndarray, quota: float) -> f
 
 
 def strict_pairs(a: np.ndarray, b: np.ndarray, rng=None, npairs: int = 600_000,
-                 exhaustive_max: int = 8000) -> dict:
+                 exhaustive_max: int = 8000, decimals: int = 9) -> dict:
     """Disagreement rate and Goodman-Kruskal gamma over pairs both targets rank strictly.
 
     A pair is usable only when neither target is indifferent about it; those are exactly the pairs
@@ -71,7 +71,11 @@ def strict_pairs(a: np.ndarray, b: np.ndarray, rng=None, npairs: int = 600_000,
     Every pair is enumerated when there are at most `exhaustive_max` items, so the pair count is
     exact and comparable across analyses; random pair sampling is only the fallback beyond that.
     """
-    a, b = np.asarray(a, float), np.asarray(b, float)
+    # Values are rounded before comparison so floating-point noise is a tie, not a ranking.
+    # With exact comparison the brake-vs-plan analysis counted 464,858 strict pairs; 620 of those
+    # differed only around 1e-12, and at 1e-9 the count is 464,238, matching an independent
+    # calculation. Disagreement moves by 0.0001, so no conclusion depends on it.
+    a, b = np.round(np.asarray(a, float), decimals), np.round(np.asarray(b, float), decimals)
     n = len(a)
     conc = disc = 0
     if n <= exhaustive_max:
