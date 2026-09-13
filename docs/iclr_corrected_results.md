@@ -112,6 +112,24 @@ indistinguishable from unrelated at every budget, by every measure.
 `responsive_frac` is now reported so this cannot recur silently: the braking controller genuinely
 distinguishes only 46.6% / 23.4% / 15.6% of its top-10/20/30% sets under oracle geometry.
 
+**Tie-robust measures — added after an independent analysis showed quota-based transfer is
+asymmetric.** Quota statistics give a sparse target free slots, so they depend on how those slots
+are filled. Two measures do not:
+
+| measure | oracle geometry | mono geometry |
+|---|---|---|
+| strictly ranked frame pairs (ties at 1e-9) | 464,238 | 878,066 |
+| pairwise disagreement | **0.525** [0.466, 0.570] | 0.511 [0.468, 0.545] |
+| Goodman-Kruskal γ | **−0.050** [−0.139, +0.068] | −0.023 [−0.090, +0.064] |
+| best-compatible braking-optimum → planner, @20% | **0.839** | 0.769 |
+| best-compatible planner-optimum → braking, @20% | **0.037** | 0.125 |
+
+Best-compatible transfer is the source optimum most favourable to the target, an upper bound. It is
+strongly asymmetric because the braking controller responds on only 219 frames, so most of its 20%
+allocation is free choice and can be filled with the planner's best frames. **So "indistinguishable
+from unrelated in both directions" holds only for planner → braking.** The direction-free evidence
+is the pairwise disagreement, which sits at chance with γ ≈ 0.
+
 ## 5. Allocation signals — deployable and diagnostic kept apart
 
 A signal is **deployable** only if it can be computed *before* deciding to escalate. Note that
@@ -138,11 +156,17 @@ diagnostics, not candidate allocators**; so is every ΔE variant. And `crit_sum`
 
 | signal | oracle geometry | mono geometry |
 |---|---|---|
-| random | +0.036 [−0.07, +0.13] | +0.036 [−0.07, +0.13] |
-| exact ΔE = best ΔE variant (E1) | +0.222 [+0.05, +0.35] | +0.222 [+0.05, +0.35] |
-| multi-metric ΔE oracle | −0.031 [−0.18, +0.09] | −0.031 [−0.18, +0.09] |
-| **PKL gain** | **+0.395 [+0.14, +0.57]** | +0.260 [+0.07, +0.41] |
-| **TIP gain** | **+0.390 [+0.15, +0.57]** | +0.221 [+0.04, +0.38] |
+| random | +0.036 [−0.07, +0.13] | +0.046 [−0.04, +0.15] |
+| cheap-detection uncertainty (deployable) | +0.053 [−0.09, +0.18] | +0.089 [−0.03, +0.18] |
+| criticality (GT geometry) | +0.056 [−0.12, +0.20] | +0.105 [−0.00, +0.22] |
+| exact ΔE = best ΔE variant (E1) | +0.222 [+0.05, +0.35] | +0.153 [−0.03, +0.32] |
+| multi-metric ΔE oracle | −0.031 [−0.18, +0.09] | −0.006 [−0.09, +0.06] |
+| **PKL gain** | **+0.395 [+0.14, +0.57]** | **+0.420 [+0.27, +0.57]** |
+| **TIP gain** | **+0.390 [+0.15, +0.57]** | **+0.400 [+0.23, +0.56]** |
+
+*Correction 2026-09-13 21:55: the mono column previously came from the run whose Planner C
+target was wired to the oracle file, so every row except PKL and TIP duplicated the oracle column
+and PKL/TIP were paired with the wrong target. Values now come from `*phase0g_eta_mono_fixed`.*
 
 ### The ordering reverses with the downstream system
 
@@ -161,9 +185,11 @@ box-placement error. The reversal survives; its magnitude halved.
 Two further points that survive unchanged. PKL's η on **its own** planner falls from **0.872 to
 0.395** when the cost is referenced to the real trajectory instead of to the planner's own
 ground-truth-conditioned output — so more than half of the headline 0.872 was the shared
-functional form, now measured rather than suspected. And **under mono geometry every signal
-collapses**: the best is cheap-detection uncertainty at 0.198, the only deployable signal whose
-interval excludes zero, while every diagnostic falls to near random.
+functional form, now measured rather than suspected. Under mono geometry the **braking controller's** signals collapse: the best is
+cheap-detection uncertainty at 0.198, the only deployable signal whose interval excludes
+zero, while every diagnostic falls to near random. On **PKL's own planner** they do not: PKL
+holds at 0.420 [+0.27, +0.57] and TIP at 0.400, while ΔE falls to 0.153 with an interval
+containing zero, so on that target the reversal is sharper under mono, not weaker.
 
 ## 6. Phase 0F headline table, corrected (η@20, longitudinal)
 
@@ -182,8 +208,9 @@ both are continuous (tie group of exactly 1); only ΔE-exact and E1 move, as pre
 - **Not** "planning-aware metrics fail at compute allocation" — PKL reaches 0.395 on its own
   planner and 0.220 on the braking controller, the latter's interval overlapping random but its
   point estimate twice what we first reported.
-- **Not** "we know what to allocate by" — under realistic monocular geometry nothing beats
-  cheap-detection uncertainty at 0.198, and no diagnostic separates from random.
+- **Not** "we know what to allocate by" — on the braking controller under realistic monocular geometry
+  nothing beats cheap-detection uncertainty at 0.198 and no diagnostic separates from random
+  (on PKL's own planner PKL does, at 0.420, but PKL needs the expensive output).
 - **Not** anything resting on Planner D. It failed its pre-registered viability gate on all six
   runs (D-F4): the whole BEV scene contributes ~1% beyond the ego's own velocity, reproducing the
   known result that nuScenes open-loop planning is ego-status dominated. Its decision value is
@@ -195,12 +222,24 @@ both are continuous (tie group of exactly 1); only ΔE-exact and E1 move, as pre
 ## 8. What the evidence does support
 
 > The marginal downstream value of additional perception compute is **sign-varying at the frame
-> level** — close to half the affected frames are made worse — and **which frames are valuable is
-> a property of the perception–planner pair, not of the perception system**: two downstream
-> systems' oracle rankings of the same frames are indistinguishable from unrelated at every
-> budget tested, and the ranking of allocation signals reverses between them.
+> level** — 45–52% of affected frames are made worse on nuScenes, and 41% (IDMPlanner) and 30%
+> (PDM-Closed) on nuPlan — and **selective allocation beats uniform full fidelity** on every
+> downstream system measured, including two published planners we did not write.
 
-External validation is the open gap. Track B infrastructure is in place and step B2 passed:
-PDM-Closed and IDMPlanner both run untouched on nuPlan mini, 4/4 scenarios each, on the same
-scenario tokens, with official metrics. The perception intervention and counterfactual branching
-are not yet built.
+**Downstream-conditionality holds only in a narrower form.** Between the braking controller and
+PKL's own planner on nuScenes, which differ in both objective and planner family, the two decision
+values are unrelated (pairwise disagreement 0.525, γ −0.050) and the ranking of allocation signals
+reverses. **On nuPlan it does not replicate.** PDM-Closed and IDMPlanner agree on the same states
+(safety cost: γ +0.78, same sign on 19 of the 21 states both respond on), and so does a single
+planner scored under two objectives (IDMPlanner, safety vs progress deviation: γ +0.70) — so on
+nuPlan neither the planner nor the objective produces disagreement.
+
+The nuPlan test is weak at detecting disagreement: both planners share an IDM core (PDM-Closed
+generates its proposals with `BatchIDMPolicy`), the intervention removes whole objects rather than
+perturbing them, only about 17% of tracked objects fall inside the forward camera cone, and the
+effective sample is 21–72 states. But it is the only external test available, and it did not support
+the claim. Downstream-conditionality should be reported as **observed between two dissimilar systems
+on nuScenes and absent on nuPlan**, not as a general property.
+
+External results: `results/final/phase0g_external_planner_{summary,transfer}.csv` and
+`phase0g_external_2x2.csv`; full report `docs/iclr_phase0g_external_planners.md` (in progress).
