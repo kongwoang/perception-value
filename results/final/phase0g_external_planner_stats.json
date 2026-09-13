@@ -1,0 +1,48 @@
+{
+  "scalar_J": {
+    "B-F1_fires": false,
+    "B-F2_fires": false,
+    "B-F3_fires": false,
+    "harmful": {
+      "idm": 0.406,
+      "pdm_closed": 0.303
+    },
+    "selective_extra_share": {
+      "idm": 0.371,
+      "pdm_closed": 0.297
+    },
+    "overlap20": 0.281,
+    "best_compatible_20": {
+      "idm->pdm": 0.918,
+      "pdm->idm": 0.982
+    },
+    "strict_pairs": {
+      "n": 103524,
+      "disagreement": 0.3262,
+      "gamma": 0.3475
+    }
+  },
+  "safety": {
+    "B-F1_fires": false,
+    "B-F2_fires": false,
+    "B-F3_fires": false,
+    "harmful": {
+      "idm": 0.314,
+      "pdm_closed": 0.371
+    },
+    "selective_extra_share": {
+      "idm": 0.364,
+      "pdm_closed": 0.303
+    },
+    "overlap20": 0.22,
+    "best_compatible_20": {
+      "idm->pdm": 1.0,
+      "pdm->idm": 0.997
+    },
+    "strict_pairs": {
+      "n": 30620,
+      "disagreement": 0.1093,
+      "gamma": 0.7814
+    }
+  }
+}
