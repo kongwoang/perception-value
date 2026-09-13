@@ -30,11 +30,23 @@ TASKS = {"longitudinal": ("J_cheap", "J_full"), "lateral": ("Jlat_cheap", "Jlat_
 NOCHK = lambda c: None
 
 
+TIE_SEEDS = 8
+
+
 def eta(df, score, col, quota=0.20):
-    pick = lambda s: budget.select_pooled(np.asarray(s, float), quota)
+    """Share of the oracle's achievable reduction captured, with ties averaged out.
+
+    Count-valued signals such as an unweighted dE tie on most of the selected set at a 20%
+    quota, so a single tie-break -- random or not -- is one draw from a wide distribution.
+    """
+    def pick(s, seed):
+        return budget.select_pooled(np.asarray(s, float), quota, seed=seed)
+
     allc = float(df[col[0]].sum())
-    orc = budget.total_risk(df, pick((df[col[0]] - df[col[1]]).to_numpy()), col)
-    tot = budget.total_risk(df, pick(np.asarray(score, float)), col)
+    dj = (df[col[0]] - df[col[1]]).to_numpy()
+    sc = np.asarray(score, float)
+    orc = float(np.mean([budget.total_risk(df, pick(dj, sd), col) for sd in range(TIE_SEEDS)]))
+    tot = float(np.mean([budget.total_risk(df, pick(sc, sd), col) for sd in range(TIE_SEEDS)]))
     return (allc - tot) / (allc - orc) if allc - orc > 1e-12 else np.nan
 
 

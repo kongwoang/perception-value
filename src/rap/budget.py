@@ -28,15 +28,19 @@ def tie_fraction(score: np.ndarray, quota: float) -> float:
     return (k - above) / k
 
 
-def select_pooled(score: np.ndarray, quota: float, seed: int | None = None) -> np.ndarray:
+def select_pooled(score: np.ndarray, quota: float, seed: int | None = 0) -> np.ndarray:
     """Top-quota frames over the whole dataset, with ties broken at random.
 
     A stable argsort breaks ties by row order, which is not a property of the score: two
     signals that tie on most of the selected set would still get a definite, reproducible and
     meaningless ranking, and two independent implementations sharing the convention would
-    agree with each other while both being arbitrary.  With `seed` given, ties are broken by a
-    seeded random key instead, so callers can average over seeds; `seed=None` keeps the old
-    deterministic order for backward compatibility with published tables.
+    agree with each other while both being arbitrary.
+
+    A seeded random key is therefore the **default**, so no caller can fall back to row order by
+    omission.  The first version of this fix defaulted to `None` for backward compatibility and
+    left ten call sites, the Phase 0F headline table among them, still ranking by row order.
+    Callers that need the tie-break marginalised out pass a sequence of seeds and average;
+    `seed=None` is still accepted, only to reproduce a pre-fix number deliberately.
     """
     score = np.asarray(score, float)
     k = int(round(quota * len(score)))
