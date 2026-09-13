@@ -5,7 +5,7 @@ cd /home/kongwoang/research/risk-aware-perception
 say () { echo "[$(date +%H:%M:%S)] $*" | tee -a logs/supervise.log; }
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
-competing () { pgrep -f "61_run_planning|62_planning_metric|71_planner_d|run_simulation" | grep -v "^$$\$" | head -1; }
+competing () { ./scripts/busy.sh; }
 gate () {
   while :; do
     [ -e logs/metrics.pause ] && { say "mono: paused"; sleep 20; continue; }

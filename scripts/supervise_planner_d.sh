@@ -13,10 +13,7 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
 say () { echo "[$(date +%H:%M:%S)] $*" | tee -a "$LOG"; }
 
-competing () {
-  pgrep -f "61_run_planning|66_planner_c|70_planner_d_data|62_planning_metric|git (push|gc|repack)" \
-    | grep -v "^$$\$" | head -1
-}
+competing () { ./scripts/busy.sh; }
 
 gate () {
   while :; do

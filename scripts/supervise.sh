@@ -26,11 +26,7 @@ say () { echo "[$(date +%H:%M:%S)] $*" | tee -a "$LOG"; }
 
 used_mb () { free -m | awk '/^Mem:/ {print $3}'; }
 
-competing () {
-  # heavy processes that are not this sweep: other python jobs, git packing, compressors
-  pgrep -f "65_planner_b|62_planning_metric|git (push|gc|repack)|git-pack|xz|zstd" \
-    | grep -v "^$$\$" | head -1
-}
+competing () { ./scripts/busy.sh; }
 
 gate () {
   while :; do

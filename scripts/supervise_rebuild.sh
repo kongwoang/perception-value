@@ -12,7 +12,7 @@ cd /home/kongwoang/research/risk-aware-perception
 PAUSE=logs/metrics.pause
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 say () { echo "[$(date +%H:%M:%S)] $*" | tee -a logs/supervise.log; }
-competing () { pgrep -f "61_run_planning|62_planning|66_planner_c|70_planner_d|71_planner_d|74_plannerC|run_simulation|git (push|gc|repack)" | grep -v "^$$\$" | head -1; }
+competing () { ./scripts/busy.sh; }
 gate () { while :; do
     [ -e "$PAUSE" ] && { say "rebuild: paused"; sleep 20; continue; }
     c=$(competing); [ -n "$c" ] && { say "rebuild: waiting on pid $c"; sleep 30; continue; }
@@ -24,7 +24,7 @@ attempt () { local l="$1"; shift
     say "$l attempt $t FAILED"; sleep $((30*t)); done; say "$l GAVE UP"; return 1; }
 
 # 1. submissions, with the corrected monocular lift
-attempt "submissions" ./scripts/py scripts/60_build_submissions.py --tag submissions_postreview
+attempt "submissions" ./scripts/py scripts/60_build_submissions.py
 
 # 2. the two published planning-aware metrics, both geometry variants
 for v in oracle mono; do for m in pkl tip; do for c in 0 1 2 3 4 5; do
