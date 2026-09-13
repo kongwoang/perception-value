@@ -1,0 +1,16 @@
+#!/bin/bash
+# Python for the nuPlan environment, with libgomp preloaded.
+#
+# Same aarch64 defect the `py` wrapper works around for the `edge` environment: an extension
+# module imported late (here cv2, reached through nuplan.database.utils.image) finds the static
+# TLS block already consumed and fails with "libgomp.so.1: cannot allocate memory in static TLS
+# block".  Preloading libgomp first puts it in the initial-exec TLS region, where there is room.
+# Everything that imports nuplan-devkit or tuplan_garage must go through this wrapper.
+# Two different libgomp copies are in play and they have different sonames, so each needs its
+# own slot in the initial-exec TLS region: conda's libgomp.so.1, which cv2 links, and the copy
+# torch vendors as libgomp-<hash>.so.1.0.0.  Preloading only one leaves the other to fail.
+E=/home/kongwoang/miniforge3/envs/nuplan
+PRE=$(ls $E/lib/python3.9/site-packages/torch.libs/libgomp*.so* 2>/dev/null | head -1)
+CONDA_GOMP=$(ls $E/lib/libgomp.so.1 2>/dev/null | head -1)
+[ -n "$CONDA_GOMP" ] && PRE="${PRE:+$PRE:}$CONDA_GOMP"
+exec env LD_PRELOAD="$PRE" $E/bin/python "$@"

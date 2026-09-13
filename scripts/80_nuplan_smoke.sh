@@ -8,11 +8,11 @@
 set -e
 export NUPLAN_DEVKIT_ROOT=/home/kongwoang/research/risk-aware-perception/third_party/nuplan_devkit
 export NUPLAN_DATA_ROOT=/home/kongwoang/datasets/nuplan
-export NUPLAN_MAPS_ROOT=/home/kongwoang/datasets/nuplan/maps
+export NUPLAN_MAPS_ROOT=/home/kongwoang/datasets/nuplan/nuplan-maps-v1.0
 export NUPLAN_EXP_ROOT=/home/kongwoang/research/risk-aware-perception/data/cache/nuplan_exp
 export NUPLAN_SIMULATION_ALLOW_ANY_BUILDER=1
 mkdir -p "$NUPLAN_EXP_ROOT"
-PY=$HOME/miniforge3/envs/nuplan/bin/python
+PY="/home/kongwoang/research/risk-aware-perception/scripts/pynuplan"
 SEARCH='[pkg://tuplan_garage.planning.script.config.common, pkg://tuplan_garage.planning.script.config.simulation, pkg://nuplan.planning.script.config.common, pkg://nuplan.planning.script.experiments]'
 LIMIT=${LIMIT:-4}
 

@@ -100,3 +100,33 @@ Native dependencies (GDAL through Fiona/rasterio/pyogrio, Shapely 2, rtree, pyar
 come from conda-forge aarch64 builds. Version pins the devkit requests that conda-forge cannot
 satisfy on aarch64 were not forced; conda resolved compatible versions instead. The planners'
 own code and configuration are unmodified.
+
+### Getting the official simulation to run on aarch64 — every compatibility step
+B2 required reproducing one untouched official simulation per planner before anything was
+modified. It took five fixes, none of which touches the planners or their configs:
+
+1. **Python 3.9 environment** (§ above). The assumption that Track B needs no torch was wrong:
+   `run_simulation.py` imports `pytorch_lightning` at module level, before any planner is
+   selected, so the entry point needs it even for rule-based planners.
+2. **torch via pip, not conda.** `mamba install pytorch-cpu` solved for 59 minutes without
+   finishing and was abandoned; `pip install "torch>=2.0,<2.4" pytorch-lightning timm` completed
+   in four minutes from `manylinux2014_aarch64` wheels. Installed: torch 2.3.1,
+   pytorch-lightning 2.6.0 (the devkit's `requirements_torch.txt` asks for 1.3.8 and torch
+   1.9.0+cu111, neither of which exists for this platform — recorded as a deviation).
+3. **`scripts/pynuplan`, an LD_PRELOAD wrapper.** cv2, reached through
+   `nuplan.database.utils.image`, failed with `libgomp.so.1: cannot allocate memory in static
+   TLS block` — the same aarch64 static-TLS defect the `py` wrapper handles for the `edge`
+   environment. Two libgomp copies with *different sonames* are in play (conda's `libgomp.so.1`
+   for cv2 and torch's vendored `libgomp-<hash>.so.1.0.0`), so both must be preloaded;
+   preloading one leaves the other to fail.
+4. **Missing pure-Python dependencies**: pytest (imported by
+   `nuplan/database/utils/pointclouds/lidar.py`), tensorboard, plus ray, selenium, testbook,
+   hypothesis, pyinstrument, retry, guppy3, control. `urllib3` pinned below 1.27 for botocore,
+   which conflicts with selenium's requirement; selenium is only used for bokeh PNG export and
+   is not on the simulation path.
+5. No change to PDM-Closed, IDMPlanner, their configs, or any scoring code.
+
+**B2 result**: `closed_loop_nonreactive_agents` on nuPlan mini, `scenario_filter=one_continuous_log`
+limited to 4 scenarios. IDMPlanner 4/4 succeeded, PDM-Closed 4/4 succeeded, on the **same**
+scenario tokens (`000d90717e5e569d`, `3ec7324424685846`, …), which is what the PDM-vs-IDM
+comparison requires. Official nuPlan metrics were written for both.
