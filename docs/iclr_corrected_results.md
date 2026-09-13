@@ -183,7 +183,7 @@ the other, on the same frames and the same perception transition. **Pre-review t
 box-placement error. The reversal survives; its magnitude halved.
 
 Two further points that survive unchanged. PKL's η on **its own** planner falls from **0.880 to 0.395** (post-review; 0.822 to 0.420 under mono) when the cost is referenced to the real trajectory instead of to the planner's own
-ground-truth-conditioned output — so more than half of the headline 0.872 was the shared
+ground-truth-conditioned output — so about half of the self-referenced score — 55% of 0.880 under oracle geometry, 49% of 0.822 under mono — was the shared
 functional form, now measured rather than suspected. Under mono geometry the **braking controller's** signals collapse: the best is
 cheap-detection uncertainty at 0.198, the only deployable signal whose interval excludes zero — but excluding zero is the wrong test: paired against random over the same scene draws it does not separate (+0.091 [−0.062, +0.270]), and nor does GT criticality (+0.087 [−0.060, +0.258]). On the braking controller under mono geometry, no signal is shown to beat random. On **PKL's own planner** they do not: PKL
 holds at 0.420 [+0.27, +0.57] and TIP at 0.400, while ΔE falls to 0.153 with an interval
