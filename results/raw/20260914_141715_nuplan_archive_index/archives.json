@@ -1,0 +1,24 @@
+[
+ {
+  "archive": "nuplan_mini_sensor.txt",
+  "url": "https://d1qinkmu0ju04f.cloudfront.net/public/nuplan-v1.1/sensor_blobs/mini_set/nuplan_mini_sensor.txt",
+  "source": "official download page (logged in), 'Mini Sensors Metadata' link, copied by the user 2026-09-14",
+  "status": 200,
+  "size": 2622,
+  "login_required": false,
+  "range_supported": true,
+  "members_listed": 0,
+  "cd_complete": false
+ },
+ {
+  "archive": "nuplan-v1.1_mini_camera_0.zip",
+  "url": "https://motional-nuplan.s3.amazonaws.com/public/nuplan-v1.1/sensor_blobs/mini_set/nuplan-v1.1_mini_camera_0.zip",
+  "source": "official download page (logged in), 'Camera 0' link, copied by the user 2026-09-14",
+  "status": 200,
+  "size": 52219710368,
+  "login_required": false,
+  "range_supported": true,
+  "members_listed": 0,
+  "cd_complete": false
+ }
+]

@@ -1519,3 +1519,60 @@ The v1.0 section holds only DBs and maps. The whole-archive option cannot fit in
 central directories of all nine shards (~25–35 MB each by estimate) would exceed the 50 MB cap, so the
 plan reads the metadata archive first and only the needed shards' directories. Waiting for the link
 addresses.
+
+### 2026-09-14 14:30 — Task 4: two official links provided by the user
+
+The user copied two links from the logged-in download page:
+* "Mini Sensors Metadata":
+  `https://d1qinkmu0ju04f.cloudfront.net/public/nuplan-v1.1/sensor_blobs/mini_set/nuplan_mini_sensor.txt`
+* "Camera 0":
+  `https://motional-nuplan.s3.amazonaws.com/public/nuplan-v1.1/sensor_blobs/mini_set/nuplan-v1.1_mini_camera_0.zip`
+
+Both sit under `public/` with no signature. Recorded with their source in
+`results/raw/nuplan_archive_urls/user_provided.tsv`.
+
+Camera 1–8 URLs are **not** built from the naming pattern. They are used only if an official source,
+such as the metadata file, lists them; otherwise the user is asked. Order: HEAD both; fetch the metadata
+text if it is small; read the central directory of Camera 0 only if Range works without login and it
+fits the 50 MB cap.
+
+## 2026-09-14 14:27 — Task 4 result: archive index, log-to-shard map and download options
+
+Requests, all logged:
+* HEAD of both official links (no login; `Accept-Ranges: bytes`);
+* GET of the 2,622-byte metadata file;
+* EOCD, ZIP64 record and full central directory of `nuplan-v1.1_mini_camera_0.zip` by Range (all 206).
+
+Total fetched **42,019,619 B** of the 52,428,800-B cap. No archive member was fetched.
+
+**Findings.**
+* **Camera 0 central directory:** ZIP64; 242,385 entries: 242,320 JPEGs (all deflated), 64 directories and a LICENSE file;
+  8 cameras × 30,290 images. Its logs equal metadata File group 0 exactly, so group *i* ↔ Camera *i* is
+  verified for shard 0.
+* **Measured CAM_F0 JPEG:** mean 211,049 B stored, 212,086 B uncompressed. This replaces the Task 3
+  estimate of 212 kB, which moves by < 0.5%.
+* **Page units:** the page's "GB" are GiB (Camera 0 HEAD = 48.63 GiB).
+* **Shards needed:** the 9 test logs are in Cameras 0, 2, 3, 6; the 34 benchmark logs span all nine.
+
+**Download options (9 test logs / all 34), against 114.6 GB free.**
+* (a) whole archives: 202.0 / 450.7 GB. They do not fit together; each fits one at a time.
+* (b) needed CAM_F0 members via Range: 37,000 images, 7.76 GB / 144,939 images, 30.6 GB.
+* (c) scenario windows via Range: 3,320 images, 0.71 GB / 12,921 images, 2.72 GB.
+* Camera 0 portions are exact (every needed file name found in the directory); the other shards are
+  estimated at the measured mean.
+* (b) and (c) also need the other shards' central directories: ~120 MB / ~320 MB, estimated from
+  Camera 0 by size.
+
+**Verdict.** Not doable in full now. Camera 0 (3 test logs; 769 window images, 167 MB) is fetchable by
+Range today, but was not fetched, because Task 4 allows no data. The rest needs from the user:
+* the official links for Camera 2, 3, 6;
+* permission for the ~120 MB of directory reads beyond the cap;
+* approval of the download.
+
+Recommended: option (c), 0.83 GB including directories.
+
+Outputs:
+* `results/final/nuplan_archive_index.csv`;
+* `docs/nuplan_archive_index.md`;
+* working files in `results/raw/nuplan_archive_urls/`, including `needed_cam_f0.csv.gz`,
+  `benchmark_logs_to_groups.csv` and `report_summary.json`.

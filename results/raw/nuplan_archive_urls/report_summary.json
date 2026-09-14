@@ -1,0 +1,37 @@
+{
+ "free_bytes": 114550288384,
+ "measured_cam_f0_mean_compressed_bytes": 211049.01518653022,
+ "measured_cam_f0_mean_uncompressed_bytes": 212085.76209970287,
+ "cam_f0_members_in_camera_0": 30290,
+ "local_header_overhead_bytes_mean": 142.0,
+ "options": [
+  {
+   "set": "9 test logs",
+   "archives": "0, 2, 3, 6",
+   "whole_archives_bytes": 202017432233,
+   "members_images": 37000,
+   "members_bytes": 7759458430,
+   "members_bytes_with_headers": 7764712430,
+   "window_images": 3320,
+   "window_bytes": 705122022,
+   "window_bytes_with_headers": 705593462,
+   "largest_single_archive_bytes": 52219710368,
+   "central_directories_bytes": 162267900,
+   "central_directories_bytes_not_yet_read": 120323090
+  },
+  {
+   "set": "34 benchmark logs",
+   "archives": "0, 1, 2, 3, 4, 5, 6, 7, 8",
+   "whole_archives_bytes": 450663826414,
+   "members_images": 144939,
+   "members_bytes": 30589233208,
+   "members_bytes_with_headers": 30609814546,
+   "window_images": 12921,
+   "window_bytes": 2723451582,
+   "window_bytes_with_headers": 2725286364,
+   "largest_single_archive_bytes": 54202487275,
+   "central_directories_bytes": 361989913,
+   "central_directories_bytes_not_yet_read": 320045103
+  }
+ ]
+}

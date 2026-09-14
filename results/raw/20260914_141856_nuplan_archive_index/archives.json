@@ -1,0 +1,16 @@
+[
+ {
+  "archive": "nuplan-v1.1_mini_camera_0.zip",
+  "url": "https://motional-nuplan.s3.amazonaws.com/public/nuplan-v1.1/sensor_blobs/mini_set/nuplan-v1.1_mini_camera_0.zip",
+  "source": "official download page (logged in), 'Camera 0' link, copied by the user 2026-09-14",
+  "status": 200,
+  "size": 52219710368,
+  "login_required": false,
+  "range_supported": true,
+  "members_listed": 242385,
+  "cd_complete": true,
+  "cd_entries": 242385,
+  "cd_bytes": 41944810,
+  "zip64": true
+ }
+]

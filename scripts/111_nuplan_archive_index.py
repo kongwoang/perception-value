@@ -11,10 +11,12 @@ page, is recorded as `login_required` and the inquiry stops there.
   --mode page  URL [URL ...]         fetch official pages; list every link that looks like an archive
   --mode head  --urls FILE           HEAD each archive URL (FILE rows: url<TAB>source)
   --mode cd    --urls FILE           HEAD, then EOCD and central directory via Range, members to csv.gz
+  --mode report                      no network: map needed CAM_F0 images to archives, price download options
 """
 from __future__ import annotations
 
 import argparse, csv, glob, gzip, json, re, struct, sys, time, urllib.error, urllib.request
+import numpy as np
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,12 +185,115 @@ def mode_cd(fx: Fetcher, run: Path, url_file: str, listing: bool):
     print(f"  total bytes fetched (all runs): {fx.total}")
 
 
+# sizes shown on the logged-in download page, as transcribed by the user (GiB); Camera 0 is measured by HEAD
+DISPLAYED_GIB = {0: 48.63, 1: 50.48, 2: 46.53, 3: 46.51, 4: 45.78, 5: 47.30, 6: 46.47, 7: 45.95, 8: 42.06}
+URLS_DIR = ROOT / "results" / "raw" / "nuplan_archive_urls"
+
+
+def mode_report():
+    """No network: map needed CAM_F0 images to archives and price the three download options."""
+    import re, shutil
+    import pandas as pd
+    txt = (URLS_DIR / "nuplan_mini_sensor.txt").read_text()
+    group, g = {}, None
+    for line in txt.splitlines():
+        mm = re.match(r"File group:\s*(\d+)", line.strip())
+        if mm:
+            g = int(mm.group(1)); continue
+        if line.strip():
+            group[line.strip()] = g
+    need = pd.read_csv(URLS_DIR / "needed_cam_f0.csv.gz")
+    runs = sorted(glob.glob(str(ROOT / "results/raw/*_nuplan_archive_index/members__nuplan-v1.1_mini_camera_0.zip.csv.gz")))
+    mem = pd.read_csv(runs[-1])
+    arch0 = json.loads((Path(runs[-1]).parent / "archives.json").read_text())[0]
+    mem = mem[mem.name.str.endswith(".jpg")].copy()
+    mem["filename_jpg"] = mem.name.str.split("/", n=1).str[1]
+    f0 = mem[mem.filename_jpg.str.contains("/CAM_F0/")]
+    mean_c = float(f0.compressed.mean())
+    local_overhead = float((30 + f0.name.str.len() + 20).mean())      # local header + name + ZIP64 extra, per member
+    j = need.merge(mem[["filename_jpg", "compressed"]], on="filename_jpg", how="left")
+    exact = j.group == 0
+    assert j.loc[exact, "compressed"].notna().all(), "a needed group-0 image is missing from Camera 0"
+    j["bytes"] = np.where(exact, j.compressed, mean_c)
+    j["exact"] = exact
+    free = shutil.disk_usage("/home/kongwoang").free
+    urls = dict(l.rstrip("\n").split("\t", 1) for l in open(URLS_DIR / "user_provided.tsv") if l.strip())
+    rows = []
+    for gi in range(9):
+        x = j[j.group == gi]
+        name = f"nuplan-v1.1_mini_camera_{gi}.zip"
+        url = next((u for u in urls if u.endswith(name)), "")
+        logs = sorted(k for k, v in group.items() if v == gi)
+        bench = sorted(set(x.log))
+        rows.append({
+            "archive": name if gi == 0 else f"Camera {gi} (file name not confirmed)",
+            "url": url or "unknown (link not provided)",
+            "source": urls.get(url, "official download page as transcribed by the user (name and size only)"),
+            "size": arch0["size"] if gi == 0 else int(DISPLAYED_GIB[gi] * 2**30),
+            "size_basis": "HEAD Content-Length" if gi == 0 else "displayed GiB on the download page",
+            "login_required": False if gi == 0 else "unknown",
+            "range_supported": True if gi == 0 else "unknown",
+            "logs_covered": len(logs), "benchmark_logs": len(bench), "test_logs": int(x[x.split == "test"].log.nunique()),
+            "needed_images": len(x), "needed_bytes": int(x.bytes.sum()),
+            "needed_images_windows": int(x.in_window.sum()), "needed_bytes_windows": int(x[x.in_window == 1].bytes.sum()),
+            "test_needed_images": int((x.split == "test").sum()), "test_needed_bytes": int(x[x.split == "test"].bytes.sum()),
+            "test_needed_images_windows": int(((x.split == "test") & (x.in_window == 1)).sum()),
+            "test_needed_bytes_windows": int(x[(x.split == "test") & (x.in_window == 1)].bytes.sum()),
+            "bytes_basis": "exact from central directory" if gi == 0 else f"estimated at measured CAM_F0 mean {mean_c:.0f} B",
+            "logs_to_archive_basis": "verified from central directory" if gi == 0 else "metadata file group; group-to-camera naming verified only for 0",
+        })
+    # central directory of the other shards, scaled from Camera 0 by archive size (needed for Range extraction)
+    cd0 = arch0["cd_bytes"]
+    for r in rows:
+        r["central_directory_bytes"] = cd0 if r["size_basis"].startswith("HEAD") else int(cd0 * r["size"] / arch0["size"])
+        r["central_directory_basis"] = "read" if r["size_basis"].startswith("HEAD") else "estimated from Camera 0 by size"
+    txt_url = next(u for u in urls if u.endswith("nuplan_mini_sensor.txt"))
+    rows.insert(0, {"archive": "nuplan_mini_sensor.txt", "url": txt_url, "source": urls[txt_url], "size": len(txt.encode()),
+                    "size_basis": "HEAD Content-Length", "login_required": False, "range_supported": True,
+                    "logs_covered": len(group), "benchmark_logs": 0, "test_logs": 0, "needed_images": 0, "needed_bytes": 0,
+                    **{f"{c}_{u}": 0 for c in ("needed", "test_needed") for u in ("images_windows", "bytes_windows")},
+                    "test_needed_images": 0, "test_needed_bytes": 0,
+                    "central_directory_bytes": 0, "central_directory_basis": "not a zip",
+                    "bytes_basis": "log-to-file-group index, fetched in full",
+                    "logs_to_archive_basis": "lists all 64 mini logs by file group"})
+    df = pd.DataFrame(rows)
+    out = ROOT / "results" / "final" / "nuplan_archive_index.csv"
+    df.to_csv(out, index=False)
+
+    df_all, df = df, df[df.archive != "nuplan_mini_sensor.txt"].reset_index(drop=True)
+
+    def opts(sub, label):
+        arch = df[df[sub] > 0]
+        whole = int(arch["size"].sum())
+        col = "test_needed" if label == "9 test logs" else "needed"
+        img, byt = int(df[f"{col}_images"].sum()), int(df[f"{col}_bytes"].sum())
+        wimg, wbyt = int(df[f"{col}_images_windows"].sum()), int(df[f"{col}_bytes_windows"].sum())
+        return {"set": label, "archives": ", ".join(str(i) for i in arch.index), "whole_archives_bytes": whole,
+                "members_images": img, "members_bytes": byt, "members_bytes_with_headers": int(byt + img * local_overhead),
+                "window_images": wimg, "window_bytes": wbyt, "window_bytes_with_headers": int(wbyt + wimg * local_overhead),
+                "largest_single_archive_bytes": int(arch["size"].max()),
+                "central_directories_bytes": int(arch["central_directory_bytes"].sum()),
+                "central_directories_bytes_not_yet_read": int(arch.loc[arch.central_directory_basis != "read",
+                                                                       "central_directory_bytes"].sum())}
+    summary = {"free_bytes": free, "measured_cam_f0_mean_compressed_bytes": mean_c,
+               "measured_cam_f0_mean_uncompressed_bytes": float(f0.uncompressed.mean()),
+               "cam_f0_members_in_camera_0": len(f0), "local_header_overhead_bytes_mean": local_overhead,
+               "options": [opts("test_logs", "9 test logs"), opts("benchmark_logs", "34 benchmark logs")]}
+    (URLS_DIR / "report_summary.json").write_text(json.dumps(summary, indent=1))
+    print(df_all[["archive", "size", "logs_covered", "benchmark_logs", "test_logs", "needed_images", "needed_bytes",
+              "test_needed_images_windows", "test_needed_bytes_windows"]].to_string(index=False))
+    print(json.dumps(summary, indent=1))
+    print("wrote", out)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", required=True, choices=["page", "head", "cd"])
+    ap.add_argument("--mode", required=True, choices=["page", "head", "cd", "report"])
     ap.add_argument("--urls", default=None)
     ap.add_argument("pages", nargs="*")
     args = ap.parse_args()
+    if args.mode == "report":
+        return mode_report()
     run = runmeta.new_run("nuplan_archive_index", vars(args))
     fx = Fetcher(run)
     try:
