@@ -2,7 +2,7 @@
 # Task 1 then Task 2 compute (RESEARCH_LOG 2026-09-14), strictly one heavy job at a time.
 #
 # Runs detached from the Claude session.  Resumes Task 1 after the q_plan out-of-memory
-# (RESEARCH_LOG 11:10): the outcome run with Planner B fixed has passed checks 1-2, the 0.10
+# (RESEARCH_LOG 11:03): the outcome run with Planner B fixed has passed checks 1-2, the 0.10
 # submissions are built, and q_plan now runs as a CPU box stage and a GPU planner stage.
 # Task 2 does not depend on Task 1's results, so it runs even if Task 1 stops.
 # Every step's start, end and exit status goes to logs/supervise_tasks.log.

@@ -1,7 +1,7 @@
 # Does sign-varying decision value survive per-mode operating points?
 
 Pre-registration: `RESEARCH_LOG.md`, 2026-09-14 "Task 1 pre-registration" (commit `bb1a270`, before any
-run), with two documented corrections before any scheme was scored (10:40 Planner B preset; 11:10 q_plan
+run), with two documented corrections before any scheme was scored (10:32 Planner B preset; 11:03 q_plan
 split). Every table at every scheme, split and sweep point: `docs/calibration_tables.md`, generated from
 `results/final/calibration_*.csv` by `scripts/109_calibration_markdown.py`.
 

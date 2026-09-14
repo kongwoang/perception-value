@@ -11,7 +11,7 @@ not depend on detections and are taken from the cached ground-truth raster.  Pla
 are exactly 74's, including batch size and frame order.
 
 Two processes, because on this board's unified memory the nuScenes tables and the planner cannot
-share one (the single-process version ran out of CUDA memory; RESEARCH_LOG 11:10):
+share one (the single-process version ran out of CUDA memory; RESEARCH_LOG 11:03):
   --stage boxes  devkit, CPU only: check 3, then every filtered box in the ego frame at 0.10, with
                  its score, per sample -- get_other_objs transforms each box on its own, so subsetting
                  by score afterwards equals transforming the subset

@@ -1281,7 +1281,7 @@ the scaled detector runtime is under 2 h.
 
 Output: `docs/nuplan_real_perception_feasibility.md`.
 
-### 2026-09-14 10:40 — Task 1: check 1 caught a configuration error; nothing had been scored
+### 2026-09-14 10:32 — Task 1: check 1 caught a configuration error; nothing had been scored
 
 The first calibration outcome run (`20260914_090507_calibration_outcomes`) passed check 1 for every
 braking, lateral and perception column (all 7 pair × geometry combinations, every frame) and check 2
@@ -1304,7 +1304,7 @@ No scheme had been scored, and the reading is unchanged. The supervisor had move
 design, and its first step crashed on an array one column too narrow in `104_nuplan_track_lists.py`
 (a 10-dim track vector allocated as 9); fixed. The supervisor is restarted with Task 1 first.
 
-### 2026-09-14 11:10 — Task 1: q_plan split into two processes after a CUDA out-of-memory
+### 2026-09-14 11:03 — Task 1: q_plan split into two processes after a CUDA out-of-memory
 
 `101_calibration_plan.py` passed check 3 for the first submission, then ran out of CUDA memory at
 the first Planner C batch. It had loaded the nuScenes devkit tables and the planner into one process,
@@ -1318,7 +1318,7 @@ Nothing was scored. The script now runs as two processes with the same logic and
 * `--stage plan` (GPU, no tables): rasters per threshold, check 4, Planner C with 74's batch size and
   frame order, check 1.
 
-## 2026-09-14 11:45 — Task 1 results: per-mode operating points — **survives**
+## 2026-09-14 11:29 — Task 1 results: per-mode operating points — **survives**
 
 Report: `docs/iclr_calibration.md`. Every table: `docs/calibration_tables.md`. Runs:
 `20260914_103252_calibration_outcomes` (Planner B recomputed from `20260914_090507`),
@@ -1347,7 +1347,7 @@ All four equivalence checks passed before any scheme was scored.
   the boundary, as the pre-registration requires. Harm under S4 is 28–55% in every nuScenes and
   moderate-gap cell.
 
-### 2026-09-14 11:40 — Task 2: R1 crashed on a file name, no result had been written
+### 2026-09-14 11:32 — Task 2: R1 crashed on a file name, no result had been written
 
 `103_routers_r1.py` scored every nuScenes and KITTI cell, then failed to save the first nuPlan score
 file, because the geometry label "n/a" put a slash into the file name. It writes its table only at the
