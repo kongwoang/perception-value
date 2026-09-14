@@ -1,5 +1,7 @@
 # Corrected results — the numbers to write from
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 *Written 2026-09-13, after the code review of the same date found seven defects (three of which
 changed published numbers) and everything downstream of the detection submissions was recomputed.
 **This file supersedes every number in `iclr_phase0f_planning_metric_stress_test.md` and

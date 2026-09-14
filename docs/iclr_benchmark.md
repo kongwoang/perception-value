@@ -1,5 +1,7 @@
 # Benchmark v0 — frozen splits, one protocol, every baseline
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 Pre-registration: `RESEARCH_LOG.md`, 2026-09-13 23:55 (commit `cd67b27`, pushed before any
 re-run). Splits: `configs/benchmark_splits.json`. One run produced every number below:
 `scripts/92_benchmark_table.py` → `results/final/benchmark_{table,cells,self_agreement}.csv`.

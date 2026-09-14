@@ -1,0 +1,15 @@
+{
+ "states": 1440,
+ "all_branches_ok": true,
+ "track_counts_equal_archive": true,
+ "idm_ref_logdev_median_m": 1.4612033200671615,
+ "idm_ref_share_logdev_over_20m": 0.0,
+ "idm_ref_collision_rate": 0.04236111111111111,
+ "archived_idm_ref_logdev_median_m": 2.4435295918225775,
+ "archived_idm_ref_share_logdev_over_20m": 0.13333333333333333,
+ "archived_idm_ref_collision_rate": 0.13819444444444445,
+ "pdm_ref_logdev_median_m": 1.8117658911145877,
+ "pdm_ref_share_logdev_over_20m": 0.0,
+ "pdm_ref_collision_rate": 0.04513888888888889,
+ "pass": true
+}

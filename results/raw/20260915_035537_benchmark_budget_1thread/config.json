@@ -1,0 +1,7 @@
+{
+  "nboot": 1000,
+  "tag": "benchmark_budget_1thread",
+  "suffix": "_1thread",
+  "reuse_overheads": "results/archive/pre_idm_route_fix/final/benchmark_budget_overheads_1thread.json",
+  "routers": false
+}

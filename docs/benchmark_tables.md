@@ -18,8 +18,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | 6 | 3536 | 13.5% | 40.2% | 0.33 | -16.37% | -24.59% |
 | nuPlan · pdm_closed · safety | 9 | 384 | 2.9% | 0.0% | 0.00 | -30.97% | -30.97% |
 | nuPlan · pdm_closed · scalar_J | 9 | 384 | 10.9% | 28.6% | 0.00 | -26.80% | -26.93% |
-| nuPlan · idm · safety | 9 | 384 | 3.1% | 16.7% | 0.32 | -2.53% | -3.75% |
-| nuPlan · idm · scalar_J | 9 | 384 | 6.8% | 38.5% | 0.32 | -2.13% | -3.14% |
+| nuPlan · idm · safety | 9 | 384 | 3.6% | 7.1% | 0.00 | -21.66% | -21.68% |
+| nuPlan · idm · scalar_J | 9 | 384 | 7.3% | 28.6% | 0.01 | -19.33% | -19.44% |
 
 ## Cells, all units
 
@@ -37,8 +37,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | 21 | 8008 | 16.9% | 35.2% | 0.06 | -42.43% | -45.24% |
 | nuPlan · pdm_closed · safety | 34 | 1440 | 4.9% | 37.1% | 0.30 | -14.71% | -21.12% |
 | nuPlan · pdm_closed · scalar_J | 34 | 1440 | 12.2% | 30.3% | 0.30 | -12.58% | -17.90% |
-| nuPlan · idm · safety | 34 | 1440 | 2.4% | 31.4% | 0.36 | -3.88% | -6.10% |
-| nuPlan · idm · scalar_J | 34 | 1440 | 6.7% | 40.6% | 0.37 | -1.99% | -3.17% |
+| nuPlan · idm · safety | 34 | 1440 | 3.3% | 27.7% | 0.22 | -16.82% | -21.58% |
+| nuPlan · idm · scalar_J | 34 | 1440 | 7.3% | 33.3% | 0.23 | -14.00% | -18.08% |
 
 ## η@10, test split
 
@@ -56,8 +56,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.067 | +0.013 | +0.045 | +0.131 | +0.102 | +0.063 | +0.189 | +0.095 | — | — |
 | nuPlan · pdm_closed · safety | +0.099 | +0.222 | +0.000 | +0.665 | +0.328 | +0.000 | — | +0.663 | — | — |
 | nuPlan · pdm_closed · scalar_J | +0.098 | +0.217 | -0.001 | +0.652 | +0.328 | -0.001 | — | +0.645 | — | — |
-| nuPlan · idm · safety | +0.067 | +0.327 | +0.000 | -0.003 | +0.640 | +0.000 | — | +0.960 | — | — |
-| nuPlan · idm · scalar_J | +0.067 | +0.328 | +0.000 | +0.307 | **+0.618** | +0.000 | — | +0.926 | — | — |
+| nuPlan · idm · safety | +0.099 | +0.248 | +0.000 | +0.368 | +0.491 | +0.000 | — | +0.740 | — | — |
+| nuPlan · idm · scalar_J | +0.098 | +0.247 | +0.000 | +0.373 | +0.493 | +0.000 | — | +0.730 | — | — |
 
 ## η@20, test split
 
@@ -75,8 +75,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.133 | +0.160 | +0.199 | +0.125 | +0.259 | +0.313 | +0.272 | +0.130 | — | — |
 | nuPlan · pdm_closed · safety | +0.201 | +0.335 | +0.000 | **+0.777** | **+0.663** | +0.000 | — | +0.888 | — | — |
 | nuPlan · pdm_closed · scalar_J | +0.200 | +0.326 | -0.001 | **+0.764** | +0.554 | -0.001 | — | +0.867 | — | — |
-| nuPlan · idm · safety | +0.135 | +0.327 | +0.000 | +0.324 | **+0.641** | +0.000 | — | +0.966 | — | — |
-| nuPlan · idm · scalar_J | +0.136 | +0.326 | +0.000 | +0.324 | **+0.621** | +0.000 | — | +0.934 | — | — |
+| nuPlan · idm · safety | +0.200 | +0.248 | +0.000 | +0.497 | +0.490 | +0.000 | — | +0.865 | — | — |
+| nuPlan · idm · scalar_J | +0.199 | +0.246 | +0.000 | +0.500 | +0.617 | +0.000 | — | +0.853 | — | — |
 
 ## η@30, test split
 
@@ -94,8 +94,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.200 | +0.315 | +0.324 | +0.157 | +0.315 | +0.338 | +0.432 | +0.157 | — | — |
 | nuPlan · pdm_closed · safety | +0.299 | +0.550 | +0.000 | **+0.890** | **+0.663** | +0.337 | — | +0.888 | — | — |
 | nuPlan · pdm_closed · scalar_J | +0.298 | +0.537 | -0.000 | **+0.879** | **+0.772** | +0.329 | — | +0.877 | — | — |
-| nuPlan · idm · safety | +0.202 | +0.327 | +0.000 | +0.669 | **+0.637** | +0.320 | — | +0.974 | — | — |
-| nuPlan · idm · scalar_J | +0.203 | +0.328 | +0.000 | +0.658 | +0.621 | +0.309 | — | +0.955 | — | — |
+| nuPlan · idm · safety | +0.299 | +0.371 | +0.000 | +0.506 | +0.627 | +0.368 | — | +0.877 | — | — |
+| nuPlan · idm · scalar_J | +0.298 | +0.372 | +0.000 | +0.514 | +0.867 | +0.367 | — | +0.868 | — | — |
 
 ## η@50, test split
 
@@ -113,8 +113,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.333 | +0.445 | +0.344 | +0.251 | +0.413 | +0.360 | +0.530 | +0.841 | — | — |
 | nuPlan · pdm_closed · safety | +0.500 | +0.888 | +0.335 | **+1.000** | +0.775 | +0.550 | — | +0.888 | — | — |
 | nuPlan · pdm_closed · scalar_J | +0.498 | +0.876 | +0.327 | **+0.992** | +0.778 | +0.536 | — | +0.886 | — | — |
-| nuPlan · idm · safety | +0.338 | +0.652 | +0.320 | +0.676 | +0.643 | +0.960 | — | +0.674 | — | — |
-| nuPlan · idm · scalar_J | +0.339 | +0.649 | +0.310 | +0.677 | +0.623 | +0.926 | — | +0.677 | — | — |
+| nuPlan · idm · safety | +0.499 | +0.741 | +0.368 | +0.752 | +0.872 | +0.740 | — | +1.000 | — | — |
+| nuPlan · idm · scalar_J | +0.497 | +0.740 | +0.367 | +0.754 | +0.867 | +0.731 | — | +0.991 | — | — |
 
 ## Deployable signals minus random, η@20, test split (paired, 95% CI)
 
@@ -132,8 +132,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.017 [-0.155, +0.243] | +0.080 [-0.155, +0.381] | +0.012 [-0.192, +0.316] | +0.088 [-0.154, +0.188] |
 | nuPlan · pdm_closed · safety | +0.204 [-0.034, +0.545] | -0.186 [-0.201, +0.030] | +0.577 [+0.202, +0.801] | +0.434 [+0.128, +0.630] |
 | nuPlan · pdm_closed · scalar_J | +0.190 [-0.021, +0.521] | -0.187 [-0.201, -0.017] | +0.574 [+0.196, +0.787] | +0.358 [-0.197, +0.622] |
-| nuPlan · idm · safety | +0.308 [-0.194, +1.162] | -0.116 [-0.201, +0.201] | +0.209 [-0.199, +0.759] | +0.570 [+0.272, +1.151] |
-| nuPlan · idm · scalar_J | +0.343 [-0.186, +1.158] | -0.113 [-0.200, +0.193] | +0.202 [-0.189, +0.658] | +0.577 [+0.257, +1.161] |
+| nuPlan · idm · safety | +0.110 [-0.196, +0.530] | -0.180 [-0.201, +0.082] | +0.263 [-0.199, +0.701] | +0.346 [-0.201, +0.799] |
+| nuPlan · idm · scalar_J | +0.123 [-0.195, +0.524] | -0.175 [-0.200, +0.096] | +0.267 [-0.202, +0.688] | +0.474 [-0.051, +0.798] |
 
 ## η@20, all units (non-learned signals; continuity with earlier reports)
 
@@ -151,8 +151,8 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | KITTI mono · traj | +0.188 | +0.072 | +0.061 | — | — | +0.080 | +0.239 | +0.267 | — | — |
 | nuPlan · pdm_closed · safety | +0.139 | +0.358 | +0.031 | — | — | +0.140 | — | +0.853 | — | — |
 | nuPlan · pdm_closed · scalar_J | +0.141 | +0.351 | +0.030 | — | — | +0.137 | — | +0.843 | — | — |
-| nuPlan · idm · safety | +0.127 | +0.214 | +0.070 | — | — | +0.071 | — | +0.989 | — | — |
-| nuPlan · idm · scalar_J | +0.126 | +0.211 | +0.069 | — | — | +0.069 | — | +0.965 | — | — |
+| nuPlan · idm · safety | +0.156 | +0.390 | +0.046 | — | — | +0.129 | — | +0.903 | — | — |
+| nuPlan · idm · scalar_J | +0.155 | +0.387 | +0.044 | — | — | +0.128 | — | +0.889 | — | — |
 
 ## Self-agreement share S = 1 − η_truth / η_self
 
@@ -275,22 +275,22 @@ Sources: `results/final/benchmark_*.csv`. Bold = deployable signal whose paired 
 | nuPlan · pdm_closed · scalar_J | mJ | 20.47 | gate_ridge | 29.494 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · pdm_closed · scalar_J | mJ | 20.47 | gate_gbm | 145.975 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · pdm_closed · scalar_J | mJ | 20.47 | uncertainty | 1.768 | 14.7% | +0.326 | [+0.004, +0.651] |
-| nuPlan · idm · safety | ms | 16.87 | random | 0.000 | 20.0% | +0.134 | [-0.200, +0.200] |
+| nuPlan · idm · safety | ms | 16.87 | random | 0.000 | 20.0% | +0.198 | [+0.197, +0.200] |
 | nuPlan · idm · safety | ms | 16.87 | gate_ridge | 3.985 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · idm · safety | ms | 16.87 | gate_gbm | 19.723 | 0.0% | +0.000 | [+0.000, +0.000] |
-| nuPlan · idm · safety | ms | 16.87 | uncertainty | 0.239 | 18.7% | +0.327 | [+0.000, +1.000] |
-| nuPlan · idm · safety | mJ | 20.47 | random | 0.000 | 20.0% | +0.134 | [-0.200, +0.200] |
+| nuPlan · idm · safety | ms | 16.87 | uncertainty | 0.239 | 18.7% | +0.248 | [+0.002, +0.728] |
+| nuPlan · idm · safety | mJ | 20.47 | random | 0.000 | 20.0% | +0.198 | [+0.197, +0.200] |
 | nuPlan · idm · safety | mJ | 20.47 | gate_ridge | 29.494 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · idm · safety | mJ | 20.47 | gate_gbm | 145.975 | 0.0% | +0.000 | [+0.000, +0.000] |
-| nuPlan · idm · safety | mJ | 20.47 | uncertainty | 1.768 | 14.7% | +0.327 | [+0.000, +1.000] |
-| nuPlan · idm · scalar_J | ms | 16.87 | random | 0.000 | 20.0% | +0.134 | [-0.191, +0.199] |
+| nuPlan · idm · safety | mJ | 20.47 | uncertainty | 1.768 | 14.7% | +0.248 | [+0.002, +0.661] |
+| nuPlan · idm · scalar_J | ms | 16.87 | random | 0.000 | 20.0% | +0.197 | [+0.196, +0.199] |
 | nuPlan · idm · scalar_J | ms | 16.87 | gate_ridge | 3.985 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · idm · scalar_J | ms | 16.87 | gate_gbm | 19.723 | 0.0% | +0.000 | [+0.000, +0.000] |
-| nuPlan · idm · scalar_J | ms | 16.87 | uncertainty | 0.239 | 18.7% | +0.326 | [+0.000, +0.992] |
-| nuPlan · idm · scalar_J | mJ | 20.47 | random | 0.000 | 20.0% | +0.134 | [-0.191, +0.199] |
+| nuPlan · idm · scalar_J | ms | 16.87 | uncertainty | 0.239 | 18.7% | +0.246 | [+0.003, +0.677] |
+| nuPlan · idm · scalar_J | mJ | 20.47 | random | 0.000 | 20.0% | +0.197 | [+0.196, +0.199] |
 | nuPlan · idm · scalar_J | mJ | 20.47 | gate_ridge | 29.494 | 0.0% | +0.000 | [+0.000, +0.000] |
 | nuPlan · idm · scalar_J | mJ | 20.47 | gate_gbm | 145.975 | 0.0% | +0.000 | [+0.000, +0.000] |
-| nuPlan · idm · scalar_J | mJ | 20.47 | uncertainty | 1.768 | 14.7% | +0.326 | [+0.000, +0.990] |
+| nuPlan · idm · scalar_J | mJ | 20.47 | uncertainty | 1.768 | 14.7% | +0.246 | [+0.003, +0.641] |
 
 | system | unit | signal | η | share 384 | share 512 | share 640 | other-unit spend / budget |
 |---|---|---|---|---|---|---|---|

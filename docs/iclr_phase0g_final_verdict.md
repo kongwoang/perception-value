@@ -1,5 +1,7 @@
 # Phase 0G — final verdict: planner-conditionality falsification
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 *Written 2026-09-13 22:00, in the order the Phase 0G specification requires. Supporting documents:
 `iclr_phase0g_planner_d.md` (Track A), `iclr_phase0g_external_planners.md` (Track B),
 `iclr_corrected_results.md` (every post-review number). FDE robustness and the deployable gate are

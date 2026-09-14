@@ -1,5 +1,7 @@
 # Real YOLOv8s perception on the nuPlan external track
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 **What this is:** the Track B nuPlan result re-measured with real detections. It replaces the transported KITTI miss
 profile with real YOLOv8s 320 / 640 detections on nuPlan CAM_F0 images, for PDM-Closed and IDM, on the same 1,440
 states (60 scenarios, 34 logs) as Track B and the benchmark.

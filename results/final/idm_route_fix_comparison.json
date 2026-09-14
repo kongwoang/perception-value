@@ -1,0 +1,2738 @@
+{
+ "unchanged_rows": {
+  "benchmark_table.csv": "identical",
+  "benchmark_cells.csv": "identical",
+  "benchmark_table_routers.csv": "identical",
+  "benchmark_budget_routers.csv": "identical",
+  "nuplan_real_perception_cells.csv": "identical",
+  "benchmark_table_nuplan_real.csv": "identical",
+  "benchmark_budget_nuplan_real.csv": "identical",
+  "benchmark_budget_two_level.csv": "identical",
+  "benchmark_budget_two_level_1thread.csv": "identical",
+  "benchmark_budget_multifidelity.csv": "identical",
+  "benchmark_budget_multifidelity_1thread.csv": "identical",
+  "phase0g_external_pdm_closed_raw.csv": "identical",
+  "nuplan_real_perception_pdm_closed_raw.csv": "identical"
+ },
+ "idm_before_after": {
+  "nuplan_real_perception_cells": {
+   "before": [
+    {
+     "variant": "transported",
+     "split": "all",
+     "loss": "safety",
+     "affected": 35,
+     "v_pos": 24,
+     "v_neg": 11,
+     "harm_rate": 0.3143,
+     "rho": 0.3641,
+     "all_full_reduction": 0.0388,
+     "oracle20_reduction": 0.061
+    },
+    {
+     "variant": "transported",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 96,
+     "v_pos": 57,
+     "v_neg": 39,
+     "harm_rate": 0.4062,
+     "rho": 0.371,
+     "all_full_reduction": 0.0199,
+     "oracle20_reduction": 0.0317
+    },
+    {
+     "variant": "transported",
+     "split": "test",
+     "loss": "safety",
+     "affected": 12,
+     "v_pos": 10,
+     "v_neg": 2,
+     "harm_rate": 0.1667,
+     "rho": 0.3245,
+     "all_full_reduction": 0.0253,
+     "oracle20_reduction": 0.0375
+    },
+    {
+     "variant": "transported",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 26,
+     "v_pos": 16,
+     "v_neg": 10,
+     "harm_rate": 0.3846,
+     "rho": 0.3216,
+     "all_full_reduction": 0.0213,
+     "oracle20_reduction": 0.0314
+    },
+    {
+     "variant": "primary",
+     "split": "all",
+     "loss": "safety",
+     "affected": 6,
+     "v_pos": 5,
+     "v_neg": 1,
+     "harm_rate": 0.1667,
+     "rho": 0.0128,
+     "all_full_reduction": 0.0047,
+     "oracle20_reduction": 0.0047
+    },
+    {
+     "variant": "primary",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 25,
+     "v_pos": 13,
+     "v_neg": 12,
+     "harm_rate": 0.48,
+     "rho": 0.0619,
+     "all_full_reduction": 0.0022,
+     "oracle20_reduction": 0.0024
+    },
+    {
+     "variant": "primary",
+     "split": "test",
+     "loss": "safety",
+     "affected": 6,
+     "v_pos": 5,
+     "v_neg": 1,
+     "harm_rate": 0.1667,
+     "rho": 0.0128,
+     "all_full_reduction": 0.012,
+     "oracle20_reduction": 0.0121
+    },
+    {
+     "variant": "primary",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 12,
+     "v_pos": 6,
+     "v_neg": 6,
+     "harm_rate": 0.5,
+     "rho": 0.0429,
+     "all_full_reduction": 0.0094,
+     "oracle20_reduction": 0.0099
+    },
+    {
+     "variant": "nofp",
+     "split": "all",
+     "loss": "safety",
+     "affected": 3,
+     "v_pos": 2,
+     "v_neg": 1,
+     "harm_rate": 0.3333,
+     "rho": 0.0125,
+     "all_full_reduction": 0.0048,
+     "oracle20_reduction": 0.0048
+    },
+    {
+     "variant": "nofp",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 11,
+     "v_pos": 6,
+     "v_neg": 5,
+     "harm_rate": 0.4545,
+     "rho": 0.0053,
+     "all_full_reduction": 0.0024,
+     "oracle20_reduction": 0.0024
+    },
+    {
+     "variant": "nofp",
+     "split": "test",
+     "loss": "safety",
+     "affected": 2,
+     "v_pos": 1,
+     "v_neg": 1,
+     "harm_rate": 0.5,
+     "rho": 1.5066,
+     "all_full_reduction": -0.0001,
+     "oracle20_reduction": 0.0001
+    },
+    {
+     "variant": "nofp",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 3,
+     "v_pos": 1,
+     "v_neg": 2,
+     "harm_rate": 0.6667,
+     "rho": 0.4408,
+     "all_full_reduction": 0.0001,
+     "oracle20_reduction": 0.0001
+    },
+    {
+     "variant": "s1",
+     "split": "all",
+     "loss": "safety",
+     "affected": 5,
+     "v_pos": 3,
+     "v_neg": 2,
+     "harm_rate": 0.4,
+     "rho": 112.0327,
+     "all_full_reduction": -0.0051,
+     "oracle20_reduction": 0.0
+    },
+    {
+     "variant": "s1",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 16,
+     "v_pos": 7,
+     "v_neg": 9,
+     "harm_rate": 0.5625,
+     "rho": 41.2247,
+     "all_full_reduction": -0.0025,
+     "oracle20_reduction": 0.0001
+    },
+    {
+     "variant": "s1",
+     "split": "test",
+     "loss": "safety",
+     "affected": 3,
+     "v_pos": 3,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.0001,
+     "oracle20_reduction": 0.0001
+    },
+    {
+     "variant": "s1",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 7,
+     "v_pos": 4,
+     "v_neg": 3,
+     "harm_rate": 0.4286,
+     "rho": 0.3841,
+     "all_full_reduction": 0.0001,
+     "oracle20_reduction": 0.0001
+    },
+    {
+     "variant": "iou50",
+     "split": "all",
+     "loss": "safety",
+     "affected": 4,
+     "v_pos": 4,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.0047,
+     "oracle20_reduction": 0.0047
+    },
+    {
+     "variant": "iou50",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 28,
+     "v_pos": 15,
+     "v_neg": 13,
+     "harm_rate": 0.4643,
+     "rho": 0.0588,
+     "all_full_reduction": 0.0022,
+     "oracle20_reduction": 0.0024
+    },
+    {
+     "variant": "iou50",
+     "split": "test",
+     "loss": "safety",
+     "affected": 4,
+     "v_pos": 4,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.012,
+     "oracle20_reduction": 0.012
+    },
+    {
+     "variant": "iou50",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 13,
+     "v_pos": 8,
+     "v_neg": 5,
+     "harm_rate": 0.3846,
+     "rho": 0.0383,
+     "all_full_reduction": 0.0094,
+     "oracle20_reduction": 0.0098
+    }
+   ],
+   "after": [
+    {
+     "variant": "transported",
+     "split": "all",
+     "loss": "safety",
+     "affected": 47,
+     "v_pos": 34,
+     "v_neg": 13,
+     "harm_rate": 0.2766,
+     "rho": 0.2202,
+     "all_full_reduction": 0.1682,
+     "oracle20_reduction": 0.2158
+    },
+    {
+     "variant": "transported",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 105,
+     "v_pos": 70,
+     "v_neg": 35,
+     "harm_rate": 0.3333,
+     "rho": 0.226,
+     "all_full_reduction": 0.14,
+     "oracle20_reduction": 0.1808
+    },
+    {
+     "variant": "transported",
+     "split": "test",
+     "loss": "safety",
+     "affected": 14,
+     "v_pos": 13,
+     "v_neg": 1,
+     "harm_rate": 0.0714,
+     "rho": 0.001,
+     "all_full_reduction": 0.2166,
+     "oracle20_reduction": 0.2168
+    },
+    {
+     "variant": "transported",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 28,
+     "v_pos": 20,
+     "v_neg": 8,
+     "harm_rate": 0.2857,
+     "rho": 0.0059,
+     "all_full_reduction": 0.1933,
+     "oracle20_reduction": 0.1944
+    },
+    {
+     "variant": "primary",
+     "split": "all",
+     "loss": "safety",
+     "affected": 5,
+     "v_pos": 3,
+     "v_neg": 2,
+     "harm_rate": 0.4,
+     "rho": 0.0551,
+     "all_full_reduction": 0.0142,
+     "oracle20_reduction": 0.015
+    },
+    {
+     "variant": "primary",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 30,
+     "v_pos": 20,
+     "v_neg": 10,
+     "harm_rate": 0.3333,
+     "rho": 0.1356,
+     "all_full_reduction": 0.0109,
+     "oracle20_reduction": 0.0126
+    },
+    {
+     "variant": "primary",
+     "split": "test",
+     "loss": "safety",
+     "affected": 4,
+     "v_pos": 3,
+     "v_neg": 1,
+     "harm_rate": 0.25,
+     "rho": 0.0437,
+     "all_full_reduction": 0.0358,
+     "oracle20_reduction": 0.0374
+    },
+    {
+     "variant": "primary",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 10,
+     "v_pos": 9,
+     "v_neg": 1,
+     "harm_rate": 0.1,
+     "rho": 0.076,
+     "all_full_reduction": 0.0305,
+     "oracle20_reduction": 0.0331
+    },
+    {
+     "variant": "nofp",
+     "split": "all",
+     "loss": "safety",
+     "affected": 2,
+     "v_pos": 2,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.015,
+     "oracle20_reduction": 0.015
+    },
+    {
+     "variant": "nofp",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 16,
+     "v_pos": 10,
+     "v_neg": 6,
+     "harm_rate": 0.375,
+     "rho": 0.0043,
+     "all_full_reduction": 0.0115,
+     "oracle20_reduction": 0.0115
+    },
+    {
+     "variant": "nofp",
+     "split": "test",
+     "loss": "safety",
+     "affected": 1,
+     "v_pos": 1,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.0022,
+     "oracle20_reduction": 0.0022
+    },
+    {
+     "variant": "nofp",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 3,
+     "v_pos": 3,
+     "v_neg": 0,
+     "harm_rate": 0.0,
+     "rho": 0.0,
+     "all_full_reduction": 0.0021,
+     "oracle20_reduction": 0.0021
+    },
+    {
+     "variant": "s1",
+     "split": "all",
+     "loss": "safety",
+     "affected": 7,
+     "v_pos": 2,
+     "v_neg": 5,
+     "harm_rate": 0.7143,
+     "rho": 3.1056,
+     "all_full_reduction": -0.0297,
+     "oracle20_reduction": 0.0141
+    },
+    {
+     "variant": "s1",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 25,
+     "v_pos": 10,
+     "v_neg": 15,
+     "harm_rate": 0.6,
+     "rho": 3.1252,
+     "all_full_reduction": -0.0237,
+     "oracle20_reduction": 0.0112
+    },
+    {
+     "variant": "s1",
+     "split": "test",
+     "loss": "safety",
+     "affected": 3,
+     "v_pos": 2,
+     "v_neg": 1,
+     "harm_rate": 0.3333,
+     "rho": 0.0464,
+     "all_full_reduction": 0.0336,
+     "oracle20_reduction": 0.0352
+    },
+    {
+     "variant": "s1",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 7,
+     "v_pos": 5,
+     "v_neg": 2,
+     "harm_rate": 0.2857,
+     "rho": 0.0822,
+     "all_full_reduction": 0.0284,
+     "oracle20_reduction": 0.031
+    },
+    {
+     "variant": "iou50",
+     "split": "all",
+     "loss": "safety",
+     "affected": 5,
+     "v_pos": 3,
+     "v_neg": 2,
+     "harm_rate": 0.4,
+     "rho": 0.0584,
+     "all_full_reduction": 0.0133,
+     "oracle20_reduction": 0.0141
+    },
+    {
+     "variant": "iou50",
+     "split": "all",
+     "loss": "scalar_J",
+     "affected": 35,
+     "v_pos": 21,
+     "v_neg": 14,
+     "harm_rate": 0.4,
+     "rho": 0.1548,
+     "all_full_reduction": 0.0101,
+     "oracle20_reduction": 0.012
+    },
+    {
+     "variant": "iou50",
+     "split": "test",
+     "loss": "safety",
+     "affected": 3,
+     "v_pos": 2,
+     "v_neg": 1,
+     "harm_rate": 0.3333,
+     "rho": 0.0464,
+     "all_full_reduction": 0.0336,
+     "oracle20_reduction": 0.0352
+    },
+    {
+     "variant": "iou50",
+     "split": "test",
+     "loss": "scalar_J",
+     "affected": 12,
+     "v_pos": 9,
+     "v_neg": 3,
+     "harm_rate": 0.25,
+     "rho": 0.0923,
+     "all_full_reduction": 0.0285,
+     "oracle20_reduction": 0.0314
+    }
+   ]
+  },
+  "benchmark_table.csv": {
+   "before": [
+    {
+     "target": "safety",
+     "signal": "random",
+     "eta": 0.1355,
+     "eta_lo": -0.2004,
+     "eta_hi": 0.2005,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "signal": "uncertainty",
+     "eta": 0.3267,
+     "eta_lo": 0.0,
+     "eta_hi": 0.9998,
+     "minus_random_lo": -0.1941
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_cheap",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2005
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_gt",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.4723,
+     "minus_random_lo": -0.2005
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.6543,
+     "eta_lo": 0.0,
+     "eta_hi": 0.9984,
+     "minus_random_lo": -0.1603
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.966,
+     "eta_lo": 0.9209,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.7432
+    },
+    {
+     "target": "safety",
+     "signal": "gate_ridge",
+     "eta": 0.3236,
+     "eta_lo": -0.0174,
+     "eta_hi": 0.9425,
+     "minus_random_lo": -0.1986
+    },
+    {
+     "target": "safety",
+     "signal": "gate_gbm",
+     "eta": 0.6407,
+     "eta_lo": 0.4588,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.272
+    },
+    {
+     "target": "safety",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.7995
+    },
+    {
+     "target": "scalar_J",
+     "signal": "random",
+     "eta": 0.136,
+     "eta_lo": -0.1929,
+     "eta_hi": 0.1996,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "signal": "uncertainty",
+     "eta": 0.3259,
+     "eta_lo": 0.0,
+     "eta_hi": 0.9932,
+     "minus_random_lo": -0.1864
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_cheap",
+     "eta": 0.0,
+     "eta_lo": -0.0003,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_gt",
+     "eta": 0.0,
+     "eta_lo": -0.0004,
+     "eta_hi": 0.4646,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.6477,
+     "eta_lo": 0.0072,
+     "eta_hi": 0.9899,
+     "minus_random_lo": -0.1381
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.9341,
+     "eta_lo": 0.8494,
+     "eta_hi": 0.9904,
+     "minus_random_lo": 0.6722
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_ridge",
+     "eta": 0.3236,
+     "eta_lo": -0.0003,
+     "eta_hi": 0.8013,
+     "minus_random_lo": -0.1889
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_gbm",
+     "eta": 0.6209,
+     "eta_lo": 0.4175,
+     "eta_hi": 0.9942,
+     "minus_random_lo": 0.257
+    },
+    {
+     "target": "scalar_J",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.8004
+    }
+   ],
+   "after": [
+    {
+     "target": "safety",
+     "signal": "random",
+     "eta": 0.2003,
+     "eta_lo": 0.1979,
+     "eta_hi": 0.201,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "signal": "uncertainty",
+     "eta": 0.2478,
+     "eta_lo": 0.0042,
+     "eta_hi": 0.7278,
+     "minus_random_lo": -0.1956
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_cheap",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.2818,
+     "minus_random_lo": -0.201
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_gt",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.5698,
+     "minus_random_lo": -0.201
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.3839,
+     "eta_lo": 0.1458,
+     "eta_hi": 0.799,
+     "minus_random_lo": -0.0545
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.865,
+     "eta_lo": 0.7013,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.502
+    },
+    {
+     "target": "safety",
+     "signal": "gate_ridge",
+     "eta": 0.4974,
+     "eta_lo": 0.0,
+     "eta_hi": 0.9,
+     "minus_random_lo": -0.199
+    },
+    {
+     "target": "safety",
+     "signal": "gate_gbm",
+     "eta": 0.4898,
+     "eta_lo": -0.001,
+     "eta_hi": 1.0,
+     "minus_random_lo": -0.2007
+    },
+    {
+     "target": "safety",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.799
+    },
+    {
+     "target": "scalar_J",
+     "signal": "random",
+     "eta": 0.1993,
+     "eta_lo": 0.1969,
+     "eta_hi": 0.2002,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "signal": "uncertainty",
+     "eta": 0.2459,
+     "eta_lo": 0.0035,
+     "eta_hi": 0.7234,
+     "minus_random_lo": -0.1954
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_cheap",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.2952,
+     "minus_random_lo": -0.2002
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_gt",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.5831,
+     "minus_random_lo": -0.2002
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.3766,
+     "eta_lo": 0.1396,
+     "eta_hi": 0.8003,
+     "minus_random_lo": -0.0587
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.8529,
+     "eta_lo": 0.6928,
+     "eta_hi": 0.9865,
+     "minus_random_lo": 0.4942
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_ridge",
+     "eta": 0.4998,
+     "eta_lo": -0.0041,
+     "eta_hi": 0.8877,
+     "minus_random_lo": -0.202
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_gbm",
+     "eta": 0.6165,
+     "eta_lo": 0.1481,
+     "eta_hi": 0.9968,
+     "minus_random_lo": -0.051
+    },
+    {
+     "target": "scalar_J",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.7998
+    }
+   ]
+  },
+  "benchmark_table_nuplan_real.csv": {
+   "before": [
+    {
+     "target": "safety",
+     "signal": "random",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_cheap",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "gate_ridge",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "gate_gbm",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_reg",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_clf",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_reg",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_clf",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_gt",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E1_fn_only",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E6_risk_weighted",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "oracle",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 6,
+     "undefined_reason": "near-zero oracle: 6 affected states on this split (< 10)"
+    },
+    {
+     "target": "scalar_J",
+     "signal": "random",
+     "eta": 0.1919,
+     "eta_lo": 0.1804,
+     "eta_hi": 0.1998,
+     "minus_random_lo": 0.0,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_cheap",
+     "eta": -0.0032,
+     "eta_lo": -0.0099,
+     "eta_hi": 0.0198,
+     "minus_random_lo": -0.202,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_ridge",
+     "eta": 0.9753,
+     "eta_lo": 0.0,
+     "eta_hi": 0.9908,
+     "minus_random_lo": -0.1935,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_gbm",
+     "eta": -0.0029,
+     "eta_lo": -0.0135,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2089,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_reg",
+     "eta": -0.0029,
+     "eta_lo": -0.0086,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2026,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_clf",
+     "eta": -0.0373,
+     "eta_lo": -0.092,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2724,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_reg",
+     "eta": 0.001,
+     "eta_lo": 0.0,
+     "eta_hi": 0.0013,
+     "minus_random_lo": -0.1987,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_clf",
+     "eta": 0.0,
+     "eta_lo": -0.0316,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2251,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_gt",
+     "eta": -0.0032,
+     "eta_lo": -0.0125,
+     "eta_hi": 0.9906,
+     "minus_random_lo": -0.2049,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.1998,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.9716,
+     "eta_lo": 0.964,
+     "eta_hi": 0.9792,
+     "minus_random_lo": 0.7685,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.8002,
+     "n_affected": 12,
+     "undefined_reason": NaN
+    }
+   ],
+   "after": [
+    {
+     "target": "safety",
+     "signal": "random",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_cheap",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "gate_ridge",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "gate_gbm",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_reg",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_clf",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_reg",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_clf",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "criticality_gt",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E1_fn_only",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "dE_E6_risk_weighted",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "safety",
+     "signal": "oracle",
+     "eta": NaN,
+     "eta_lo": NaN,
+     "eta_hi": NaN,
+     "minus_random_lo": NaN,
+     "n_affected": 4,
+     "undefined_reason": "near-zero oracle: 4 affected states on this split (< 10)"
+    },
+    {
+     "target": "scalar_J",
+     "signal": "random",
+     "eta": 0.1853,
+     "eta_lo": 0.1538,
+     "eta_hi": 0.201,
+     "minus_random_lo": 0.0,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_cheap",
+     "eta": 0.0081,
+     "eta_lo": -0.0721,
+     "eta_hi": 0.0624,
+     "minus_random_lo": -0.2564,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_ridge",
+     "eta": 0.0562,
+     "eta_lo": 0.0,
+     "eta_hi": 0.1108,
+     "minus_random_lo": -0.201,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "gate_gbm",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.201,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_reg",
+     "eta": 0.0308,
+     "eta_lo": 0.0044,
+     "eta_hi": 0.0792,
+     "minus_random_lo": -0.1959,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_clf",
+     "eta": 0.9376,
+     "eta_lo": 0.8388,
+     "eta_hi": 0.9937,
+     "minus_random_lo": 0.6432,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_reg",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.201,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_clf",
+     "eta": 0.0592,
+     "eta_lo": 0.0031,
+     "eta_hi": 0.1994,
+     "minus_random_lo": -0.1977,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "criticality_gt",
+     "eta": 0.0081,
+     "eta_lo": 0.0005,
+     "eta_hi": 0.0087,
+     "minus_random_lo": -0.1999,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E1_fn_only",
+     "eta": 0.0005,
+     "eta_lo": 0.0005,
+     "eta_hi": 0.0006,
+     "minus_random_lo": -0.2005,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "dE_E6_risk_weighted",
+     "eta": 0.0624,
+     "eta_lo": 0.0063,
+     "eta_hi": 0.1522,
+     "minus_random_lo": -0.1944,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    },
+    {
+     "target": "scalar_J",
+     "signal": "oracle",
+     "eta": 1.0,
+     "eta_lo": 1.0,
+     "eta_hi": 1.0,
+     "minus_random_lo": 0.799,
+     "n_affected": 10,
+     "undefined_reason": NaN
+    }
+   ]
+  },
+  "benchmark_table_routers.csv": {
+   "before": [
+    {
+     "target": "safety",
+     "signal": "R1_mlp_reg",
+     "eta": 0.0264,
+     "eta_lo": -1.9828,
+     "eta_hi": 0.9642,
+     "minus_random_lo": -1.7797
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_clf",
+     "eta": 0.3409,
+     "eta_lo": -0.9711,
+     "eta_hi": 0.5008,
+     "minus_random_lo": -0.9761
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_reg",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.4851,
+     "minus_random_lo": -0.2005
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_clf",
+     "eta": 0.0,
+     "eta_lo": 0.0,
+     "eta_hi": 0.1976,
+     "minus_random_lo": -0.1997
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_reg",
+     "eta": 0.0187,
+     "eta_lo": -1.9427,
+     "eta_hi": 0.6674,
+     "minus_random_lo": -1.7492
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_clf",
+     "eta": 0.3436,
+     "eta_lo": 0.0081,
+     "eta_hi": 0.9,
+     "minus_random_lo": -0.1753
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_reg",
+     "eta": -0.001,
+     "eta_lo": -0.0135,
+     "eta_hi": 0.0,
+     "minus_random_lo": -0.2052
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_clf",
+     "eta": 0.0126,
+     "eta_lo": -0.988,
+     "eta_hi": 0.3407,
+     "minus_random_lo": -0.9878
+    }
+   ],
+   "after": [
+    {
+     "target": "safety",
+     "signal": "R1_mlp_reg",
+     "eta": 0.1227,
+     "eta_lo": 0.0,
+     "eta_hi": 0.193,
+     "minus_random_lo": -0.201
+    },
+    {
+     "target": "safety",
+     "signal": "R1_mlp_clf",
+     "eta": 0.3705,
+     "eta_lo": 0.0093,
+     "eta_hi": 0.5937,
+     "minus_random_lo": -0.1908
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_reg",
+     "eta": 0.3681,
+     "eta_lo": 0.0752,
+     "eta_hi": 0.9704,
+     "minus_random_lo": -0.1243
+    },
+    {
+     "target": "safety",
+     "signal": "R1_gbm_clf",
+     "eta": 0.3695,
+     "eta_lo": -0.0026,
+     "eta_hi": 0.9664,
+     "minus_random_lo": -0.2018
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_reg",
+     "eta": 0.1216,
+     "eta_lo": -0.002,
+     "eta_hi": 0.2637,
+     "minus_random_lo": -0.2012
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_mlp_clf",
+     "eta": 0.2473,
+     "eta_lo": 0.0016,
+     "eta_hi": 0.5963,
+     "minus_random_lo": -0.1971
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_reg",
+     "eta": 0.3617,
+     "eta_lo": 0.0953,
+     "eta_hi": 0.9504,
+     "minus_random_lo": -0.1047
+    },
+    {
+     "target": "scalar_J",
+     "signal": "R1_gbm_clf",
+     "eta": 0.2466,
+     "eta_lo": -0.0023,
+     "eta_hi": 0.427,
+     "minus_random_lo": -0.2014
+    }
+   ]
+  },
+  "benchmark_budget_two_level.csv": {
+   "before": [
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1337,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8004
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.3267,
+     "minus_random_lo": -0.1953
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1337,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8004
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1465,
+     "eta": 0.3267,
+     "minus_random_lo": -0.1953
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1343,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8012
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.3259,
+     "minus_random_lo": -0.1862
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1343,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8012
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1465,
+     "eta": 0.3259,
+     "minus_random_lo": -0.1864
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    }
+   ],
+   "after": [
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1977,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.2478,
+     "minus_random_lo": -0.1964
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1977,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1465,
+     "eta": 0.2478,
+     "minus_random_lo": -0.1964
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1967,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8009
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.2459,
+     "minus_random_lo": -0.195
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1967,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8009
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1465,
+     "eta": 0.2459,
+     "minus_random_lo": -0.1946
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    }
+   ]
+  },
+  "benchmark_budget_two_level_1thread.csv": {
+   "before": [
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1337,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8004
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.3267,
+     "minus_random_lo": -0.1953
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1337,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8004
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0146,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1889,
+     "eta": 0.3267,
+     "minus_random_lo": -0.1953
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1336,
+     "eta": 0.0,
+     "minus_random_lo": -0.1996
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1343,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8012
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.3259,
+     "minus_random_lo": -0.1862
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1343,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8012
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0146,
+     "eta": 0.0,
+     "minus_random_lo": -0.199
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1889,
+     "eta": 0.3259,
+     "minus_random_lo": -0.1862
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1336,
+     "eta": 0.0,
+     "minus_random_lo": -0.1988
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    }
+   ],
+   "after": [
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1977,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.2478,
+     "minus_random_lo": -0.1964
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1977,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0146,
+     "eta": 0.2454,
+     "minus_random_lo": -0.1998
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1889,
+     "eta": 0.2478,
+     "minus_random_lo": -0.1964
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1336,
+     "eta": 0.0,
+     "minus_random_lo": -0.2
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "safety",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1967,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8009
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1871,
+     "eta": 0.2459,
+     "minus_random_lo": -0.195
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1226,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "ms",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "random",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 0.1967,
+     "minus_random_lo": 0.0
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "oracle",
+     "feasible": true,
+     "escalated_frac": 0.2,
+     "eta": 1.0,
+     "minus_random_lo": 0.8009
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_ridge",
+     "feasible": true,
+     "escalated_frac": 0.0146,
+     "eta": 0.2477,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "gate_gbm",
+     "feasible": true,
+     "escalated_frac": 0.0,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "uncertainty",
+     "feasible": true,
+     "escalated_frac": 0.1889,
+     "eta": 0.2459,
+     "minus_random_lo": -0.195
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_cheap",
+     "feasible": true,
+     "escalated_frac": 0.1336,
+     "eta": 0.0,
+     "minus_random_lo": -0.1991
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "criticality_gt",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    },
+    {
+     "target": "scalar_J",
+     "unit": "mJ",
+     "signal": "dE_E6_risk_weighted",
+     "feasible": false,
+     "escalated_frac": NaN,
+     "eta": NaN,
+     "minus_random_lo": NaN
+    }
+   ]
+  },
+  "reading_primary_all": {
+   "before": {
+    "safety": {
+     "harm_rate": {
+      "pdm_closed": 0.4444444444444444,
+      "idm": 0.16666666666666666
+     },
+     "rho": {
+      "pdm_closed": 0.3340197419539051,
+      "idm": 0.012787523337361046
+     },
+     "B-F1_fires": false,
+     "harm_ge_20_and_rho_ge_20_both": false
+    },
+    "scalar_J": {
+     "harm_rate": {
+      "pdm_closed": 0.375,
+      "idm": 0.48
+     },
+     "rho": {
+      "pdm_closed": 0.34825960199882955,
+      "idm": 0.06191468784802398
+     },
+     "B-F1_fires": false,
+     "harm_ge_20_and_rho_ge_20_both": false
+    },
+    "reading": "intermediate"
+   },
+   "after": {
+    "safety": {
+     "harm_rate": {
+      "pdm_closed": 0.4444444444444444,
+      "idm": 0.4
+     },
+     "rho": {
+      "pdm_closed": 0.3340197419539051,
+      "idm": 0.0550821604713839
+     },
+     "B-F1_fires": false,
+     "harm_ge_20_and_rho_ge_20_both": false
+    },
+    "scalar_J": {
+     "harm_rate": {
+      "pdm_closed": 0.375,
+      "idm": 0.3333333333333333
+     },
+     "rho": {
+      "pdm_closed": 0.34825960199882955,
+      "idm": 0.13556374251485048
+     },
+     "B-F1_fires": false,
+     "harm_ge_20_and_rho_ge_20_both": false
+    },
+    "reading": "intermediate"
+   }
+  },
+  "trackb_falsifiers": {
+   "before": {
+    "scalar_J": {
+     "B-F1_fires": false,
+     "B-F2_fires": false,
+     "B-F3_fires": false,
+     "harmful": {
+      "idm": 0.406,
+      "pdm_closed": 0.303
+     },
+     "selective_extra_share": {
+      "idm": 0.371,
+      "pdm_closed": 0.297
+     },
+     "overlap20": 0.281,
+     "best_compatible_20": {
+      "idm->pdm": 0.918,
+      "pdm->idm": 0.982
+     },
+     "strict_pairs": {
+      "n": 103524,
+      "disagreement": 0.3262,
+      "gamma": 0.3475
+     }
+    },
+    "safety": {
+     "B-F1_fires": false,
+     "B-F2_fires": false,
+     "B-F3_fires": false,
+     "harmful": {
+      "idm": 0.314,
+      "pdm_closed": 0.371
+     },
+     "selective_extra_share": {
+      "idm": 0.364,
+      "pdm_closed": 0.303
+     },
+     "overlap20": 0.22,
+     "best_compatible_20": {
+      "idm->pdm": 1.0,
+      "pdm->idm": 0.997
+     },
+     "strict_pairs": {
+      "n": 30606,
+      "disagreement": 0.1091,
+      "gamma": 0.7819
+     }
+    }
+   },
+   "after": {
+    "scalar_J": {
+     "B-F1_fires": false,
+     "B-F2_fires": false,
+     "B-F3_fires": false,
+     "harmful": {
+      "idm": 0.333,
+      "pdm_closed": 0.303
+     },
+     "selective_extra_share": {
+      "idm": 0.226,
+      "pdm_closed": 0.297
+     },
+     "overlap20": 0.32,
+     "best_compatible_20": {
+      "idm->pdm": 0.885,
+      "pdm->idm": 0.903
+     },
+     "strict_pairs": {
+      "n": 138066,
+      "disagreement": 0.2571,
+      "gamma": 0.4858
+     }
+    },
+    "safety": {
+     "B-F1_fires": false,
+     "B-F2_fires": false,
+     "B-F3_fires": false,
+     "harmful": {
+      "idm": 0.277,
+      "pdm_closed": 0.371
+     },
+     "selective_extra_share": {
+      "idm": 0.22,
+      "pdm_closed": 0.303
+     },
+     "overlap20": 0.236,
+     "best_compatible_20": {
+      "idm->pdm": 0.963,
+      "pdm->idm": 0.995
+     },
+     "strict_pairs": {
+      "n": 47311,
+      "disagreement": 0.1572,
+      "gamma": 0.6856
+     }
+    }
+   }
+  }
+ },
+ "all_unchanged_rows_identical": true
+}

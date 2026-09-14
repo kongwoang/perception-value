@@ -1,5 +1,7 @@
 # nuPlan allocation track on real-perception decision values
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 **What this is.** A re-run of the benchmark's nuPlan cells with Task 5 real-perception labels (primary variant), so
 the allocation track matches the real-perception result.
 

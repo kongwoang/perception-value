@@ -1,5 +1,7 @@
 # Lightweight routers on the benchmark and budget tracks
 
+> **Note (2026-09-15).** IDM numbers in this document predate the IDM route fix and are superseded. In 58% of nuPlan states the pipeline gave IDM a route it could not start from. Corrected values and the before/after comparison are in `docs/iclr_idm_route_fix.md`. PDM-Closed, nuScenes and KITTI numbers are unaffected.
+
 Pre-registration: `RESEARCH_LOG.md`, 2026-09-14 "Task 2 pre-registration", committed before any run.
 Four operational incidents are logged there, none affecting design or results: an R1 file-name crash,
 two board reboots, and the R2 restaging. Every table at every quota: `docs/routers_tables.md`, generated

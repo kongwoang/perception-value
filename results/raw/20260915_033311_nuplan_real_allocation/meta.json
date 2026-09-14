@@ -1,0 +1,39 @@
+{
+ "costs": {
+  "cheap": {
+   "ms": 14.374369621276855,
+   "mJ": 44.70575240411993
+  },
+  "640": {
+   "ms": 23.571229934692383,
+   "mJ": 105.78773123420578
+  }
+ },
+ "leakage_guard_refused": {
+  "crit_sum_gt": true,
+  "dE_E1_fn_only": true,
+  "dE_E6_risk_weighted": true,
+  "unc_proxy": true
+ },
+ "min_affected": 10,
+ "gate_feature_sources": {
+  "ego_speed": "ego_state",
+  "ego_accel": "ego_state",
+  "n_cheap": "cheap_det",
+  "n_cheap_fov": "cheap_det",
+  "n_cheap_fov_bicycle": "cheap_det",
+  "n_cheap_fov_pedestrian": "cheap_det",
+  "n_cheap_fov_vehicle": "cheap_det",
+  "n_static_fov": "cheap_det",
+  "min_range_fov": "cheap_det",
+  "min_gap_corridor": "cheap_det",
+  "n_corridor_20": "cheap_det",
+  "n_corridor_40": "cheap_det",
+  "min_ttc_corridor": "cheap_det",
+  "n_fov_band_30_40": "cheap_det",
+  "crit_cheap_sum": "cheap_det",
+  "crit_cheap_max": "cheap_det",
+  "n_red_lights": "ego_state",
+  "d_n_cheap_fov": "cheap_prev"
+ }
+}

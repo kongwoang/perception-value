@@ -4,22 +4,22 @@
     "B-F2_fires": false,
     "B-F3_fires": false,
     "harmful": {
-      "idm": 0.406,
+      "idm": 0.333,
       "pdm_closed": 0.303
     },
     "selective_extra_share": {
-      "idm": 0.371,
+      "idm": 0.226,
       "pdm_closed": 0.297
     },
-    "overlap20": 0.281,
+    "overlap20": 0.32,
     "best_compatible_20": {
-      "idm->pdm": 0.918,
-      "pdm->idm": 0.982
+      "idm->pdm": 0.885,
+      "pdm->idm": 0.903
     },
     "strict_pairs": {
-      "n": 103524,
-      "disagreement": 0.3262,
-      "gamma": 0.3475
+      "n": 138066,
+      "disagreement": 0.2571,
+      "gamma": 0.4858
     }
   },
   "safety": {
@@ -27,22 +27,22 @@
     "B-F2_fires": false,
     "B-F3_fires": false,
     "harmful": {
-      "idm": 0.314,
+      "idm": 0.277,
       "pdm_closed": 0.371
     },
     "selective_extra_share": {
-      "idm": 0.364,
+      "idm": 0.22,
       "pdm_closed": 0.303
     },
-    "overlap20": 0.22,
+    "overlap20": 0.236,
     "best_compatible_20": {
-      "idm->pdm": 1.0,
-      "pdm->idm": 0.997
+      "idm->pdm": 0.963,
+      "pdm->idm": 0.995
     },
     "strict_pairs": {
-      "n": 30606,
-      "disagreement": 0.1091,
-      "gamma": 0.7819
+      "n": 47311,
+      "disagreement": 0.1572,
+      "gamma": 0.6856
     }
   }
 }
