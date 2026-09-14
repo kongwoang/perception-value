@@ -1356,23 +1356,48 @@ reading. The supervisor had already started R2's image cache. A continuation scr
 cache to finish, then runs R1, R2 training and the router budget tables, one at a time. Nothing about
 the design changed.
 
-### 2026-09-14 12:55 — Task 2: the board rebooted during R2; R2 is now staged per dataset and per step
+### 2026-09-14 12:53 — Task 2: the board rebooted during R2; R2 is now staged per dataset and per step
 
-R2 finished training the nuScenes network: 30 epochs, loss 1.199 → 0.015, weights saved 11:50:46.
-The board then rebooted, with uptime 2 min at 12:51, taking the session, the supervisor and the job
-with it. The log stops after the last epoch. Next in the same process were the PyTorch scores, the ONNX
-export and `trtexec`. The kernel log is not readable without root, so the cause is not confirmed. The
-likeliest one: `trtexec`'s default TensorRT workspace (the whole device memory) meeting a process that
-still held its CUDA context, on unified memory.
-
+R2 finished training the nuScenes network: 30 epochs, loss 1.199 → 0.015, weights saved 11:50:46. The
+board rebooted, with uptime 2 min at 12:51, taking the session, the supervisor and the job with it.
 No R2 result had been written.
 
-Changes (no design change):
+The first entry named unified-memory exhaustion by `trtexec` as the likeliest cause. The board's own
+telemetry (the dashboard agent's 20-s history) contradicts it. The last sample before the reboot,
+11:50:40, shows:
+* GPU at 99% for 5 min, 36 W;
+* 76 °C;
+* memory at 59%, swap at 1.7%;
+* no `trtexec` process yet.
+
+The cause is unknown. See 13:20 for the second reboot, which rules out memory and heat more firmly.
+
+Changes kept (harmless, and they reduce peak memory):
 * Every R2 stage is its own process, one dataset at a time.
 * Train (and score with PyTorch) → exit.
-* Export: ONNX on the CPU, `trtexec` with the workspace capped at 512 MiB, then TensorRT scoring.
-* The finished nuScenes weights are reused (same procedure, all 30 epochs completed); the KITTI network
-  is trained.
+* Export: ONNX on the CPU, then `trtexec` with the workspace capped at 512 MiB.
+* The finished nuScenes weights are reused (same procedure, all 30 epochs completed).
 
-The commits, pushed results and caches were checked after the reboot (`git fsck` and the two image
-caches).
+After the reboot: `git fsck` clean; both image caches intact.
+
+### 2026-09-14 13:20 — a second reboot, at light load: not memory, not heat
+
+R2 then completed on both datasets:
+* nuScenes: weights reused, TensorRT engine built in 120 s;
+* KITTI: trained 30 epochs at 99% GPU, 36 W and up to 78.5 °C for ten minutes without incident, engine
+  built in 118 s;
+* TensorRT and PyTorch scores agree to Spearman ≥ 0.9996.
+
+The router budget run started at 13:10:59. The board rebooted about 40 s later, before its log had a
+line. The last telemetry sample (13:11:20):
+* CPU 86%, GPU 0%;
+* 12 W, 56 °C;
+* memory at 22%.
+
+The history also shows a brief sample at 13:15:00 (memory at 6%, just booted), then another gap until
+13:16:40, and uptime was 1 min at 13:17. So the board apparently rebooted again while idle during boot.
+
+Neither reboot coincides with memory pressure or heat. The second happened at light load and was
+followed by one at idle. That points away from the workload, towards power or hardware; this is not
+verifiable without a kernel log. No result was lost: every finished step had written and committed
+its output. Only the router budget step remains.
