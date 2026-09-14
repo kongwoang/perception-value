@@ -1303,3 +1303,17 @@ The fix:
 No scheme had been scored, and the reading is unchanged. The supervisor had moved on to Task 2 by
 design, and its first step crashed on an array one column too narrow in `104_nuplan_track_lists.py`
 (a 10-dim track vector allocated as 9); fixed. The supervisor is restarted with Task 1 first.
+
+### 2026-09-14 11:10 — Task 1: q_plan split into two processes after a CUDA out-of-memory
+
+`101_calibration_plan.py` passed check 3 for the first submission, then ran out of CUDA memory at
+the first Planner C batch. It had loaded the nuScenes devkit tables and the planner into one process,
+and on this board's unified memory that left 1.36 GB when 512 MB was requested. `74` never loaded the
+tables, so it had never hit this.
+
+Nothing was scored. The script now runs as two processes with the same logic and the same checks:
+* `--stage boxes` (devkit, CPU): check 3, then every filtered box at 0.10 in the ego frame, with its
+  score. `get_other_objs` transforms each box on its own, so subsetting by score afterwards equals
+  transforming the subset.
+* `--stage plan` (GPU, no tables): rasters per threshold, check 4, Planner C with 74's batch size and
+  frame order, check 1.
