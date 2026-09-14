@@ -1442,3 +1442,47 @@ At 20%, a router beats random in 3 cells and a gate in 5. None do on nuScenes.
 ### Operational notes
 
 The fan was set to 100% at 13:21 at the user's request, and will be set to 100% for heavy jobs from now on.
+
+## 2026-09-14 — Task 4 pre-registration: nuPlan sensor archive index (metadata only)
+
+**Goal.** Find how nuPlan distributes the CAM_F0 images the benchmark would need, and how much must be
+downloaded to run real perception on the 9 test logs and on all 34 benchmark logs. The per-log and
+per-scenario image lists come from Task 3.
+
+**Rules, enforced in `scripts/111_nuplan_archive_index.py`.** Every request goes through one logger that
+records method, URL, status, response headers and body bytes in `requests.jsonl`, and refuses any request
+that would take the total past 50 MB. Allowed:
+* official documentation pages;
+* HTTP HEAD;
+* Range reads of a ZIP's end-of-central-directory record and its central directory.
+
+Not allowed:
+* data archives or members;
+* credentials, account creation, accepting terms, or tokens.
+
+A 401/403, or a redirect to a login or terms page, stops that line of inquiry, and the requirement is
+reported. Archive names and URLs are taken only from official sources — the local devkit docs, the
+nuPlan website or its linked download page — and every URL records its source. Nothing is guessed.
+
+**What the local devkit already says** (`third_party/nuplan_devkit/docs/dataset_setup.md`, README): the
+download page is `https://www.nuscenes.org/nuplan#download`, and downloading requires creating an account
+and agreeing to the Terms of Use. The devkit lists no archive names and no archive URLs. PROVENANCE records
+that the mini camera blobs are nine shards of 45–54 GB split by blob, but not their URLs, so they cannot be
+used here.
+
+**Steps.**
+1. Fetch the official page and list any archive links it exposes without logging in.
+2. HEAD every archive URL it exposes. If Range requests work without login, read only the ZIP central
+   directory.
+3. Map the 34 and 9 logs to archives with exact member counts and compressed bytes.
+4. Compare three options against free disk: whole archives; needed CAM_F0 members via Range, only if the
+   server allows it; scenario-window images only.
+
+The measured mean CAM_F0 JPEG size replaces Task 3's 212 KB estimate, if a central directory is reachable.
+
+**Outputs.** `results/final/nuplan_archive_index.csv`, `docs/nuplan_archive_index.md`, and the request log
+under `results/raw/*_nuplan_archive_index`.
+
+**Reading.** "Doable now" requires every needed archive URL to come from an official source reachable
+without login, and the chosen option's download to fit within free disk with a 25% margin. Anything short
+of that is reported as the exact action the user must take.
