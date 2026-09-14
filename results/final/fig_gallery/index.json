@@ -1,0 +1,173 @@
+{
+ "selection": "q_brake mono, 6 most negative and 6 most positive V, excluding scene-0032 frame 9 and scene-0048 frame 3, at most one frame per scene (across all 12), ties broken by scene then frame",
+ "frames": [
+  {
+   "scene": "scene-0053",
+   "frame": 20,
+   "sample_token": "1e65fa62bee34256809a762821cae323",
+   "V": -10.112777429437061,
+   "image_copy": "negative_1_scene-0053_20.jpg",
+   "sign": "negative",
+   "rank": 1,
+   "action": {
+    "cheap": "DECELERATE",
+    "full": "KEEP",
+    "reference": "DECELERATE"
+   }
+  },
+  {
+   "scene": "scene-0049",
+   "frame": 6,
+   "sample_token": "2dd4c5b2adbb4c26aed327997b9ffd62",
+   "V": -4.44,
+   "image_copy": "negative_2_scene-0049_06.jpg",
+   "sign": "negative",
+   "rank": 2,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "KEEP"
+   }
+  },
+  {
+   "scene": "scene-0055",
+   "frame": 3,
+   "sample_token": "ee535106a1c546d2b99f9eeacc41066e",
+   "V": -4.44,
+   "image_copy": "negative_3_scene-0055_03.jpg",
+   "sign": "negative",
+   "rank": 3,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "KEEP"
+   }
+  },
+  {
+   "scene": "scene-0094",
+   "frame": 8,
+   "sample_token": "abccb4eda68e441d893861429fdd5605",
+   "V": -4.44,
+   "image_copy": "negative_4_scene-0094_08.jpg",
+   "sign": "negative",
+   "rank": 4,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "KEEP"
+   }
+  },
+  {
+   "scene": "scene-0067",
+   "frame": 25,
+   "sample_token": "d7f023cebff64a64956e486bc608383d",
+   "V": -4.430891720407086,
+   "image_copy": "negative_5_scene-0067_25.jpg",
+   "sign": "negative",
+   "rank": 5,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "KEEP"
+   }
+  },
+  {
+   "scene": "scene-0035",
+   "frame": 2,
+   "sample_token": "60341918a107414c9c44a9bfe169c9e4",
+   "V": -4.390000000000001,
+   "image_copy": "negative_6_scene-0035_02.jpg",
+   "sign": "negative",
+   "rank": 6,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "KEEP"
+   }
+  },
+  {
+   "scene": "scene-0099",
+   "frame": 16,
+   "sample_token": "73620d31303a47f9a86908f6157370f9",
+   "V": 57.00024493786235,
+   "image_copy": "positive_1_scene-0099_16.jpg",
+   "sign": "positive",
+   "rank": 1,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "HARD_BRAKE"
+   }
+  },
+  {
+   "scene": "scene-0044",
+   "frame": 14,
+   "sample_token": "5894789560e1417cbc67d82c99464527",
+   "V": 14.683816716136448,
+   "image_copy": "positive_2_scene-0044_14.jpg",
+   "sign": "positive",
+   "rank": 2,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "HARD_BRAKE"
+   }
+  },
+  {
+   "scene": "scene-0102",
+   "frame": 34,
+   "sample_token": "e26feac8d43d4eed9a11e739b0d4264b",
+   "V": 7.988052427442403,
+   "image_copy": "positive_3_scene-0102_34.jpg",
+   "sign": "positive",
+   "rank": 3,
+   "action": {
+    "cheap": "KEEP",
+    "full": "HARD_BRAKE",
+    "reference": "DECELERATE"
+   }
+  },
+  {
+   "scene": "scene-0065",
+   "frame": 24,
+   "sample_token": "81458d7c63ee40afba6d143188cebaa2",
+   "V": 5.396277414599659,
+   "image_copy": "positive_4_scene-0065_24.jpg",
+   "sign": "positive",
+   "rank": 4,
+   "action": {
+    "cheap": "KEEP",
+    "full": "DECELERATE",
+    "reference": "DECELERATE"
+   }
+  },
+  {
+   "scene": "scene-0054",
+   "frame": 30,
+   "sample_token": "9e5c937cc7d74b3ca32eba79df6912c9",
+   "V": 4.573511988143277,
+   "image_copy": "positive_5_scene-0054_30.jpg",
+   "sign": "positive",
+   "rank": 5,
+   "action": {
+    "cheap": "KEEP",
+    "full": "DECELERATE",
+    "reference": "DECELERATE"
+   }
+  },
+  {
+   "scene": "scene-0018",
+   "frame": 19,
+   "sample_token": "81f15cced544486daa6aa4d6b6bf17d9",
+   "V": 4.44,
+   "image_copy": "positive_6_scene-0018_19.jpg",
+   "sign": "positive",
+   "rank": 6,
+   "action": {
+    "cheap": "HARD_BRAKE",
+    "full": "KEEP",
+    "reference": "KEEP"
+   }
+  }
+ ]
+}

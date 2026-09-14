@@ -1998,3 +1998,61 @@ The transported variant, re-evaluated under this rule, reads consistent on all l
 
 **Operational.** A background wait of this session was killed when the session was resumed. The detached
 supervisor was unaffected.
+
+## 2026-09-14 21:27 — Task 6: figure data export (export only), first run stopped by an assertion
+
+Task 6 exports figure data and registers nothing new. Script: `scripts/118_figure_exports.py`.
+* **Source.** Every nuScenes frame is rebuilt through `rap.decision.build`'s functions, in its order.
+* **Safeguard.** The rebuilt J_cheap, J_full and actions must equal the registered joined tables (mono and
+  oracle, 3,376 frames each) before anything is written.
+
+**Bug (export script only, no registered result affected).** The first run raised an AssertionError before
+writing any file. My detection→GT pair re-derivation asserted that a GT counts as matched exactly when it is
+assigned a detection. `rap.risk.match` defines matched differently:
+* an unassigned GT keeps its best IoU with *any* detection, including one assigned to another GT;
+* the pipeline counts a GT as detected when that best IoU is ≥ 0.5 (`per_object_error`, `add_perception_gain`).
+
+**Fix.** The export now follows the existing definition.
+* Such a GT is matched; its position and confidence come from its best-overlapping detection.
+* It is flagged `det_shared_with_other_gt_cheap/full`, and the number of such rows is recorded in
+  `fig_bev_constants.json`.
+* False positives remain the detections `rap.risk.match` leaves unassigned.
+
+### 2026-09-14 21:32 — Task 6 result: figure data exported, no registered result changed
+
+**Safeguard.** Rebuilt frames equal the registered joined tables. Mono and oracle, 3,376 frames each:
+J_cheap and J_full max |diff| 0.0, and 0 action mismatches.
+
+**A. `results/final/fig_bev_objects.csv.gz`** — 12,773 rows.
+
+| system · geometry | rows | V≠0 frames with rows | not exported: missed by both | not exported: FP in both (IoU ≥ 0.5 / ≥ 0.3) |
+|---|---|---|---|---|
+| q_brake mono | 3,079 | 481 of 486 | 1,464 | 298 / 335 |
+| q_brake oracle | 1,942 | 290 of 295 | 806 | 196 / 223 |
+| q_plan ADE oracle | 7,752 | 1,218 of 1,226 | 4,149 | 801 / 885 |
+
+* The 5, 5 and 8 frames without rows hold only objects missed by both modes or FPs in both.
+* Rows by type (brake mono / brake oracle / plan):
+
+| type | brake mono | brake oracle | plan |
+|---|---|---|---|
+| fp_added_by_full | 1,001 | 695 | 2,326 |
+| fp_removed_by_full | 349 | 218 | 916 |
+| matched_both | 1,087 | 635 | 2,683 |
+| miss_lost_by_full | 67 | 44 | 186 |
+| miss_recovered_by_full | 575 | 350 | 1,641 |
+
+* 667 rows are matched through a detection assigned to another GT, and flagged as such.
+* `position_basis`: near_face (brake), box_centre (plan).
+* Constants and definitions: `fig_bev_constants.json`.
+
+**B. `results/final/fig_gallery/`** — 12 CAM_FRONT images copied byte-identical, 12 JSONs and an index.
+* q_brake mono, 6 most negative V (−10.11 to −4.39) and 6 most positive (+57.0 to +4.44).
+* scene-0032 frame 9 and scene-0048 frame 3 are excluded; every frame is from a different scene.
+* Negatives 2–4 tie at −4.440; ties are broken by scene, then frame.
+* Per the user's addition, each JSON also lists the GTs missed by both modes and the FPs present in both.
+* The images are nuScenes data (CC BY-NC-SA 4.0), redistributed here for research.
+
+**C. `results/final/fig_budget_curves.csv`**
+* 856 per-cell rows (unit ms, every allocator and budget level, η with 95% CI and escalated fraction).
+* 180 rows of medians over cells per track × signal × budget level.

@@ -1,0 +1,133 @@
+{
+ "source": "scripts/118_figure_exports.py",
+ "setting": {
+  "dataset": "nuScenes v1.0-trainval, 85 scenes, 3,376 CAM_FRONT keyframes",
+  "detector": "YOLOv8s",
+  "cheap": "ns_cheap_320",
+  "full": "ns_full_640",
+  "threshold_cheap": 0.25,
+  "threshold_full": 0.25,
+  "match_iou": 0.5,
+  "matching": "rap.risk.match: greedy, confidence-ordered, class-agnostic, one-to-one",
+  "min_gt_height_px": 10.0,
+  "mono_camera_height_m": 1.51,
+  "registered_tables": {
+   "oracle": "results/raw/20260913_211441_phase0g_eta_fde_oracle/joined_frames.pkl",
+   "mono": "results/raw/20260913_214436_phase0g_eta_fde_mono/joined_frames.pkl"
+  }
+ },
+ "controller": {
+  "corridor_half_width_m": 1.2,
+  "max_range_m": 80.0,
+  "standoff_m": 2.0,
+  "reaction_time_s": 0.4,
+  "a_decelerate_mps2": 2.5,
+  "a_hard_brake_mps2": 6.0,
+  "threshold_decelerate_mps2": 1.0,
+  "threshold_hard_brake_mps2": 3.5,
+  "a_cap_mps2": 9.0,
+  "use_ttc": true,
+  "actions": [
+   "KEEP",
+   "DECELERATE",
+   "HARD_BRAKE"
+  ],
+  "braking_onset_distance_static_obstacle_by_ego_speed_mps": {
+   "5": {
+    "decelerate_below_m": 16.5,
+    "hard_brake_below_m": 7.571428571428571
+   },
+   "10": {
+    "decelerate_below_m": 56.0,
+    "hard_brake_below_m": 20.285714285714285
+   },
+   "15": {
+    "decelerate_below_m": 120.5,
+    "hard_brake_below_m": 40.142857142857146
+   },
+   "20": {
+    "decelerate_below_m": 210.0,
+    "hard_brake_below_m": 67.14285714285714
+   }
+  },
+  "onset_formula": "d = v^2 / (2 a_threshold) + standoff + v * reaction_time (ttc = inf)"
+ },
+ "columns": {
+  "V": "J(CHEAP) - J(FULL) from the registered tables; brake = J, plan_ade = JC_ade (Planner C vs the real future)",
+  "x_lateral_m": "ego frame lateral centre (lat_min + lat_max)/2, nuScenes ego y, POSITIVE TO THE LEFT",
+  "z_forward_m": "ego frame forward range as the braking controller uses it: near-face range (mono: cached monocular z; oracle: GT long_near for detections overlapping a GT box at IoU >= 0.5)",
+  "position_source": "controller_near_face for brake rows; for plan_ade rows the box centre Planner C's oracle submission used (gt_box_centre, or mono_lift_centre = z + class-prior length/2)",
+  "position_basis": "near_face (q_brake rows) or box_centre (q_plan rows)",
+  "in_corridor": "the controller's corridor test rap.planner.in_corridor(lat_min, lat_max, corridor_half_width)",
+  "considered_by_controller": "in_corridor and z_forward_m <= max_range (the selection inside required_decel)",
+  "x_lateral_full_m / z_forward_full_m / in_corridor_full": "matched_both only: the FULL detection's view (the primary columns are the CHEAP detection's)",
+  "a_req_obj": "the controller's per-object required deceleration for that mode's detection",
+  "class": "detector coarse class of the detection the row is about",
+  "gt_id": "track id in rap.nusc geometry",
+  "det_index_cheap / det_index_full": "index of the detection among that mode's detections at threshold 0.25 (the order of the cached detections), -1 if none"
+ },
+ "types": {
+  "matched_both": "GT matched by CHEAP and by FULL",
+  "miss_recovered_by_full": "GT missed by CHEAP, matched by FULL",
+  "miss_lost_by_full": "GT matched by CHEAP, missed by FULL",
+  "fp_added_by_full": "FULL detection matched to no GT and paired with no unmatched CHEAP detection (IoU >= 0.5)",
+  "fp_removed_by_full": "CHEAP detection matched to no GT and paired with no unmatched FULL detection (IoU >= 0.5)",
+  "not_exported": "GT missed by both modes, and unmatched detections present in both modes (counts below)"
+ },
+ "gt_matched_note": "a GT object counts as matched by a mode when rap.risk.match's best IoU is >= 0.5. For an unassigned GT that value is its best overlap with any detection, so a GT can be matched through a detection assigned to another GT; the registered miss counts use the same definition. Such rows take position and confidence from that best-overlapping detection and have det_shared_with_other_gt_cheap/full = true",
+ "fp_in_both_iou30_note": "omitted_by_system_geometry.*.fp_in_both_iou30 counts unmatched detections present in both modes when the cross-mode pairing uses IoU >= 0.3 instead of 0.5 (recorded only; the exported types use 0.5)",
+ "gallery_note": "the gallery JSONs additionally list every GT object missed by both modes and every FP present in both modes (pairing IoU >= 0.5), so the BEV inset can show the whole scene; the BEV CSV does not",
+ "plan_ade_note": "Planner C has no corridor test; in_corridor on plan_ade rows is the braking controller's test on the braking geometry of the same detection, given for reference only.",
+ "rows_by_system_geometry_type": {
+  "brake|mono|fp_added_by_full": 1001,
+  "brake|mono|fp_removed_by_full": 349,
+  "brake|mono|matched_both": 1087,
+  "brake|mono|miss_lost_by_full": 67,
+  "brake|mono|miss_recovered_by_full": 575,
+  "brake|oracle|fp_added_by_full": 695,
+  "brake|oracle|fp_removed_by_full": 218,
+  "brake|oracle|matched_both": 635,
+  "brake|oracle|miss_lost_by_full": 44,
+  "brake|oracle|miss_recovered_by_full": 350,
+  "plan_ade|oracle|fp_added_by_full": 2326,
+  "plan_ade|oracle|fp_removed_by_full": 916,
+  "plan_ade|oracle|matched_both": 2683,
+  "plan_ade|oracle|miss_lost_by_full": 186,
+  "plan_ade|oracle|miss_recovered_by_full": 1641
+ },
+ "omitted_by_system_geometry": {
+  "brake|mono": {
+   "frames_V_nonzero": 486,
+   "fp_in_both": 298,
+   "missed_by_both": 1464,
+   "fp_in_both_iou30": 335
+  },
+  "brake|oracle": {
+   "frames_V_nonzero": 295,
+   "fp_in_both": 196,
+   "missed_by_both": 806,
+   "fp_in_both_iou30": 223
+  },
+  "plan_ade|oracle": {
+   "frames_V_nonzero": 1226,
+   "fp_in_both": 801,
+   "missed_by_both": 4149,
+   "fp_in_both_iou30": 885
+  }
+ },
+ "rows_matched_through_shared_detection": 667,
+ "verification_rebuild_equals_registered_tables": {
+  "mono": {
+   "frames": 3376,
+   "J_cheap_max_abs_diff": 0.0,
+   "J_full_max_abs_diff": 0.0,
+   "action_mismatches": 0
+  },
+  "oracle": {
+   "frames": 3376,
+   "J_cheap_max_abs_diff": 0.0,
+   "J_full_max_abs_diff": 0.0,
+   "action_mismatches": 0
+  }
+ }
+}

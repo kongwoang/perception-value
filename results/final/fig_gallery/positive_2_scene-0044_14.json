@@ -1,0 +1,91 @@
+{
+ "scene": "scene-0044",
+ "frame": 14,
+ "sample_token": "5894789560e1417cbc67d82c99464527",
+ "system": "brake",
+ "geometry": "mono",
+ "image_path": "/home/kongwoang/datasets/nuscenes/trainval/samples/CAM_FRONT/n015-2018-07-24-11-03-52+0800__CAM_FRONT__1532401766512460.jpg",
+ "image_copy": "positive_2_scene-0044_14.jpg",
+ "V": 14.683816716136448,
+ "J_cheap": 15.281621079288444,
+ "J_full": 0.5978043631519963,
+ "ego_speed_mps": 6.6192065088126295,
+ "action": {
+  "cheap": "KEEP",
+  "full": "HARD_BRAKE",
+  "reference": "HARD_BRAKE"
+ },
+ "a_req": {
+  "cheap": 0.0,
+  "full": 5.373398839452471,
+  "reference": 3.9027709488629285
+ },
+ "cheap_boxes": [
+  {
+   "det_index": 0,
+   "xyxy": [
+    2.8681182861328125,
+    274.7269287109375,
+    676.8795776367188,
+    663.3007202148438
+   ],
+   "class": "vehicle",
+   "conf": 0.92431640625,
+   "matched_gt_id": 8,
+   "x_lateral_m": 4.187312126159668,
+   "z_forward_m": 11.131319046020508,
+   "lat_min_m": 1.2251619100570679,
+   "lat_max_m": 7.149462699890137,
+   "in_corridor": false,
+   "considered_by_controller": false,
+   "a_req_obj": 0.0
+  }
+ ],
+ "full_boxes": [
+  {
+   "det_index": 0,
+   "xyxy": [
+    1.651153564453125,
+    277.31414794921875,
+    708.5147094726562,
+    667.4978637695312
+   ],
+   "class": "vehicle",
+   "conf": 0.91650390625,
+   "matched_gt_id": 8,
+   "x_lateral_m": 3.9569568634033203,
+   "z_forward_m": 10.865852355957031,
+   "lat_min_m": 0.9245141744613647,
+   "lat_max_m": 6.989399433135986,
+   "in_corridor": true,
+   "considered_by_controller": true,
+   "a_req_obj": 5.373398839452471
+  }
+ ],
+ "gt_boxes": [
+  {
+   "gt_id": 8,
+   "instance_token": "9ded5bee1a2843159f3ca1e054235808",
+   "type": "vehicle",
+   "xyxy_projected": [
+    0.0,
+    224.405029296875,
+    719.2344360351562,
+    688.131591796875
+   ],
+   "x_lateral_m": 4.538354873657227,
+   "z_forward_m": 10.260860443115234,
+   "lat_min_m": 1.034875750541687,
+   "lat_max_m": 8.041833877563477,
+   "ttc_s": 1.478255271911621,
+   "in_corridor": true,
+   "considered_by_controller": true,
+   "matched_by_cheap": true,
+   "matched_by_full": true,
+   "a_req_obj": 3.9027709488629285
+  }
+ ],
+ "missed_by_both": [],
+ "fp_in_both": [],
+ "conventions": "boxes in original image pixels; x_lateral_m positive to the left; z_forward_m = near-face range; missed_by_both uses the GT projected box and GT geometry; fp_in_both primary fields are the CHEAP detection's (FULL's in *_full), paired at IoU >= 0.5 (mono geometry for detections, GT long_near for GT boxes); see fig_bev_constants.json"
+}
