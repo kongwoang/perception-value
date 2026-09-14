@@ -156,21 +156,133 @@ def measure_overheads(n_frames=400):
 
 def signal_overhead(ov, track, signal, n_models=1):
     """(ms, mJ) per frame an allocator adds on top of CHEAP, and where the number comes from."""
-    base = ov["nuScenes"] if track == "nuPlan" else ov[track]
-    src = "measured" if track != "nuPlan" else "nuScenes feature time as proxy (track features not timed)"
-    ms = {"random": 0.0, "oracle": 0.0, "uncertainty": base["uncertainty_ms"],
-          "criticality_cheap": base["criticality_cheap_ms"],
-          "gate_ridge": base["features_ms"] + n_models * ov["ridge_predict_ms"],
-          "gate_gbm": base["features_ms"] + n_models * ov["gbm_predict_ms"]}[signal]
-    mw = ov.get("cpu_mw_over_idle", np.nan)
+    if signal in ("random", "oracle"):
+        return 0.0, 0.0, "none"
+    proxy = track == "nuPlan"
+    rt = "nuScenes" if proxy else track
+    base = ov[rt]
+    src = "measured" if not proxy else "nuScenes feature time as proxy (track features not timed)"
+    if signal.startswith("R1_"):
+        ms = ov[f"r1_features_ms_{rt}"] + ov["r1_mlp_predict_ms" if "_mlp_" in signal else "r1_gbm_predict_ms"]
+        mw = ov.get("r1_cpu_mw_over_idle", np.nan)
+    elif signal == "R2_cnn_clf":
+        ms = ov[f"r2_pre_ms_{rt}"] + ov["r2_trt_ms"]
+        mw = ov.get("r2_cpu_gpu_mw_over_idle", np.nan)
+    elif signal == "gate_gbm_batched":
+        ms = base["features_ms"] + ov["gbm_batched_ms_per_frame"]
+        mw = ov.get("cpu_mw_over_idle", np.nan)
+    else:
+        ms = {"uncertainty": base["uncertainty_ms"], "criticality_cheap": base["criticality_cheap_ms"],
+              "gate_ridge": base["features_ms"] + n_models * ov["ridge_predict_ms"],
+              "gate_gbm": base["features_ms"] + n_models * ov["gbm_predict_ms"]}[signal]
+        mw = ov.get("cpu_mw_over_idle", np.nan)
     mj = ms * max(mw, 0.0) / 1e3 if np.isfinite(mw) else 0.0
-    return ms, mj, (src if signal not in ("random", "oracle") else "none")
+    return ms, mj, src
+
+
+def measure_router_overheads(n_frames=400):
+    """Task 2: single-frame cost of R1 and R2, and the amortised batched GBM gate, measured on this board."""
+    import cv2, glob as _g, importlib.util as _iu, torch
+    from rap.trt import TRTModule
+    s1 = _iu.spec_from_file_location("r103", ROOT / "scripts" / "103_routers_r1.py")
+    r1 = _iu.module_from_spec(s1)
+    s1.loader.exec_module(r1)
+    res, cfg, frs = {}, RiskConfig(), {}
+    for track, det_dir, mode in (("nuScenes", Path(CACHE) / "nusc_det_tv", "ns_cheap_320"),
+                                 ("KITTI", Path(CACHE) / "det", "cheap_320")):
+        frs[track] = _frames(det_dir, mode, n_frames)
+        w, h = r1.IMG_WH[track]
+        res[f"r1_features_ms_{track}"] = _median_ms(lambda it: r1.det_list_features(it[0], w, h), frs[track])
+    X = np.array([r1.det_list_features(it[0], *r1.IMG_WH["nuScenes"]) for it in frs["nuScenes"]])
+    y = X[:, 0] + np.random.default_rng(0).normal(size=len(X))       # timing only: the model shape is fixed
+    mlp = r1.models()["R1_mlp_reg"][1]().fit(X, y)
+    gbm = predict.make_model("gbm", "reg", 0).fit(X, y)
+    rows = [X[i:i + 1] for i in range(len(X))]
+    res["r1_mlp_predict_ms"] = _median_ms(lambda r: mlp.predict(r), rows)
+    res["r1_gbm_predict_ms"] = _median_ms(lambda r: gbm.predict(r), rows)
+    X65 = np.nan_to_num(np.array([list(F.frame_features(*it, G.PRIMARY, cfg.op_conf).values())
+                                  for it in frs["nuScenes"]], float))
+    g65 = predict.make_model("gbm", "reg", 0).fit(X65, X65[:, :5].sum(1))
+    big = np.repeat(X65, int(np.ceil(1000 / len(X65))), axis=0)[:1000]
+    ts = []
+    for _ in range(20):
+        t = time.perf_counter()
+        g65.predict(big)
+        ts.append((time.perf_counter() - t) * 1e3)
+    res["gbm_batched_ms_per_frame"] = float(np.median(ts)) / len(big)
+    k1 = {"i": 0}
+
+    def r1_work():
+        it = frs["nuScenes"][k1["i"] % len(frs["nuScenes"])]
+        k1["i"] += 1
+        mlp.predict(r1.det_list_features(it[0], *r1.IMG_WH["nuScenes"])[None])
+    idle = _rails_during(lambda: time.sleep(0.02), 8.0)
+    busy = _rails_during(r1_work, 8.0)
+    res["r1_cpu_mw_over_idle"] = float(busy.get("CPU", np.nan) - idle.get("CPU", np.nan))
+
+    runs = sorted(_g.glob(str(ROOT / "results" / "raw" / "*_router_r2")))
+    if runs:
+        dev = torch.device("cuda:0")
+        paths = {"nuScenes": sorted(_g.glob("/home/kongwoang/datasets/nuscenes/trainval/samples/CAM_FRONT/*.jpg"))[:200],
+                 "KITTI": sorted(_g.glob("/home/kongwoang/datasets/kitti_tracking/training/image_02/0000/*.png"))[:200]}
+        decoded = {}
+
+        def pre(im):
+            x = torch.from_numpy(np.ascontiguousarray(
+                cv2.resize(im, (128, 128), interpolation=cv2.INTER_AREA)[:, :, ::-1].transpose(2, 0, 1)))
+            x = x.to(dev).float()[None]
+            torch.cuda.synchronize()
+            return x
+        for track, ps in paths.items():
+            res[f"r2_decode_ms_{track}"] = _median_ms(lambda q: cv2.imread(q, cv2.IMREAD_COLOR), ps, passes=1)
+            decoded[track] = [cv2.imread(q, cv2.IMREAD_COLOR) for q in ps]
+            res[f"r2_pre_ms_{track}"] = _median_ms(pre, decoded[track])
+        eng = TRTModule(Path(runs[-1]) / "r2_nuScenes_fp16.engine")
+        x0 = torch.zeros(1, 3, 128, 128, device=dev)
+        for _ in range(50):
+            eng(x0)
+
+        def trt_once(_):
+            eng(x0)
+            torch.cuda.synchronize()
+        res["r2_trt_ms"] = _median_ms(trt_once, list(range(300)), passes=1)
+        k2 = {"i": 0}
+
+        def r2_work():
+            im = decoded["nuScenes"][k2["i"] % len(decoded["nuScenes"])]
+            k2["i"] += 1
+            eng(pre(im))
+            torch.cuda.synchronize()
+        idle = _rails_during(lambda: time.sleep(0.02), 8.0)
+        busy = _rails_during(r2_work, 8.0)
+        res["r2_cpu_gpu_mw_over_idle"] = float(sum(busy.get(r, 0.0) - idle.get(r, 0.0) for r in ("CPU", "GPU")))
+    return res
+
+
+def load_router_scores():
+    """Per-frame router scores written by 103 (R1) and 107 (R2), keyed by cell."""
+    import glob as _g
+    out = {}
+    for tag in ("routers_r1", "router_r2"):
+        runs = sorted(_g.glob(str(ROOT / "results" / "raw" / f"*_{tag}")))
+        if not runs:
+            continue
+        for f in sorted(_g.glob(runs[-1] + "/scores__*.npz")):
+            _, track, geometry, system, target = Path(f).stem.split("__")
+            z = np.load(f, allow_pickle=False)
+            keycols = ("scenario", "iteration") if "scenario" in z.files else ("seq", "frame")
+            df = pd.DataFrame({k: (z[k].astype(str) if k in ("scenario", "seq") else z[k].astype(int)) for k in keycols})
+            for k in z.files:
+                if k.startswith(("R1_", "R2_")) and not k.endswith("_torch"):
+                    df[k] = z[k]
+            out.setdefault((track, geometry, system, target), []).append((keycols, df))
+    return out
 
 
 # ----------------------------------------------------------------------------------------------
 # two fidelity levels
 
-def two_level(cells, ov, nboot, rng):
+def two_level(cells, ov, nboot, rng, routers=None):
     rows = []
     for c in cells:
         d = c["d"]
@@ -184,6 +296,16 @@ def two_level(cells, ov, nboot, rng):
         for s in ("uncertainty", "criticality_cheap"):
             if s in c["cols"]:
                 scores[s] = pd.to_numeric(d[c["cols"][s]], errors="coerce").fillna(-np.inf).to_numpy()[m]
+        if routers is not None:
+            # the same GBM ranking, charged its batched inference cost instead of a single-row call
+            scores["gate_gbm_batched"] = scores["gate_gbm"]
+            for keycols, rdf in routers.get((c["track"], c["geometry"], c["system"], c["target"]), []):
+                left = d.loc[m, list(keycols)].copy()
+                for kc in keycols:
+                    left[kc] = left[kc].astype(str) if kc in ("seq", "scenario") else left[kc].astype(int)
+                j = left.merge(rdf, on=list(keycols), how="left", validate="one_to_one")
+                for name in [x for x in rdf.columns if x not in keycols]:
+                    scores[name] = j[name].fillna(-np.inf).to_numpy(float)
         uniq = np.unique(units)
         idx = [np.flatnonzero(units == u) for u in uniq]
         draws = [np.concatenate([idx[i] for i in rng.integers(0, len(uniq), len(uniq))]) for _ in range(nboot)]
@@ -387,29 +509,37 @@ def main():
     ap.add_argument("--tag", default="benchmark_budget")
     ap.add_argument("--suffix", default="",
                     help="appended to every output name, so a sensitivity run cannot overwrite the primary one")
+    ap.add_argument("--routers", action="store_true",
+                    help="Task 2: add R1, R2 and the batched-inference GBM gate; two-level tables only")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     rng = np.random.default_rng(0)
 
     ov = measure_overheads()
+    if args.routers:
+        ov.update(measure_router_overheads())
     print("  overheads:", json.dumps({k: v for k, v in ov.items() if not k.startswith("rails")}, default=float))
     splits = json.loads((ROOT / "configs" / "benchmark_splits.json").read_text())
     cells = [c for gen in (t92.nuscenes_cells, t92.kitti_cells, t92.nuplan_cells) for c in gen(splits)]
-    two = pd.DataFrame(two_level(cells, ov, args.nboot, rng))
-    multi = pd.DataFrame(multi_fidelity(ov, args.nboot, rng))
+    routers = load_router_scores() if args.routers else None
+    two = pd.DataFrame(two_level(cells, ov, args.nboot, rng, routers))
+    multi = pd.DataFrame() if args.routers else pd.DataFrame(multi_fidelity(ov, args.nboot, rng))
 
     out = Path(RESULTS) / "final"
     costs = {t: profile_costs(t) for t in PROFILE}
-    for name, obj in ((f"benchmark_budget_overheads{args.suffix}.json", {"overheads": ov, "costs": costs}),):
+    sfx = "_routers" if args.routers else args.suffix
+    for name, obj in ((f"benchmark_budget_overheads{sfx}.json", {"overheads": ov, "costs": costs}),):
         (out / name).write_text(json.dumps(obj, indent=1, default=float))
         (run / name).write_text(json.dumps(obj, indent=1, default=float))
-    for name, df in ((f"benchmark_budget_two_level{args.suffix}", two),
-                     (f"benchmark_budget_multifidelity{args.suffix}", multi)):
+    outputs = ((("benchmark_budget_routers", two),) if args.routers else
+               ((f"benchmark_budget_two_level{args.suffix}", two), (f"benchmark_budget_multifidelity{args.suffix}", multi)))
+    for name, df in outputs:
         df.to_csv(out / f"{name}.csv", index=False)
         df.to_csv(run / f"{name}.csv", index=False)
         print(f"  wrote {out / (name + '.csv')} ({len(df)} rows)")
-    s = multi[(multi.budget_level == 0.2)][["system", "unit", "signal", "eta", "share_384", "share_512", "share_640"]]
-    print(s.round(3).to_string(index=False))
+    if not args.routers:
+        s = multi[(multi.budget_level == 0.2)][["system", "unit", "signal", "eta", "share_384", "share_512", "share_640"]]
+        print(s.round(3).to_string(index=False))
 
 
 if __name__ == "__main__":

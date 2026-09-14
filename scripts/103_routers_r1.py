@@ -127,6 +127,13 @@ def main():
             test = (d.split == "test").to_numpy()
             t0 = time.time()
             scores = fit_score(X, v, fit)
+            # per-frame scores, so the measured-cost allocation (108) evaluates exactly these rankings
+            ident = ({"scenario": d.scenario.astype(str).to_numpy().astype("U32"), "iteration": d.iteration.to_numpy()}
+                     if c["track"] == "nuPlan" else
+                     {"seq": d.seq.astype(str).to_numpy().astype("U32"), "frame": d.frame.to_numpy()})
+            np.savez_compressed(run / f"scores__{c['track']}__{c['geometry']}__{c['system']}__{c['target']}.npz",
+                                unit=d.unit.astype(str).to_numpy().astype("U40"), split=d.split.to_numpy().astype("U8"),
+                                V=v, J_cheap=d[c["cheap"]].to_numpy(float), **ident, **scores)
             ks, prize0, point, draws, dropped = t92.evaluate(v[test], d.unit.to_numpy()[test],
                                                              {"random": None, **{k: s[test] for k, s in scores.items()}},
                                                              args.nboot, rng)
