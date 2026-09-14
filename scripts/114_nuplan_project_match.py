@@ -445,8 +445,8 @@ def main():
         "dt": {"abs_ms_quantiles": dict(zip(map(str, q), (np.quantile(np.abs(dt.dt_us), q) / 1e3).round(2).tolist())),
                "n_iterations_over_50ms": int((np.abs(dt.dt_us) > DT_FLAG_US).sum()),
                "n_decision_iterations_over_50ms": int(((np.abs(dt.dt_us) > DT_FLAG_US) & dt.decision).sum()),
-               "n_states_any_buffer_image_over_50ms": int(dt.assign(f=np.abs(dt.dt_us) > DT_FLAG_US)
-                                                          .groupby("scenario").f.sum().gt(0).sum()),
+               "n_scenarios_any_image_over_50ms": int(dt.assign(f=np.abs(dt.dt_us) > DT_FLAG_US)
+                                                      .groupby("scenario").f.sum().gt(0).sum()),
                "nearest_db_image_not_fetched": int((~dt.nearest_in_db_fetched).sum())},
         "distortion_monotone_to_clamp": {l: {"monotone": m[0], "r_max": round(m[1], 4), "min_derivative": round(m[2], 4)}
                                          for l, m in mono.items()},

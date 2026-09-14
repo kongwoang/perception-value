@@ -1804,3 +1804,31 @@ lift landed 4–6 m short.
   `Accept-Ranges: bytes`, with no login. Every shard's log set equals its metadata File group, so the
   Camera 2–8 URLs built by the user's rule are verified.
 * **Fetch plan:** 12,921 members, 2,765,642,770 B (cap 3.5 GB).
+
+### 2026-09-14 15:09 — Task 5 Stage A result: 12,921 CAM_F0 window images fetched by Range, all verified
+
+**Fetch.**
+* 12,921 members from the nine shards in 13,727 member requests. Every answer was 206 with the exact
+  range, so there was no whole-archive fallback.
+* **2,765,645,994 B** of image data, against the 3.5 GB cap and 2,765,642,770 B planned.
+  * 806 members had a local extra field longer than the central one and needed one more small request.
+  * 96,920 B were over-read in total: local header bytes past a member, where the local extra is shorter.
+* All 12,921 inflate to the directory size, match the directory CRC32 and decode to 1080×1920×3.
+* Local-header CRCs also match. No other camera, lidar or non-window member was requested.
+
+**Metadata.** 110 requests, 360,313,925 B. Six directory chunk requests to Cameras 2, 3, 4, 6, 7 and 8
+got `RemoteDisconnected` on a reused idle connection; each succeeded on retry, and the failed attempts
+count 0 B.
+
+**Stored.** Images: `~/datasets/nuplan/sensor_blobs_cam_f0/<log>/CAM_F0/<hash>.jpg`, 2.7 GB.
+
+**Committed** under `results/raw/nuplan_task5/`:
+* the shard URLs with sources;
+* `dirs.json`, with HEAD, EOCD and per-shard log checks;
+* `plan.json` and `plan_members.csv.gz`, with offsets and CRCs of the fetched members;
+* `manifest.csv`, the per-member verification;
+* `image_index.csv.gz`;
+* the request ledgers.
+
+**Kept local.** The full central-directory listings, `cd/`, 63 MB. They can be re-derived from the public
+archives with a 360 MB read.

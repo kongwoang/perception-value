@@ -1,0 +1,53 @@
+{
+ "images": 12921,
+ "logs": 34,
+ "planned_bytes": 2765642770,
+ "cap": 3500000000,
+ "per_shard": [
+  {
+   "shard": 0,
+   "images": 2308,
+   "bytes": 483950424
+  },
+  {
+   "shard": 1,
+   "images": 1539,
+   "bytes": 336447174
+  },
+  {
+   "shard": 2,
+   "images": 1758,
+   "bytes": 418254784
+  },
+  {
+   "shard": 3,
+   "images": 220,
+   "bytes": 59295892
+  },
+  {
+   "shard": 4,
+   "images": 880,
+   "bytes": 153020440
+  },
+  {
+   "shard": 5,
+   "images": 1100,
+   "bytes": 221175918
+  },
+  {
+   "shard": 6,
+   "images": 1891,
+   "bytes": 402533913
+  },
+  {
+   "shard": 7,
+   "images": 2346,
+   "bytes": 530540209
+  },
+  {
+   "shard": 8,
+   "images": 879,
+   "bytes": 160424016
+  }
+ ]
+}
