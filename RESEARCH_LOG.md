@@ -1832,3 +1832,58 @@ count 0 B.
 
 **Kept local.** The full central-directory listings, `cd/`, 63 MB. They can be re-derived from the public
 archives with a 360 MB read.
+
+### 2026-09-14 15:29 — Task 5 Stage B: detection, projection and checks, reviewed before any CHEAP/FULL branch is scored
+
+**B1 detection.** 12,921 images, no throttling before or after, fan at 100%.
+
+| mode | dets ≥ 0.10 / ≥ 0.25 | total median | preprocess | inference | postprocess | CPU+GPU mJ/frame |
+|---|---|---|---|---|---|---|
+| 320 | 139,697 / 82,519 | 14.4 ms | 1.7 ms | 6.4 ms | 6.3 ms | 44.7 |
+| 640 | 226,824 / 131,003 | 23.6 ms | 2.5 ms | 14.8 ms | 6.3 ms | 105.8 |
+
+* JPEG decode: 15.6 ms.
+* Energy is from the 300-frame dedicated passes.
+* S1 FULL threshold on the 25 train ∪ val logs: **0.4766**.
+
+**B2 time alignment.**
+* |Δt| over 5,760 buffer iterations: median 25.0 ms, max 40.9 ms. None exceeds 50 ms.
+* For every iteration, the DB's nearest CAM_F0 image was among the fetched ones.
+
+**B3/B4 projection.**
+* Distortion is monotone to the clamp radius in all 34 logs.
+* FP lift plane (train ∪ val): z = −0.324 m, so the camera sits 1.84 m above the road.
+* Informational ground check on all state iterations: median vehicle-bottom z −0.370 m.
+* Lift applied to 10,303 true vehicle boxes at decision iterations:
+  * median |range error| 0.30 m within 15 m, 0.81 m at 15–30 m, 6.3 m at 30–60 m;
+  * median xy error 2.55 m, with a long tail (95th percentile 194 m) from slopes and near-horizon rays;
+  * lifts beyond 80 m are dropped by the registered rule (4,136 FULL and 431 CHEAP FPs across all
+    iterations).
+
+**Matching (primary IoU 0.3).**
+* Match IoU median: 0.664 at 320, 0.648 at 640; 5% quantiles 0.38 and 0.36.
+* Per state: 18.5 eligible in-camera tracks; CHEAP keeps 5.4 and FULL 7.7; CHEAP adds 0.83 FPs and FULL
+  1.68.
+* S1 branch: keeps 5.8, adds 0.55 FPs. IoU-0.5 branches: keep 4.4 / 5.9, add 1.75 / 3.10 FPs.
+
+**Recall on 26,611 eligible in-camera tracks at the 1,440 decision iterations** (threshold 0.25):
+
+| class | recall 320 / 640, IoU 0.3 | recall 320 / 640, IoU 0.5 | transported model predicts 320 / 640 | KITTI measured 320 |
+|---|---|---|---|---|
+| all | 0.293 / 0.415 | 0.236 / 0.320 | 0.204 / 0.540 | 0.475 |
+| vehicle | 0.469 / 0.617 | — | 0.297 / 0.592 | — |
+| pedestrian | 0.080 / 0.169 | — | 0.091 / 0.481 | — |
+| bicycle | 0.054 / 0.196 | — | 0.034 / 0.238 | — |
+
+* **The transported profile exaggerates the fidelity gap on nuPlan.** It predicts a 0.34 recall gap
+  against a measured 0.12. By distance, at 40–60 m it predicts 320 0.04 / 640 0.47; measured is 0.22 / 0.35.
+* **Coupling:** P(640 | 320) = 0.936, and 1.9% of tracks are hit at 320 but missed at 640. KITTI: 0.969
+  and 1.5%. The loss channel is present and slightly stronger.
+* **The ≥ 10 px restriction is vacuous.** Every in-camera track projects ≥ 32.7 px, and nuPlan tracks
+  reach only ~81 m.
+* **Pedestrian recall is low** because many projected pedestrians are occluded (behind barriers, crowds,
+  vehicles). The rule removes them from both modes.
+
+**Overlays.** 20 saved; 8 inspected, covering Las Vegas, Boston and Pittsburgh and vehicles 17, 26, 28,
+35, 38 and 45. Boxes align with the objects. Projected 3D hulls are somewhat wider than the 2D detections,
+and occluded tracks project onto their occluders. No change was made after inspection.
