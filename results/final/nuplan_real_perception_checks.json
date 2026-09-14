@@ -766,8 +766,42 @@
   ],
   "seconds": 318.20130157470703
  },
- "reference_pdm_closed": null,
- "reference_idm": null,
+ "reference_pdm_closed": {
+  "planner": "pdm_closed",
+  "states": 1440,
+  "reference_ok": 1440,
+  "reference_vs_trackb_mismatches": {
+   "collision": 0,
+   "min_clearance": 0,
+   "log_deviation_mean": 0,
+   "log_deviation_final": 0
+  },
+  "reference_reproduces_trackb": true,
+  "identity_observation_equal_states": 1440,
+  "identity_planned_states": 120,
+  "identity_planner_mismatches": 0,
+  "identity_reproduces_reference": true,
+  "planner_calls": 1560,
+  "seconds": 2382.219866037369
+ },
+ "reference_idm": {
+  "planner": "idm",
+  "states": 1440,
+  "reference_ok": 1440,
+  "reference_vs_trackb_mismatches": {
+   "collision": 0,
+   "min_clearance": 0,
+   "log_deviation_mean": 0,
+   "log_deviation_final": 0
+  },
+  "reference_reproduces_trackb": true,
+  "identity_observation_equal_states": 1440,
+  "identity_planned_states": 120,
+  "identity_planner_mismatches": 0,
+  "identity_reproduces_reference": true,
+  "planner_calls": 1560,
+  "seconds": 1091.6102800369263
+ },
  "recall_overall": [
   {
    "min_height_10px": false,

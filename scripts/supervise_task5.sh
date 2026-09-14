@@ -33,6 +33,7 @@ elif [ "$1" = part2 ]; then
   step br_pdm scripts/pynuplan scripts/115_nuplan_real_counterfactual.py --planner pdm_closed --phase branches \
     || quit "part2: PDM-Closed branches FAILED"
   step cells scripts/py scripts/116_nuplan_real_cells.py --stage cells || quit "part2: cells FAILED"
+  step markdown scripts/py scripts/117_nuplan_real_markdown.py || quit "part2: markdown FAILED"
   fan '{"mode":"auto","profile":"quiet"}'
   say "TASK5 PART2 DONE"
 fi

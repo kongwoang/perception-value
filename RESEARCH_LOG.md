@@ -1887,3 +1887,32 @@ archives with a 360 MB read.
 **Overlays.** 20 saved; 8 inspected, covering Las Vegas, Boston and Pittsburgh and vehicles 17, 26, 28,
 35, 38 and 45. Boxes align with the objects. Projected 3D hulls are somewhat wider than the 2D detections,
 and occluded tracks project onto their occluders. No change was made after inspection.
+
+### 2026-09-14 16:26 — Task 5 checks 6–7 passed for both planners; scoring started
+
+Pre-registered checks 6 and 7, before any CHEAP/FULL branch was scored.
+
+| check | IDM | PDM-Closed |
+|---|---|---|
+| reference re-run vs Track B's stored values, 1,440 states | 0 mismatches | 0 mismatches |
+| identity observation equals reference, 1,440 states × 4 buffer iterations | equal | equal |
+| identity planner output equals reference, 120 planned states | equal | equal |
+| planner calls | 1,560 | 1,560 |
+| run time | 18 min | 40 min |
+
+The four checked fields are collision, min clearance and both log deviations.
+
+This establishes three things:
+* everything outside the observation filter is unchanged from Track B;
+* the planners are deterministic, which the planner-call de-duplication relies on;
+* the branch-construction path is transparent.
+
+Part 2 (seven branches per planner, then cells) was launched automatically at 16:25, conditioned on both
+checks passing.
+
+**Operational.** `scripts/supervise_task5.sh` was edited (the 117 markdown step appended to part 2) while
+part 1 was still running from that file. Bash reads a script by byte offset, so when part 1 ended it
+executed the shifted tail of the edited file. That wrote a spurious "TASK5 PART2 DONE" line at 16:25:15
+and possibly a fan-to-auto call. Part 2 sets the fan back to 100% when it starts (verified).
+No computation was affected. Waits now key on the markdown step, and running supervisor files are no
+longer edited.
