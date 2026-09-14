@@ -103,7 +103,8 @@ Local ZIP headers add about 142 B per member, 5 MB for (b) on the test logs.
 * For Cameras 2, 3 and 6 the same bucket and path are likely but unverified until their links are HEADed.
 
 **A cheaper directory read is possible but untested.** Camera 0's directory is ordered by log, then
-camera (64 contiguous runs), and its local offsets increase monotonically. Sampling small Range chunks
+camera: every log-and-camera folder is one contiguous run, apart from the root entry and a trailing LICENSE.
+Its local offsets increase monotonically. Sampling small Range chunks
 could locate just the needed CAM_F0 runs instead of reading ~40 MB per shard.
 
 ## What needs your action
