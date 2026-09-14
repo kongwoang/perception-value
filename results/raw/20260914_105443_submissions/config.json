@@ -1,0 +1,21 @@
+{
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "det": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_det_tv",
+  "modes": [
+    "ns_cheap_320",
+    "ns_full_640"
+  ],
+  "roles": [
+    "cheap",
+    "full"
+  ],
+  "op_conf": 0.1,
+  "op_conf_full": 0.1,
+  "variants": [
+    "oracle",
+    "mono"
+  ],
+  "scenes": 0,
+  "out": "data/cache/nusc_submissions_calib"
+}
