@@ -1,0 +1,11 @@
+{
+ "n_batch": 1000,
+ "ridge": {
+  "single_frame_ms": 0.41521999810356647,
+  "batch_ms_per_frame": 0.0015200729976641014
+ },
+ "gbm": {
+  "single_frame_ms": 16.051487997174263,
+  "batch_ms_per_frame": 0.021356124503654428
+ }
+}

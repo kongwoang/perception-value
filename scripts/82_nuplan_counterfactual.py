@@ -82,6 +82,41 @@ def make_planner(kind: str):
     raise ValueError(kind)
 
 
+def route_for(kind: str, scenario, iteration: int, route_fix: bool = True):
+    """Route roadblocks for a planner instantiated at `iteration` of `scenario`.
+
+    PDM-Closed corrects its route internally (tuPlan Garage's route_roadblock_correction) and receives the scenario
+    route unchanged.  The devkit's IDMPlanner looks for the ego's lane only in the first two route roadblocks, so when
+    it is instantiated at a state beyond them, or the ego is off the scenario route (pickup/drop-off and stationary
+    scenarios), it plans along a wrong path -- tens to hundreds of metres from the ego.  For IDM the route is therefore
+    corrected with the same route_roadblock_correction and trimmed to start at the ego's roadblock.  IDM's policy and
+    parameters are unchanged.  `route_fix=False` reproduces the original (buggy) behaviour.
+    """
+    ids = scenario.get_route_roadblock_ids()
+    if kind != "idm" or not route_fix:
+        return ids
+    from nuplan.common.maps.maps_datatypes import SemanticMapLayer
+    from shapely.geometry import Point
+    from tuplan_garage.planning.simulation.planner.pdm_planner.utils.route_utils import route_roadblock_correction
+
+    def block(i):
+        return (scenario.map_api.get_map_object(i, SemanticMapLayer.ROADBLOCK)
+                or scenario.map_api.get_map_object(i, SemanticMapLayer.ROADBLOCK_CONNECTOR))
+
+    ego = scenario.get_ego_state_at_iteration(iteration)
+    blocks = {i: block(i) for i in dict.fromkeys(ids)}
+    corrected = route_roadblock_correction(ego, scenario.map_api, {i: b for i, b in blocks.items() if b is not None})
+    pt = Point(ego.center.x, ego.center.y)
+    first = 0
+    for k, i in enumerate(corrected):
+        b = block(i)
+        if b is not None and b.polygon.distance(pt) <= 0.5:
+            first = k
+            break
+    trimmed = corrected[first:]
+    return trimmed if len(trimmed) >= 2 else corrected
+
+
 def _sampling(horizon: float, interval: float):
     from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
     return TrajectorySampling(num_poses=int(round(horizon / interval)), interval_length=interval)
@@ -140,6 +175,8 @@ def main():
     ap.add_argument("--map_root", default="/home/kongwoang/datasets/nuplan/nuplan-maps-v1.0")
     ap.add_argument("--out", default=str(Path(RESULTS) / "final"))
     ap.add_argument("--log_limit", type=int, default=2)
+    ap.add_argument("--no_route_fix", dest="route_fix", action="store_false",
+                    help="hand IDM the scenario route unchanged (the original, buggy behaviour)")
     ap.add_argument("--sanity", action="store_true",
                     help="B6 wiring probe: compare the reference branch with one that removes "
                          "every object in the camera, instead of comparing fidelities")
@@ -168,6 +205,8 @@ def main():
         idxs = np.linspace(args.buffer, max(n - int(4.5 / dt) - 1, args.buffer),
                            args.per_scenario).astype(int)
         for it in sorted(set(int(i) for i in idxs)):
+            init = PlannerInitialization(route_roadblock_ids=route_for(args.planner, sc, it, args.route_fix),
+                                         mission_goal=sc.get_mission_goal(), map_api=sc.map_api)
             base = SimulationHistoryBuffer.initialize_from_scenario(
                 args.buffer, sc, DetectionsTracks)
             # roll the buffer forward to `it` so the state really is this iteration's

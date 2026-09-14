@@ -2239,3 +2239,57 @@ reuses it). Perception, matching and scoring are not involved.
 
 **Nothing registered is changed.** A corrected IDM rerun (Track B, Task 5, Task 7 IDM cells) has to be
 pre-registered before it is scored.
+
+## 2026-09-15 00:50 — Audit for similar errors, and pre-registration of the corrected IDM rerun
+
+**Audit.** The error class is a published component fed inputs that break an assumption of its released code.
+Checked, and cleared:
+
+| component | check | result |
+|---|---|---|
+| IDM and PDM-Closed parameters | against the released YAML configs (devkit `idm_planner.yaml`, tuPlan Garage `pdm_closed_planner.yaml`) | identical |
+| PDM-Closed's route | handling at a mid-scenario or off-route state | corrected internally by `route_roadblock_correction` on its first call; its reference deviation is 2–3 m everywhere |
+| PKL's planner (Planner C, nuScenes): pixel→metre decoding and the frame of the true trajectory | tested on 400 **validation** rasters against the axis alternatives (`results/raw/idm_route_diagnostics/pkl_axis_probe.py`) | the pipeline's decoding (first axis = x) gives the lowest ADE: 2.39 m. y flipped: 2.61 m; axes swapped: 13.2 m; x flipped: 18.4 m. corr(x) = 0.916; the median forward position at 1 s is 4.60 m vs 4.63 m true; no false motion on 74 stationary frames |
+| scoring | horizon alignment (trajectory time vs logged iteration), history buffer, traffic-light input | consistent |
+
+PKL's planner still fails viability: ADE 2.39 m against 1.80 m for constant velocity on that chunk. That is a
+property of the planner, not of the harness.
+
+**The only error found is the IDM route input** (entry above).
+
+**Fix.** A new `route_for()` in `82_nuplan_counterfactual.py`, also used by 115.
+* For IDM, at every state: correct the scenario route with tuPlan Garage's `route_roadblock_correction`, then
+  trim it to start at the ego's roadblock.
+* PDM-Closed receives the scenario route unchanged, as before.
+* IDM's policy and parameters are unchanged.
+* `--no_route_fix` reproduces the original behaviour.
+* `93_budget_allocation.py` gains `--reuse_overheads`, so the rerun keeps the measured allocator costs and no
+  other cell moves.
+
+**Rerun** (`scripts/supervise_idm_fix.sh`, detached, one job at a time). Everything that depends on IDM:
+1. Track B IDM, 60 scenarios × 24 states;
+2. 83 and 85;
+3. 92 and 94;
+4. 103, 93 (`--routers`, reused overheads) and 110;
+5. Task 5 IDM reference and identity phase, then branches; 116 checks and cells; 117;
+6. Task 7 (120);
+7. 118 (budget curves).
+
+The perception inputs and every design choice, variant and statistic stay as registered for Tracks B, 5 and 7.
+The archived pre-fix outputs are in `results/archive/pre_idm_route_fix/`.
+
+**Checks, fixed now.**
+1. **After the Track B IDM run** (`121 --stage trackb`, stop on failure):
+   * every branch computed a trajectory;
+   * CHEAP, FULL and reference track counts equal the archive on all 1,440 states (the perception filter is
+     untouched);
+   * IDM's reference median mean log deviation ≤ 3 m;
+   * ≤ 2% of states above 20 m (before the fix: median 2.4 m, 13.3% above 20 m).
+2. **Task 5.** The IDM reference reproduces the corrected Track B values on all states, and the identity branch
+   reproduces the reference (115's own checks).
+3. **After the chain** (`121 --stage compare`, flag on failure): every PDM-Closed, nuScenes and KITTI row of the
+   regenerated tables equals the archived row. The bootstrap streams run in cell order, and PDM-Closed precedes
+   IDM.
+
+**Readings.** Unchanged rules: Track B B-F1..B-F3; the Task 5 C3 reading; Task 7 descriptive. Results are reported
+**before and after** the fix, labelled as a bug correction. The pre-fix readings are not overwritten in the log.

@@ -119,6 +119,7 @@ def main():
     ap.add_argument("--planner", required=True, choices=["idm", "pdm_closed"])
     ap.add_argument("--phase", required=True, choices=["ref", "branches"])
     ap.add_argument("--buffer", type=int, default=4)
+    ap.add_argument("--no_route_fix", action="store_true", help="hand IDM the scenario route unchanged (original behaviour)")
     ap.add_argument("--data_root", default="/home/kongwoang/datasets/nuplan")
     ap.add_argument("--map_root", default="/home/kongwoang/datasets/nuplan/nuplan-maps-v1.0")
     args = ap.parse_args()
@@ -160,6 +161,8 @@ def main():
                                      mission_goal=sc.get_mission_goal(), map_api=sc.map_api)
         rows = []
         for pos, it in enumerate(sorted(int(i) for i in g.iteration)):
+            init = PlannerInitialization(route_roadblock_ids=cf82.route_for(args.planner, sc, it, not args.no_route_fix),
+                                         mission_goal=sc.get_mission_goal(), map_api=sc.map_api)
             base = SimulationHistoryBuffer.initialize_from_scenario(args.buffer, sc, DetectionsTracks)
             for k in range(max(it - args.buffer + 1, 0), it + 1):
                 base.append(sc.get_ego_state_at_iteration(k), sc.get_tracked_objects_at_iteration(k))

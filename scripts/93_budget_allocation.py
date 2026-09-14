@@ -510,15 +510,21 @@ def main():
     ap.add_argument("--tag", default="benchmark_budget")
     ap.add_argument("--suffix", default="",
                     help="appended to every output name, so a sensitivity run cannot overwrite the primary one")
+    ap.add_argument("--reuse_overheads", default=None,
+                    help="take allocator overheads from this benchmark_budget_overheads*.json instead of measuring them")
     ap.add_argument("--routers", action="store_true",
                     help="Task 2: add R1, R2 and the batched-inference GBM gate; two-level tables only")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     rng = np.random.default_rng(0)
 
-    ov = measure_overheads()
-    if args.routers:
-        ov.update(measure_router_overheads())
+    if args.reuse_overheads:
+        # a rerun that changes only decision values keeps the measured costs, so every other cell is reproduced
+        ov = json.loads(Path(args.reuse_overheads).read_text())["overheads"]
+    else:
+        ov = measure_overheads()
+        if args.routers:
+            ov.update(measure_router_overheads())
     print("  overheads:", json.dumps({k: v for k, v in ov.items() if not k.startswith("rails")}, default=float))
     splits = json.loads((ROOT / "configs" / "benchmark_splits.json").read_text())
     cells = [c for gen in (t92.nuscenes_cells, t92.kitti_cells, t92.nuplan_cells) for c in gen(splits)]
