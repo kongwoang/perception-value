@@ -52,7 +52,7 @@ def build_b(det_dir: Path, cheap: str, full: str, seqs, cfg: RiskConfig,
             out = {}
             for tag, cache, idx, prev in (("cheap", c, i, prev_c), ("full", f, j, prev_f)):
                 d, geo = cache.det(idx), cache.geo(idx)
-                k = d["conf"] >= cfg.op_conf
+                k = d["conf"] >= cfg.thr(tag)
                 geo_k = {kk: vv[k] for kk, vv in geo.items()}
                 bx = d["xyxy"][k].astype(float)
                 z, lo, hi, tt = _apply_range_source(bx, geo_k, g, range_source, rng, 0.0)

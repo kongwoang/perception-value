@@ -85,7 +85,7 @@ def mono_range_sigma(det_dir, cheap_mode, seqs, cfg: RiskConfig,
             if not len(g):
                 continue
             d, geo = c.det(i), c.geo(i)
-            k = d["conf"] >= cfg.op_conf
+            k = d["conf"] >= cfg.thr("cheap")
             bx = d["xyxy"][k].astype(float)
             if not len(bx):
                 continue
@@ -130,7 +130,7 @@ def build(det_dir, cheap_mode: str, full_mode: str, seqs, cfg: RiskConfig,
             out = {}
             for tag, cache, idx in (("cheap", c, i), ("full", f, j)):
                 d, geo = cache.det(idx), cache.geo(idx)
-                k = d["conf"] >= cfg.op_conf
+                k = d["conf"] >= cfg.thr(tag)
                 geo_k = {kk: vv[k] for kk, vv in geo.items()}
                 bx = d["xyxy"][k].astype(float)
                 z, lo, hi, tt = _apply_range_source(bx, geo_k, g, range_source, rng, sigma)
@@ -197,7 +197,7 @@ def add_perception_gain(df: pd.DataFrame, det_dir, cheap_mode, full_mode, seqs,
             e = {}
             for tag, cache, idx in (("cheap", c, i), ("full", f, f.index[fr])):
                 d = cache.det(idx)
-                k = d["conf"] >= cfg.op_conf
+                k = d["conf"] >= cfg.thr(tag)
                 b, _ = match(gt, cls, d["xyxy"][k].astype(float), d["conf"][k],
                              d["coarse"][k], cfg)
                 e[tag] = float((b < cfg.iou_thr).sum())

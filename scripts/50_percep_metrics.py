@@ -58,7 +58,7 @@ def primitives(det_dir, cheap, full, seqs, cfg, adapter, min_h) -> pd.DataFrame:
             rec = {"seq": s, "frame": fr}
             prim = {}
             for tag, cache, idx in (("cheap", c, i), ("full", f, f.index[fr])):
-                pr = PM.frame_losses(gt, gcls, cg, cache.det(idx), cfg)
+                pr = PM.frame_losses(gt, gcls, cg, cache.det(idx), cfg, op_conf=cfg.thr(tag))
                 prim[tag] = pr
                 for k, v in pr.items():
                     rec[f"{tag}_{k}"] = v
@@ -70,7 +70,7 @@ def primitives(det_dir, cheap, full, seqs, cfg, adapter, min_h) -> pd.DataFrame:
                 hits = {}
                 for tag, cache, idx in (("cheap", c, i), ("full", f, f.index[fr])):
                     d = cache.det(idx)
-                    k = d["conf"] >= cfg.op_conf
+                    k = d["conf"] >= cfg.thr(tag)
                     b, _ = _m(gt, gcls, d["xyxy"][k].astype(float), d["conf"][k],
                               d["coarse"][k], cfg)
                     hits[tag] = b >= cfg.iou_thr

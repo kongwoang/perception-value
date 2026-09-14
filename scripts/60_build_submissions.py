@@ -26,13 +26,18 @@ def main():
     ap.add_argument("--version", default="v1.0-trainval")
     ap.add_argument("--det", default=str(CACHE / "nusc_det_tv"))
     ap.add_argument("--modes", nargs="+", default=["ns_cheap_320", "ns_full_640"])
+    ap.add_argument("--roles", nargs="+", default=["cheap", "full"],
+                    help="fidelity of each mode, in the order of --modes; selects its threshold")
+    ap.add_argument("--op_conf", type=float, default=0.25)
+    ap.add_argument("--op_conf_full", type=float, default=None)
     ap.add_argument("--variants", nargs="+", default=["oracle", "mono"])
     ap.add_argument("--scenes", type=int, default=0)
     ap.add_argument("--out", default=str(CACHE / "nusc_submissions"))
     args = ap.parse_args()
 
     run = runmeta.new_run("submissions", vars(args))
-    cfg = RiskConfig()
+    cfg = RiskConfig(op_conf=args.op_conf, op_conf_full=args.op_conf_full)
+    assert len(args.roles) == len(args.modes), "one role per mode"
     db = NuScenesDB(args.dataroot, args.version)
     adapter = make_adapter(db)
     det = Path(args.det)
@@ -46,9 +51,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     manifest = {"scenes": seqs, "files": {}}
     for variant in args.variants:
-        for mode in args.modes:
+        for mode, role in zip(args.modes, args.roles):
             caches = {s: DetCache(det / mode / f"{s}.npz") for s in seqs}
-            sub = NS.build_submission(db, adapter, caches, seqs, cfg, variant)
+            sub = NS.build_submission(db, adapter, caches, seqs, cfg, variant, role=role)
             p = NS.write_submission(sub, out / f"{variant}__{mode}.json")
             n = sum(len(v) for v in sub["results"].values())
             manifest["files"][f"{variant}/{mode}"] = str(p)

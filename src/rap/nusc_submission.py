@@ -50,8 +50,8 @@ def _ego_to_global(pts_ego: np.ndarray, R_ego: np.ndarray, t_ego: np.ndarray) ->
 
 
 def build_submission(db, adapter, det_cache, seqs, cfg: RiskConfig,
-                     variant: str = "oracle") -> dict:
-    """One nuScenes detection submission for one perception mode."""
+                     variant: str = "oracle", role: str = "cheap") -> dict:
+    """One nuScenes detection submission for one perception mode, at that mode's threshold."""
     results = {}
     name_to_scene = {db.scene_name(s): s for s in db.scenes}
     for name in seqs:
@@ -74,7 +74,7 @@ def build_submission(db, adapter, det_cache, seqs, cfg: RiskConfig,
                     if len(g) else np.zeros((0, 4)))
 
             d, geo = cache.det(i), cache.geo(i)
-            keep = d["conf"] >= cfg.op_conf
+            keep = d["conf"] >= cfg.thr(role)
             bx = d["xyxy"][keep].astype(float)
             boxes = []
             if len(bx):

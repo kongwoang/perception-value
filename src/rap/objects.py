@@ -120,8 +120,8 @@ def build_sequence(seq: str, cheap: DetCache, full: DetCache,
         sc = cheap.scalars(i)
 
         # -- oracle side: was this GT object handled correctly by each mode?
-        kc = dc["conf"] >= cfg.op_conf
-        kf = df["conf"] >= cfg.op_conf
+        kc = dc["conf"] >= cfg.thr("cheap")
+        kf = df["conf"] >= cfg.thr("full")
         cls = np.array(["v"] * len(gt))
         bc, _ = match(gt, cls, dc["xyxy"][kc].astype(float), dc["conf"][kc], dc["coarse"][kc], cfg)
         bf, _ = match(gt, cls, df["xyxy"][kf].astype(float), df["conf"][kf], df["coarse"][kf], cfg)

@@ -15,9 +15,9 @@ from .risk import RiskConfig, _ioa, match
 
 
 def frame_losses(gt_xyxy, gt_cls, gt_crit, det, cfg: RiskConfig,
-                 dontcare=None) -> dict:
-    """All perception losses for one frame under one mode."""
-    keep = det["conf"] >= cfg.op_conf
+                 dontcare=None, op_conf: float | None = None) -> dict:
+    """All perception losses for one frame under one mode, at that mode's operating threshold."""
+    keep = det["conf"] >= (cfg.op_conf if op_conf is None else op_conf)
     dx, dc = det["xyxy"][keep].astype(np.float64), det["conf"][keep]
     dcls = det["coarse"][keep]
 

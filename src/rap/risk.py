@@ -31,6 +31,18 @@ class RiskConfig:
     min_gt_height: float = 10.0      # GT boxes below this are unmeasurable
     dontcare_ioa: float = 0.5        # detection is ignored if this much of it is DontCare
 
+    def thr(self, role: str) -> float:
+        """Operating threshold of one fidelity: CHEAP uses op_conf, FULL op_conf_full when set.
+
+        Every place that filters detections goes through here, so a per-mode operating point
+        reaches detection filtering, the monocular lift, oracle-geometry matching, the controllers,
+        the planners and the perception losses alike, and op_conf_full=None is the shared-threshold
+        pipeline exactly.
+        """
+        if role not in ("cheap", "full"):
+            raise ValueError(role)
+        return self.op_conf_full if (role == "full" and self.op_conf_full is not None) else self.op_conf
+
 
 def match(gt_xyxy, gt_cls, det_xyxy, det_conf, det_cls, cfg: RiskConfig):
     """Greedy confidence-ordered matching. Returns (best_iou_per_gt, matched_det_mask)."""
