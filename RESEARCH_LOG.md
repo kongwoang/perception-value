@@ -1346,3 +1346,12 @@ All four equivalence checks passed before any scheme was scored.
 * **S4.** The CHEAP optimum sits at the 0.10 grid floor in 7 KITTI cells, so those optima are limited by
   the boundary, as the pre-registration requires. Harm under S4 is 28–55% in every nuScenes and
   moderate-gap cell.
+
+### 2026-09-14 11:40 — Task 2: R1 crashed on a file name, no result had been written
+
+`103_routers_r1.py` scored every nuScenes and KITTI cell, then failed to save the first nuPlan score
+file, because the geometry label "n/a" put a slash into the file name. It writes its table only at the
+end, so no R1 number exists. The fix drops the slash when writing, and `93` restores the label when
+reading. The supervisor had already started R2's image cache. A continuation script waits for that
+cache to finish, then runs R1, R2 training and the router budget tables, one at a time. Nothing about
+the design changed.

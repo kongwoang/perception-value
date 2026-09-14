@@ -269,6 +269,7 @@ def load_router_scores():
             continue
         for f in sorted(_g.glob(runs[-1] + "/scores__*.npz")):
             _, track, geometry, system, target = Path(f).stem.split("__")
+            geometry = "n/a" if geometry == "na" else geometry          # written without the slash
             z = np.load(f, allow_pickle=False)
             keycols = ("scenario", "iteration") if "scenario" in z.files else ("seq", "frame")
             df = pd.DataFrame({k: (z[k].astype(str) if k in ("scenario", "seq") else z[k].astype(int)) for k in keycols})
