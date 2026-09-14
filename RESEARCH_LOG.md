@@ -1576,3 +1576,195 @@ Outputs:
 * `docs/nuplan_archive_index.md`;
 * working files in `results/raw/nuplan_archive_urls/`, including `needed_cam_f0.csv.gz`,
   `benchmark_logs_to_groups.csv` and `report_summary.json`.
+
+## 2026-09-14 14:44 — Task 5 pre-registration: real YOLOv8s perception on the nuPlan external track
+
+Committed before any request of this task and before any image is fetched, detected or scored.
+
+**Goal.** Replace the transported KITTI miss profile (Track B) with real YOLOv8s 320/640 detections on
+nuPlan CAM_F0. Re-measure sign-varying decision value for PDM-Closed and IDM on the same 1,440 states
+(60 scenarios, 34 logs, 24 states each) that Track B and the benchmark use.
+
+**URL sources.**
+* Camera 0 and the metadata file: recorded in Task 4.
+* Camera 1: the link the user pasted with this task.
+* Camera 2–8: built by the user's own stated rule, quoted: "thay số là ra link nên tôi ko copy nữa"
+  (replace the number and you get the link). Each URL's source column says so.
+* A URL counts as verified only if HEAD returns 200 with `application/zip` **and** its central
+  directory's log set equals metadata File group *i*.
+* Any failure → STOP and report; no guessing beyond the user's rule.
+
+### Stage A — data (`scripts/112_nuplan_fetch_cam_f0.py`)
+
+**A2. Directories.**
+* Per shard, in order 0–8: HEAD, EOCD (ZIP64), then the full central directory by Range. Name, method,
+  sizes, **CRC32**, flags and local offset are stored.
+* Task 4's listing lacked CRC32, so Camera 0 is re-read.
+* Cap: 400 MB cumulative, counted in this task's own ledger. The nine EOCD-reported directory sizes are
+  summed before any directory is read. If the sum exceeds 400 MB, Camera 0 is not re-read and its
+  CRCs come from the local headers (flag bit 3 must be clear).
+
+**A3. Members.**
+* Only CAM_F0 members inside the Task 3 scenario windows ([t0 − 2 s, t1], `needed_cam_f0.csv.gz`
+  `in_window == 1`): 12,921 images of the 34 logs.
+* The planned byte total is computed exactly from the directories before the first member request;
+  the fetch aborts if it would pass 3.5 GB.
+* One Range per member: local header (30 B + name + the central extra length) plus compressed data.
+  A longer local extra is fetched with one extra request; any over-read bytes are logged.
+* Shards one at a time, 6 connections within a shard, 3 retries per transient error. A non-206 answer
+  after retries → STOP. No whole-archive fallback.
+* Verification per member:
+  * local signature and name equal the directory's;
+  * raw inflate to exactly the uncompressed size;
+  * CRC32 equals the directory's;
+  * `cv2.imdecode` gives 1080×1920×3.
+* Every request logged: method, URL, range, status, bytes. Resumable from a manifest.
+
+**A4. Layout.** `~/datasets/nuplan/sensor_blobs_cam_f0/<log>/CAM_F0/<hash>.jpg`.
+
+### Stage B — perception
+
+**B1. Detection** (`113_nuplan_detect.py`, edge env, fan 100%).
+* Engines: `yolov8s_ns_cheap_320` (192×320) and `yolov8s_ns_full_640` (384×640). Their 16:9 input
+  matches CAM_F0's 1920×1080, as on nuScenes.
+* Existing `TwoFidelityDetector` TRT path: conf ≥ 0.10, NMS IoU 0.65, max 100.
+* Cache: `rap.cache` format, one npz per (mode, log), frames in timestamp order, plus an index csv
+  (log, frame, image token, timestamp, file). No mono geometry arrays.
+* Latency: per-mode medians of preprocess, inference and postprocess, CUDA-synchronised over every
+  image; JPEG decode reported separately.
+* Energy: CPU + GPU rail power over idle, sampled at 20 Hz during a dedicated 300-image pass per mode;
+  mJ per frame.
+
+**B2. Time alignment.** For each state and each of its 4 history-buffer iterations (it−3..it), take the
+CAM_F0 image nearest the iteration's lidar timestamp. Report the |Δt| distribution and flag > 50 ms.
+Flagged images are kept and counted. No motion compensation.
+
+**B3. Matched projection** (`114_nuplan_project_match.py`, nuplan env).
+
+*Projection.*
+* 3D boxes are the `lidar_box` rows of that iteration's lidar_pc, keyed by track token.
+* Global → ego at the **image's** ego pose, then ego → camera by the inverse extrinsic — the devkit's
+  `boxes_lidar_to_img` chain.
+* 8 corners, clipped at z_cam = 0.1 m. Normalised coordinates are clamped to 1.25× the undistorted
+  image border, then passed through the DB distortion (k1, k2, p1, p2, k3) and intrinsic. The
+  distortion must be monotone out to that radius (a check).
+* Box = hull of the corners, clipped to the image.
+* In camera = centre z_cam > 0 and a clipped box with positive area. No range cap.
+
+*Eligible classes.*
+* vehicle, pedestrian, bicycle.
+* traffic_cone, barrier, czone_sign and generic_object have no COCO class. They pass through
+  unchanged in every branch, as in the transported filter.
+
+*Matching.*
+* Per image and per mode, among detections at that mode's threshold: `scipy linear_sum_assignment`
+  maximising IoU over class-compatible pairs with IoU ≥ threshold.
+* Compatibility (nuPlan category ← YOLO coarse class):
+  * vehicle ← vehicle;
+  * pedestrian ← person;
+  * bicycle, which includes motorcycles and tricycles per the DB ← cyclist or person.
+
+*Branch.*
+* An eligible in-camera track is kept iff matched.
+* Tracks outside the camera, and static classes, are unchanged.
+* Unmatched detections are added as false-positive agents:
+  * the bottom-centre pixel is undistorted, cast as a ray, rotated by the extrinsic, and intersected
+    with the ego ground plane z = 0 (camera height = extrinsic z, 1.52 m);
+  * the FP is dropped if the ray does not hit the ground ≥ 0.5 m ahead, or lands beyond 80 m;
+  * centre = ground point + L/2 along the horizontal ray; heading = ego heading; velocity 0;
+  * size = the class's median (L, W, H) over tracks of the 25 train ∪ val logs (person → pedestrian,
+    cyclist → bicycle);
+  * deterministic token per (variant, image, detection).
+* FPs are per frame; there is no tracking.
+
+*Variants.*
+
+| variant | CHEAP thr | FULL thr | IoU | FP |
+|---|---|---|---|---|
+| **primary** | 0.25 | 0.25 | 0.3 | yes |
+| nofp | 0.25 | 0.25 | 0.3 | no |
+| s1 | 0.25 | `match_detection_counts` on all train ∪ val window images (Task 1 rule) | 0.3 | yes |
+| iou50 | 0.25 | 0.25 | 0.5 | yes |
+
+**B4. Checks, before any CHEAP/FULL branch is scored** → `results/final/nuplan_real_perception_checks.json`.
+1. Data: counts, CRC and decode failures (must be 0), and the group-to-shard map.
+2. Δt distribution and flags.
+3. 20 overlays (seed 0, drawn from state images), downscaled to 960×540, in
+   `results/final/nuplan_real_perception_overlays/`: projected boxes by class, static classes dashed,
+   and each mode's detections at 0.25 with their matches.
+4. Match IoU quantiles per mode and IoU threshold.
+5. Per-class recall at 320 and 640 (thr 0.25, IoU 0.3 and 0.5), overall and by distance band
+   (0, 10, 20, 30, 40, 60, ∞ m), also restricted to projected height ≥ 10 px. Compared with:
+   * KITTI observed recall (greedy, class-agnostic, IoU 0.5, height ≥ 10 px — a different matching,
+     so a caveat, not a pass/fail);
+   * the transported model's predicted recall on the same nuPlan objects.
+6. Identity:
+   * a branch with every eligible in-camera track marked matched and no FP must equal the reference
+     observation object-for-object on all 1,440 states × 4 buffer iterations;
+   * its planner outputs must equal the reference exactly on 120 states (states 1 and 13 of each
+     scenario), for both planners.
+7. Reference re-run: collision, min clearance and both log deviations must equal Track B's stored
+   reference values on all 1,440 states, for both planners. If not → STOP before scoring.
+8. Ground plane (informational): median bottom height of vehicle boxes within 30 m, in the ego frame.
+9. Distortion monotone to the clamp radius.
+
+### Stage C — planners and losses
+
+**C1** (`115_nuplan_real_counterfactual.py`).
+* Imports `make_planner`, `score` and `filtered_history` from `82_nuplan_counterfactual.py` unchanged.
+* A `RealPerceptionFilter` with the same `apply(detections, ego, scenario, iteration, mode)`
+  interface returns each variant's branch.
+* Same scenario builder as script 91, asserting Track B's 60 scenarios and 1,440 states. Buffer 4, a
+  fresh planner per branch, the same scoring over 0.5–4.0 s against logged tracks.
+* Branches: reference, cheap, full, cheap_nofp, full_nofp, full_s1 (cheap_s1 = cheap), cheap_iou50,
+  full_iou50.
+* Planner calls are de-duplicated: branches whose four buffered observations are identical (tokens,
+  types, poses, velocities, sizes) share one result. Checks 6 and 7 establish the determinism this
+  relies on.
+* Order:
+  1. reference for all states and the identity branch on 120 states;
+  2. checks 6–7;
+  3. all other branches.
+* Detached, supervised, checkpointed per scenario. One heavy job at a time.
+
+**C2** (`116_nuplan_real_cells.py`) → `results/final/nuplan_real_perception_cells.csv`.
+* Rows: planner × loss × split × variant.
+  * Losses: collision, clearance_shortfall, log_deviation, safety, scalar_J, with 83's weights.
+  * Splits: all 34 logs; the 9 test logs.
+  * Variants: transported (Track B raw), primary, nofp, s1, iou50.
+* Columns:
+  * states;
+  * affected (|V| > 1e-9), V>0 and V<0 counts;
+  * harm rate P(V<0 | V≠0);
+  * ρ = Σmax(−V,0) / Σmax(V,0);
+  * all-FULL reduction (ΣJ_cheap − ΣJ_full) / ΣJ_cheap;
+  * oracle@20 reduction (the top 20% positive V over ΣJ_cheap);
+  * selective extra share.
+* 95% CIs for harm rate, ρ and both reductions: percentile, log-level bootstrap, 1,000 draws, seed 0.
+* Descriptive: in-camera eligible tracks, tracks kept per mode, FPs per state.
+
+**C3. Reading, fixed now.** Primary variant, all 1,440 states, evaluated on safety and on scalar_J.
+* **Falsifier fires (B-F1)** on an aggregate if the harm rate is < 5% for **both** planners.
+* **Consistent with the benchmark** if the harm rate is ≥ 20% **and** ρ ≥ 0.20 for **both** planners on
+  **both** aggregates.
+* **Intermediate** otherwise.
+* Zero affected states counts as harm rate 0.
+* The test split, the other losses and the sensitivities are reported under the same rule but do not
+  decide the reading.
+* The outcome is reported whatever it is.
+
+**Limitations stated in advance.**
+* Open-loop per state.
+* Per-frame detection without tracking, so FPs flicker across the buffer.
+* Lidar tracks serve as ground truth, and occluded or distant tracks are removed in both modes.
+* Image–lidar offset ≤ 50 ms, uncompensated.
+* Static classes pass through.
+* Camera 1–8 URLs follow the user's rule and are verified by HEAD and directory contents.
+
+**Outputs.**
+* `results/final/nuplan_real_perception_cells.csv`
+* `nuplan_real_perception_checks.json`
+* `nuplan_real_perception_{idm,pdm_closed}_raw.csv`
+* the overlays
+* `docs/iclr_nuplan_real_perception.md`
+* request ledgers under `results/raw/`
