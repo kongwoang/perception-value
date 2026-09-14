@@ -1033,3 +1033,140 @@ for both planners; the multi-fidelity greedy against brute force on 150 instance
   braking/mono loses its mJ row). A descriptive timing note (`95_gate_inference_batch_timing.py`, feeds
   no allocation) shows GBM inference is per-call overhead — 16.05 ms single vs 0.021 ms per frame in a
   1,000-frame batch — so the binding cost is feature extraction (3.6–3.9 ms, ≈20% of FULL).
+
+## 2026-09-14 — Task 1 pre-registration: does sign-varying value survive per-mode operating points?
+
+### The concern
+
+Harm could be an artefact of one shared threshold (`op_conf = 0.25` for CHEAP and FULL): a
+higher-resolution pass puts more low-confidence boxes above the same cut, so FULL may "hurt" only
+through extra false positives. The test: give each fidelity its own operating point, chosen without
+test units, and see whether harm and the harm-to-benefit ratio remain.
+
+### Step 0 (read-only, done before this entry)
+
+Every detection cache stores boxes down to conf 0.10 (the engines ran at `Mode.conf = 0.10`):
+
+| cache | min conf | share of boxes < 0.25 |
+|---|---|---|
+| nuScenes ns_cheap_320 / ns_full_640 | 0.1002 / 0.1002 | 48.5% / 40.9% |
+| KITTI Y8 cheap_320 / cheap_384 / cheap_512 / full_640 | 0.1002 | 46.4% / 45.2% / 42.9% / 39.8% |
+| KITTI RT-DETR rt_mid_480 / rt_full_640 | 0.1002 | 76.6% / 74.8% |
+
+Re-thresholding a cache at t ≥ 0.10 is identical to running the engine at t: greedy NMS only lets a
+box be suppressed by a higher-scoring one, and `max_det` truncates a confidence-sorted list, so the
+boxes above t are the same either way. Thresholds below 0.10 are not available: the 0.05 point of
+the S2 grid is dropped. Re-running the engines at conf ≥ 0.01 for the eight modes would take about
+35–45 min (logged runs: nuScenes 208 s; KITTI Y8 708 s + 502 s; RT-DETR 842 s + 870 s). It is not
+done unless a scheme selects 0.10 for some mode, in which case that choice is reported as limited
+by the boundary.
+
+### Step 1 — wiring
+
+`RiskConfig.thr(role)` returns `op_conf` for CHEAP and `op_conf_full` (falling back to `op_conf`)
+for FULL. It replaces the shared threshold in `decision.build`, `decision.add_perception_gain`,
+`65_planner_b_decision.build_b`, `percep_metrics.frame_losses` and the recall bins of
+`50_percep_metrics.primitives`, `nusc_submission.build_submission` and `60_build_submissions`, and
+`objects.py`. With `op_conf_full = None` every path is the current code. The box-centre fix and all
+other conventions are untouched.
+
+Evaluation path — the threshold is applied where detections are filtered, then the unchanged
+pipeline runs:
+
+* **Per-mode outcomes, composed into cells.** Nothing couples the two modes: the braking and lateral
+  controllers and Planner B carry the previous action within a mode, perception losses are per
+  mode, submissions are per box. Each mode is therefore run at each threshold it needs, and a cell
+  is V = J_CHEAP(t_c) − J_FULL(t_f).
+* **q_plan.** Submissions are built once per mode and geometry at 0.10. The submission at t is its
+  subset with score ≥ t: the monocular lift and the oracle-geometry GT match are per box and do not
+  depend on the threshold. Map and ego raster channels do not depend on detections, so only the
+  object channel is redrawn, from the filtered boxes through the same `load_prediction →
+  add_center_dist → filter_eval_boxes → get_other_objs` path and PKL's own corner rasterisation.
+  Planner C and ADE as in `74_plannerC_vs_truth.py`.
+
+**Checks that must pass before any scheme is scored** (|Δ| ≤ 1e-9 unless stated). A failure stops
+the run and is reported instead of results.
+
+1. S0 (0.25 / 0.25) reproduces `20260913_133004_core_matrix_postreview` (J, Jlat, dE, every dE_E*,
+   n_cheap, n_full), `20260912_111225_planner_b_static_fixed` (JB) and `planC_vs_truth[_mono].csv`
+   (JC_ade) on every frame.
+2. A direct run at (0.15, 0.45) and at (0.45, 0.15) equals the composition from per-mode runs.
+3. The 0.10 submissions filtered at 0.25 equal the current submission files, box for box.
+4. Rasters rebuilt at 0.25 equal the cached CHEAP and FULL test rasters bit for bit.
+
+### Step 2 — threshold schemes
+
+All selection uses train ∪ val units of `configs/benchmark_splits.json` only.
+
+| scheme | CHEAP | FULL |
+|---|---|---|
+| S0 current | 0.25 | 0.25 |
+| S1 count-matched | 0.25 | `tables.match_detection_counts` over train ∪ val caches |
+| S2 F1-optimal | argmax pooled F1 | argmax pooled F1 |
+| S3 precision-matched | 0.25 | lowest t on a 0.01 grid (0.10–0.70) with pooled precision ≥ CHEAP precision at 0.25; if none, 0.70 flagged |
+| S4 downstream-tuned | argmin mean J of that mode | argmin mean J of that mode |
+
+Details:
+* Precision = matched detections / detections; recall = matched measurable GT / measurable GT.
+  Pooled over train ∪ val frames, with the matching `RiskConfig` uses: greedy by confidence,
+  class-agnostic, IoU 0.5, `min_gt_height`.
+* S2 grid: 0.10–0.70 in steps of 0.05, each mode separately.
+* S4 is chosen per mode, downstream system and geometry, on the same grid; exact ties go to the
+  value closest to 0.25.
+* Sweep: (t_c, t_f) ∈ {0.15, 0.25, 0.35, 0.45, 0.55}², all units, harm rate and ρ only.
+
+**Cells (14).**
+* nuScenes Y8 320→640 × {oracle, mono} × {q_brake, q_plan (ADE)}.
+* KITTI mono × {q_traj (Planner B), q_brake} × {Y8 320→640, 384→640, 512→640, RT-DETR 480→640}.
+* KITTI oracle Y8 320→640 × {q_traj, q_brake}.
+
+**Reported per scheme × cell × split (all units, test):**
+* chosen thresholds;
+* detections per frame, precision and recall per mode;
+* affected count;
+* harm rate = P(V<0 | V≠0);
+* ρ = Σ max(−V,0) / Σ max(V,0);
+* all-FULL and oracle@20 loss reduction, with the exact tie expectation of `92_benchmark_table.py`;
+* unit bootstrap (scene / sequence), 1000 draws, seed 0, 95% CI for harm rate and ρ.
+
+**nuScenes cells, additionally.** For each gain g ∈ {exact FN (dE), FN+FP (E2), combined (E5_combined),
+E_risk (E6)}:
+* sign disagreement: share of frames with g ≠ 0 and V ≠ 0 whose signs differ;
+* Spearman correlation of g and V over all frames;
+* harmed | gain > 0 = P(V<0 | g>0), also given conditional on V ≠ 0.
+
+Brake-vs-planner: the number of plan frames with V_brake · V_plan < 0, with the number where both
+are nonzero. These definitions are written out here because the source of the paper's
+sign-agreement table is not in this repository; they should be checked against it.
+
+### Reading, fixed now
+
+Applied to all-unit statistics, separately under S1, S2 and S3.
+
+* **Survives:** under each of S1–S3, harm rate ≥ 20% and ρ ≥ 0.20 in at least 3 of the 4 nuScenes cells
+  **and** in all 6 KITTI moderate-gap cells (mono × {q_traj, q_brake} × {384→640, 512→640, RT-DETR
+  480→640}). This is the literal reading of "in the KITTI moderate-gap cells". The number of KITTI
+  cells passing is reported, so a "most cells" reading can also be applied.
+* **Collapses:** under S1–S3, harm rate < 10% or ρ < 0.10 in more than half of the 14 cells.
+* **Otherwise:** mixed, reported per scheme and cell.
+
+S4 and the sweep are reported but do not enter the reading. Test-split statistics are reported next
+to every all-unit number. The outcome is reported whatever it is.
+
+### Outputs
+
+`results/final/calibration_cells.csv`, `calibration_sweep.csv`, `calibration_thresholds.csv`;
+per-mode outcomes under `results/raw/*_calibration_*`; `docs/iclr_calibration.md`.
+
+### Cost and prior
+
+Estimated cost:
+* precision/recall curves: about 10 min;
+* per-mode pipeline runs at about 15 thresholds for 7 pair × geometry combinations: about 1–1.5 h,
+  with 4 CPU worker processes;
+* q_plan: about 45 min, as one GPU job;
+* statistics: about 15 min.
+
+Prior: KITTI with oracle geometry already has ρ ≈ 0 for Planner B (0.004 over all units), so a
+"collapse" count will include cells that had nothing to collapse from; the moderate-gap and
+nuScenes cells are where the question is live.
