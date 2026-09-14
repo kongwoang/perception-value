@@ -125,8 +125,9 @@ Tuning each fidelity to its own downstream loss does not remove the sign variati
 2. **Shared-threshold harm is not the whole effect, but part of it moves.** Under S1, harm on nuScenes
    braking falls by 5–7 points and ρ by up to 0.14. The planner cells do not move at all. State this as
    "reduced, not removed".
-3. **The low-gap and oracle-geometry KITTI cells are harmless under every scheme.** The claim should be
-   scoped to cells with a meaningful fidelity gap or monocular geometry. That is where the benchmark
+3. **The KITTI Y8 320→640 cells carry little harm mass under every scheme.** ρ stays ≤ 0.19 even though
+   8–41% of their affected frames are harmed, and ρ ≤ 0.09 with oracle geometry. The claim should be scoped
+   to cells with a moderate fidelity gap or monocular geometry on nuScenes, which is where the benchmark
    already puts it.
 
 ## Caveats
