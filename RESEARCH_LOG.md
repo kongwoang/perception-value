@@ -1768,3 +1768,39 @@ Flagged images are kept and counted. No motion compensation.
 * the overlays
 * `docs/iclr_nuplan_real_perception.md`
 * request ledgers under `results/raw/`
+
+### 2026-09-14 15:03 — Task 5 amendment, before any branch is built or scored: ground plane of the FP lift
+
+**Found.** A smoke test on 2 states of one val log, before detection on the full set, projected the logged
+boxes into fetched images. Alignment is good: vehicles and bollards sit on their image boxes. The
+pre-registered ground-plane check, run on DB boxes, disagreed with the registered lift:
+* median bottom of vehicle boxes 3–30 m ahead, in the ego frame, over every 20th sweep of the benchmark
+  windows: **−0.323 m** on train ∪ val (IQR −0.385 to −0.278, n 2,810);
+* −0.357 m on test (reported only, not used).
+
+The nuPlan ego frame's origin is the rear axle, ~0.32 m above the road. The registered plane z = 0
+(camera height 1.52 m) would put every false positive about 18% too close; on true boxes the smoke-test
+lift landed 4–6 m short.
+
+**Change.**
+* The FP lift intersects the plane z = g, where g is that train ∪ val median, recomputed inside 114 by the
+  rule above. Camera height above the road ≈ 1.52 − g ≈ 1.85 m.
+* No test unit and no decision value is involved.
+* New informational check: the lift applied to true projected vehicle boxes, with its xy and range errors.
+
+**Implementation details, design unchanged.**
+* FP tokens are keyed by (mode, image, cached detection), not by variant, so identical branches can share
+  one planner call.
+* The per-object table is csv.gz, because the edge env has no pyarrow.
+* The S1 FULL threshold is computed in 113.
+
+**Operational.**
+* **Bug 1 in 112:** `m.flags` resolved to the pandas DataFrame attribute, raising a TypeError after
+  Camera 0's directory had been saved. Fixed with column access; the saved directory is reused, not
+  re-fetched.
+* **Bug 2 in 112:** the directory budget check counted the saved Camera 0 directory a second time and
+  would have stopped at 401.7 MB. Fixed.
+* **Metadata result:** 360,313,925 B of the 400 MB cap. All nine HEADs returned 200, `application/zip`,
+  `Accept-Ranges: bytes`, with no login. Every shard's log set equals its metadata File group, so the
+  Camera 2–8 URLs built by the user's rule are verified.
+* **Fetch plan:** 12,921 members, 2,765,642,770 B (cap 3.5 GB).
