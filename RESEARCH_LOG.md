@@ -1355,3 +1355,24 @@ end, so no R1 number exists. The fix drops the slash when writing, and `93` rest
 reading. The supervisor had already started R2's image cache. A continuation script waits for that
 cache to finish, then runs R1, R2 training and the router budget tables, one at a time. Nothing about
 the design changed.
+
+### 2026-09-14 12:55 — Task 2: the board rebooted during R2; R2 is now staged per dataset and per step
+
+R2 finished training the nuScenes network: 30 epochs, loss 1.199 → 0.015, weights saved 11:50:46.
+The board then rebooted, with uptime 2 min at 12:51, taking the session, the supervisor and the job
+with it. The log stops after the last epoch. Next in the same process were the PyTorch scores, the ONNX
+export and `trtexec`. The kernel log is not readable without root, so the cause is not confirmed. The
+likeliest one: `trtexec`'s default TensorRT workspace (the whole device memory) meeting a process that
+still held its CUDA context, on unified memory.
+
+No R2 result had been written.
+
+Changes (no design change):
+* Every R2 stage is its own process, one dataset at a time.
+* Train (and score with PyTorch) → exit.
+* Export: ONNX on the CPU, `trtexec` with the workspace capped at 512 MiB, then TensorRT scoring.
+* The finished nuScenes weights are reused (same procedure, all 30 epochs completed); the KITTI network
+  is trained.
+
+The commits, pushed results and caches were checked after the reboot (`git fsck` and the two image
+caches).
