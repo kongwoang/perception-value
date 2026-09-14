@@ -77,6 +77,9 @@ MODES = {("nuScenes", "nusc_det_tv", "ns_cheap_320"), ("nuScenes", "nusc_det_tv"
 PER_MODE = ["J", "Jlat", "n", "JB"]                       # {col}_{tag}
 PER_MODE_PRIM = ["fn", "fp", "loc", "cls", "crit_fn", "n_det", "n_gt"]   # {tag}_{col}
 TAGS = ("cheap", "full")
+# The benchmark's Planner B is the `static_obstacles` preset (run 20260912_111225_planner_b_static_fixed,
+# the tables 92 reads).  The first run of this script used "default"; check 1 caught it.
+PLANNER_B_PARAMS, PLANNER_B_COSTS = "static_obstacles", "default"
 
 _W = {}                                                   # per-worker state
 
@@ -130,7 +133,7 @@ def run_task(key, t_cheap, t_full, outdir):
     prim = m52._pm.primitives(dd, cm, fm, seqs, cfg, ad, cfg.min_gt_height)
     d = d.merge(prim, on=["seq", "frame"], how="left", validate="one_to_one")
     if dataset == "KITTI":
-        pb, cb = m65.B.PARAMS_B["default"], m65.B.COSTS_B["default"]
+        pb, cb = m65.B.PARAMS_B[PLANNER_B_PARAMS], m65.B.COSTS_B[PLANNER_B_COSTS]
         b = m65.build_b(dd, cm, fm, seqs, cfg, ad, geo, pb, cb)
         d = d.merge(b[["seq", "frame", "JB_cheap", "JB_full"]], on=["seq", "frame"], validate="one_to_one")
     else:
@@ -141,6 +144,26 @@ def run_task(key, t_cheap, t_full, outdir):
     # string columns as fixed-width unicode: an object array would need allow_pickle to read back
     np.savez_compressed(outdir / name, **{c: (d[c].astype(str).to_numpy().astype("U32") if c == "seq"
                                              else d[c].to_numpy()) for c in keep})
+    return key, t_cheap, t_full, name, time.time() - t0
+
+
+def planb_task(key, t_cheap, t_full, src, outdir):
+    """Recompute only the Planner B columns of an existing per-mode outcome file (see --reuse_run)."""
+    t0 = time.time()
+    m65, ad, seqs = _W["m65"], _W["adapter"], _W["seqs"]
+    dataset, det_dir, cm, fm, geo, _, _ = SPECS[key]
+    cfg = RiskConfig(op_conf=t_cheap, op_conf_full=t_full)
+    z = np.load(src, allow_pickle=False)
+    d = pd.DataFrame({k: z[k] for k in z.files})
+    d["seq"] = d.seq.astype(str)
+    b = m65.build_b(CACHE / det_dir, cm, fm, seqs, cfg, ad, geo,
+                    m65.B.PARAMS_B[PLANNER_B_PARAMS], m65.B.COSTS_B[PLANNER_B_COSTS])
+    b["seq"] = b.seq.astype(str)
+    d = d.drop(columns=["JB_cheap", "JB_full"]).merge(b[["seq", "frame", "JB_cheap", "JB_full"]],
+                                                     on=["seq", "frame"], validate="one_to_one")
+    name = Path(src).name
+    np.savez_compressed(outdir / name, **{c: (d[c].to_numpy().astype("U32") if c == "seq" else d[c].to_numpy())
+                                          for c in z.files})
     return key, t_cheap, t_full, name, time.time() - t0
 
 
@@ -176,10 +199,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--tag", default="calibration_outcomes")
+    ap.add_argument("--reuse_run", default=None,
+                    help="an earlier run of this script: keep its curves, thresholds and every non-Planner-B "
+                         "column, recompute Planner B with PLANNER_B_PARAMS, then run the checks again")
     args = ap.parse_args()
     run = runmeta.new_run(args.tag, vars(args))
     outdir = run / "outcomes"
     outdir.mkdir()
+    if args.reuse_run:
+        return reuse(Path(args.reuse_run), run, outdir, args.workers)
     splits = json.loads((ROOT / "configs" / "benchmark_splits.json").read_text())
     trval = {"nuScenes": set(splits["nuscenes"]["train"] + splits["nuscenes"]["val"]),
              "KITTI": set(splits["kitti"]["train"] + splits["kitti"]["val"])}
@@ -250,6 +278,10 @@ def main():
     idx = pd.DataFrame(index)
     idx.to_csv(run / "outcome_index.csv", index=False)
 
+    run_checks(run, outdir, idx)
+
+
+def run_checks(run, outdir, idx):
     # ---- Checks
     checks = []
     derived = [f"dE_{m}" for m in PM.METRICS]
@@ -283,6 +315,33 @@ def main():
     print(f"\n  checks 1-2: {'ALL PASS' if allpass else 'FAILED -- no scheme may be scored'}")
     print("  wrote", run)
     sys.exit(0 if allpass else 3)
+
+
+
+def reuse(old, run, outdir, workers):
+    import shutil
+    for f in ["thresholds_S0_S3.json", "calibration_pr_curves.csv"] + [p.name for p in old.glob("curve__*.npz")]:
+        shutil.copy(old / f, run / f)
+    oidx = pd.read_csv(old / "outcome_index.csv")
+    ctx = get_context("spawn")
+    pool = ctx.Pool(workers, initializer=_init, initargs=("KITTI",))
+    jobs, index = [], []
+    for _, r in oidx.iterrows():
+        if SPECS[r.spec][0] == "KITTI":
+            jobs.append(pool.apply_async(planb_task, (r.spec, r.t_cheap, r.t_full, str(old / "outcomes" / r.file), outdir)))
+        else:
+            shutil.copy(old / "outcomes" / r.file, outdir / r.file)
+            index.append({"spec": r.spec, "t_cheap": r.t_cheap, "t_full": r.t_full, "file": r.file, "seconds": 0.0})
+    t0 = time.time()
+    for n, j in enumerate(jobs, 1):
+        key, a, b, name, dt = j.get()
+        index.append({"spec": key, "t_cheap": a, "t_full": b, "file": name, "seconds": dt})
+        print(f"  [planB {n}/{len(jobs)}] {key:20s} ({a:.4f}, {b:.4f})  {dt:.0f}s  elapsed {time.time() - t0:.0f}s", flush=True)
+    pool.close(); pool.join()
+    idx = pd.DataFrame(index)
+    idx.to_csv(run / "outcome_index.csv", index=False)
+    (run / "reused_from.txt").write_text(f"{old.name}: Planner B recomputed with {PLANNER_B_PARAMS}; all else copied\n")
+    run_checks(run, outdir, idx)
 
 
 if __name__ == "__main__":

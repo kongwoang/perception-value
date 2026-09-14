@@ -1,12 +1,14 @@
 #!/bin/bash
 # Task 1 then Task 2 compute (RESEARCH_LOG 2026-09-14), strictly one heavy job at a time.
 #
-# Runs detached from the Claude session, because the previous session ended while 100 was running.
-# Waits for the calibration outcome run, refuses to continue Task 1 unless its equivalence checks
-# passed, and records every step's start, end and exit status in logs/supervise_tasks.log.
+# Runs detached from the Claude session, because a previous session ended while 100 was running.
+# Task 1 first: Planner B columns recomputed with the benchmark's preset (the first outcome run used
+# the wrong one; RESEARCH_LOG 10:40), then the equivalence checks decide whether Task 1 continues.
 # Task 2 does not depend on Task 1's results, so it runs even if Task 1 stops.
+# Every step's start, end and exit status goes to logs/supervise_tasks.log.
 cd /home/kongwoang/research/risk-aware-perception
 LOG=logs/supervise_tasks.log
+FIRST=results/raw/20260914_090507_calibration_outcomes
 say () { echo "[$(date +%H:%M:%S)] $*" >> $LOG; }
 wait_free () { while [ -n "$(./scripts/busy.sh)" ]; do sleep 30; done; sync; sleep 5; }
 step () {
@@ -16,10 +18,10 @@ step () {
   if "$@" >> logs/$name.log 2>&1; then say "$name ok"; return 0; else say "$name FAILED (exit $?)"; return 1; fi
 }
 
-say "supervisor started; waiting for 100_calibration_outcomes"
-wait_free
+say "supervisor (re)started"
+step calib_outcomes_planb ./scripts/py scripts/100_calibration_outcomes.py --workers 3 --reuse_run "$FIRST"
 OC=$(ls -d results/raw/*_calibration_outcomes | tail -1)
-if python3 -c "import json,sys; sys.exit(0 if json.load(open('$OC/checks.json'))['all_pass'] else 1)" 2>/dev/null; then
+if [ "$OC" != "$FIRST" ] && python3 -c "import json,sys; sys.exit(0 if json.load(open('$OC/checks.json'))['all_pass'] else 1)" 2>/dev/null; then
   say "task1 checks 1-2 PASS ($OC)"
   step calib_submissions ./scripts/py scripts/60_build_submissions.py --op_conf 0.10 --op_conf_full 0.10 \
        --out data/cache/nusc_submissions_calib \

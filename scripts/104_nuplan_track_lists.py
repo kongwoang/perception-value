@@ -33,7 +33,7 @@ CLASSES = ("vehicle", "pedestrian", "bicycle", "static")
 
 
 def track_vector(objs, ego, keep, filt):
-    x = np.zeros((TOPK, 5 + len(CLASSES)))
+    x = np.zeros((TOPK, 5 + len(CLASSES) + 1))            # presence, x, y, l, w | 4 classes | area
     if not len(objs) or not keep.any():
         return x.reshape(-1)
     g = m91.geometry(filt, objs, ego)

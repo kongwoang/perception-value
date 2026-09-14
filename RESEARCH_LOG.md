@@ -1280,3 +1280,26 @@ Reading: "feasible now" if the scenario-window images of the 9 test logs fit in 
 the scaled detector runtime is under 2 h.
 
 Output: `docs/nuplan_real_perception_feasibility.md`.
+
+### 2026-09-14 10:40 — Task 1: check 1 caught a configuration error; nothing had been scored
+
+The first calibration outcome run (`20260914_090507_calibration_outcomes`) passed check 1 for every
+braking, lateral and perception column (all 7 pair × geometry combinations, every frame) and check 2
+(direct asymmetric runs equal the composition). It **failed check 1 for Planner B on every KITTI
+cell**: JB differed on ~2,300 of 8,008 frames, by up to 16.9.
+
+The cause is the runner's configuration, not the pipeline. The benchmark's Planner B is the
+`static_obstacles` preset (`PlannerBParams(obstacle_closes=False)`; run
+`20260912_111225_planner_b_static_fixed`, the table `92_benchmark_table.py` reads), and
+`100_calibration_outcomes.py` had called `PARAMS_B["default"]`.
+
+The fix:
+* The preset is now a named constant.
+* A `--reuse_run` mode recomputes only the Planner B columns of the existing outcome files, with
+  `static_obstacles`, at the same thresholds.
+* Every other column is copied unchanged: they already passed check 1.
+* Checks 1 and 2 then run again on the new run directory.
+
+No scheme had been scored, and the reading is unchanged. The supervisor had moved on to Task 2 by
+design, and its first step crashed on an array one column too narrow in `104_nuplan_track_lists.py`
+(a 10-dim track vector allocated as 9); fixed. The supervisor is restarted with Task 1 first.
