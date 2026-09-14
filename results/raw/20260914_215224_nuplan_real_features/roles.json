@@ -1,0 +1,32 @@
+{
+ "gate_features": [
+  "ego_speed",
+  "ego_accel",
+  "n_cheap",
+  "n_cheap_fov",
+  "n_cheap_fov_bicycle",
+  "n_cheap_fov_pedestrian",
+  "n_cheap_fov_vehicle",
+  "n_static_fov",
+  "min_range_fov",
+  "min_gap_corridor",
+  "n_corridor_20",
+  "n_corridor_40",
+  "min_ttc_corridor",
+  "n_fov_band_30_40",
+  "crit_cheap_sum",
+  "crit_cheap_max",
+  "n_red_lights",
+  "d_n_cheap_fov"
+ ],
+ "diagnostic": [
+  "crit_sum_gt",
+  "dE_E1_fn_only",
+  "dE_E6_risk_weighted"
+ ],
+ "checks": {
+  "states": 1440,
+  "branch_count_mismatch_vs_n_tracks_cheap": 0,
+  "crit_sum_gt_mismatch_vs_benchmark": 0
+ }
+}

@@ -2137,3 +2137,53 @@ and `benchmark_budget_routers.csv`, on three things:
 * which deployable signals beat random (paired lower bound > 0) at 20% quota and at the 20% ms budget;
 * how many cells are undefined;
 * the affected-state counts per split.
+
+## 2026-09-14 21:59 — Task 7 results: the nuPlan allocation track on real-perception decision values
+
+**Run.** Features: `results/raw/20260914_215224_nuplan_real_features`. Scoring: `*_nuplan_real_allocation`.
+Outputs, all new; nothing existing was modified:
+* `results/final/benchmark_table_nuplan_real.csv` (312 rows);
+* `results/final/benchmark_budget_nuplan_real.csv` (416 rows);
+* `docs/iclr_nuplan_real_allocation.md`.
+
+**Checks.**
+* The CHEAP-branch object count equals Task 5's `n_tracks_cheap` on 1,440/1,440 states.
+* Reference criticality equals the existing column on 1,440/1,440 states.
+* `assert_no_leakage` passes the 18 gate features and refuses crit_sum_gt, dE_E1_fn_only, dE_E6_risk_weighted and
+  unc_proxy.
+
+**Affected states, test / all** (detection profile in brackets):
+
+| planner | safety | scalar_J |
+|---|---|---|
+| PDM-Closed | 27 / 45 (11 / 70) | 48 / 104 (42 / 175) |
+| IDM | 6 / 6 (12 / 35) | 12 / 25 (26 / 96) |
+
+IDM safety is **undefined** on both splits under the registered rule (< 10 affected states).
+
+**Frame quota, test, 20%** — η, with the paired lower bound over random in brackets:
+
+| cell | gate ridge | gate GBM | other |
+|---|---|---|---|
+| PDM-Closed safety | 0.99 [+0.58] | 0.99 [+0.64] | before: 0.78 [+0.20] and 0.66 [+0.13] |
+| PDM-Closed scalar_J | 0.99 [+0.60] | 0.99 [+0.75] | — |
+| IDM scalar_J | no win | no win | E_risk diagnostic 0.97 on 12 states |
+
+* The gate now wins 2 of 4 nuPlan cells at 20% (before: 4 of 4).
+* Across quotas, deployable wins on test: gates 18, R1 6, cheap-side criticality 1.
+* E_risk on PDM-Closed falls from 0.89 to 0.14, consistent with the false-positive mechanism of Task 5.
+
+**Budget.**
+* 20% ms: only the batched GBM gate on PDM-Closed scalar_J beats random (η 0.57 [+0.015], escalates 5%). With the
+  KITTI costs, nothing on nuPlan did.
+* 20% mJ: nothing.
+* 30–50%: the gates win on PDM-Closed (ms and mJ); gate ridge and R1-MLP-reg win on IDM scalar_J at 50%.
+
+**Caveats recorded.**
+* **Concentration.** 24 of 27 affected PDM-Closed safety test states come from one log (…_00152_00504), 17 from one
+  scenario, and the gates rank that scenario first.
+* **Dropped draws.** 330–368 of 1,000 bootstrap draws are dropped (the prize collapses without that log), so the
+  intervals are conditional and too narrow.
+* **Few training labels.** 18 affected PDM-Closed safety states in train ∪ val.
+* **Descriptive sanity check.** Top-20% composition per gate and the ridge coefficient spread, computed from the
+  saved scores, not a new registered analysis. It showed no sign of leakage.
