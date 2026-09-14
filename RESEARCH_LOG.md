@@ -2187,3 +2187,55 @@ IDM safety is **undefined** on both splits under the registered rule (< 10 affec
 * **Few training labels.** 18 affected PDM-Closed safety states in train ∪ val.
 * **Descriptive sanity check.** Top-20% composition per gate and the ridge coefficient spread, computed from the
   saved scores, not a new registered analysis. It showed no sign of leakage.
+
+## 2026-09-15 00:41 — Diagnosis: IDM is fed a route it cannot start from (harness bug; PDM-Closed unaffected)
+
+**Question from review of Tasks 5 and 7.** Why is IDM nearly inert on nuPlan? Is it a code error or a real
+property of the planner?
+
+**Finding: a planner-input bug in our open-loop harness** (`82_nuplan_counterfactual.py`, and 115, which
+reuses it). Perception, matching and scoring are not involved.
+
+1. **The mechanism.** Every branch initialises `IDMPlanner` with `scenario.get_route_roadblock_ids()`, the
+   route of the scenario.
+   * The devkit's `IDMPlanner._get_starting_edge` looks for the ego's lane **only in the first two route
+     roadblocks**, and otherwise takes the closest edge among them.
+   * PDM-Closed runs tuPlan Garage's `route_roadblock_correction` on its first call; the devkit's IDM has no
+     such step.
+2. **Measured at all 1,440 benchmark states** (reference branch only, no perception involved;
+   `results/raw/idm_route_diagnostics/route_geometry.csv`):
+   * the ego is farther than 2 m from the first two route roadblocks in **836 states (58%, 42 scenarios)**;
+   * in 193 of those (9 scenarios: pickup/dropoff, stationary) it lies on no route roadblock at all.
+
+| ego position | states | IDM mean deviation from the log | IDM collision | PDM-Closed deviation / collision |
+|---|---|---|---|---|
+| within the first two roadblocks | 604 | 1.5 m | 4.5% | 2.0 m / 3.5% |
+| beyond them | 836 | 30.2 m | 20.6% | 2.5 m / 5.3% |
+| on no route roadblock | 193 | 104 m (median 47 m) | 13.5% | 3.1 m / 3.1% |
+
+   * In the worst scenario (`e678935a`) IDM's plan starts 409 m from the ego.
+   * Track B's route warnings ("could not find valid path") cover 245 states; the failures are broader
+     than the warnings.
+   * The position of a state within its scenario does not explain it: 17% of states are warned even at the
+     first state.
+3. **Consequence for registered results.**
+   * **IDM-valid states** (ego within the first two roadblocks): real perception gives 0 affected safety
+     states and 1 affected scalar_J state.
+   * **The 836 affected states** hold **all** of IDM's real-perception decision value (6 safety, 24
+     scalar_J).
+   * **Detection-profile runs:** 22 of 35 IDM safety states fall in those 836 as well.
+   * **Scope.** The IDM cells of Track B, Task 5 and Task 7, and the nuPlan IDM rows of the benchmark tables,
+     therefore do not measure a functioning IDM. PDM-Closed's cells are unaffected: it corrects its route
+     internally, and its deviation is 2–3 m everywhere.
+   * **Caveat.** The 604 valid states are not a like-for-like subset (early-route geometry). They show where
+     IDM works, not what its decision value is.
+4. **Candidate fix, tried on train ∪ val states only** (`idm_fix_probe.py`, 21 states, reference branch).
+   * Correct the route with tuPlan Garage's `route_roadblock_correction`, trim it to start at the ego's
+     roadblock, and initialise IDM with that route. IDM's policy and parameters are unchanged.
+   * Result: median deviation 6.3 → 1.7 m and maximum 413 → 13.9 m. On the 13.9 m state PDM-Closed deviates
+     14.7 m too.
+   * Correction alone fixes the off-route states but not the on-route states beyond the first two
+     roadblocks (341 m remains on `c447cf02`). Trimming is what fixes those.
+
+**Nothing registered is changed.** A corrected IDM rerun (Track B, Task 5, Task 7 IDM cells) has to be
+pre-registered before it is scored.
