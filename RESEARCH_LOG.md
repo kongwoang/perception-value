@@ -1950,3 +1950,51 @@ transported profile, and its harm mass is small.
 * s1 (FULL threshold 0.477): safety 5 affected, 2 harmful carrying most of the mass (ρ 112); all-FULL
   safety reduction −0.5%.
 * iou50: safety 4 affected, 0 harmful; scalar_J 28 affected (harm 46%, ρ 0.06).
+
+## 2026-09-14 21:23 — Task 5 results: real perception on the nuPlan track (pre-registered 14:44)
+
+Part 2 ran 17:41–20:48. All 7 branches computed a trajectory on all 1,440 states for both planners; there
+were 7,965 planner calls per planner. Observations are planner-independent, so the counts of shared results
+are the same for both planners. Cells and tables were written at 20:48.
+
+**Reading (C3), primary, all 1,440 states: intermediate.**
+
+| aggregate | harm PDM-Closed | harm IDM | ρ PDM-Closed | ρ IDM |
+|---|---|---|---|---|
+| safety | 44.4% | 16.7% | 0.33 | 0.013 |
+| scalar_J | 37.5% | 48.0% | 0.35 | 0.06 |
+
+* B-F1 does not fire on either aggregate.
+* Consistency fails on IDM only; PDM-Closed clears both bars on both aggregates.
+
+**Against the transported profile (Track B), safety, all logs.**
+* PDM-Closed: affected states 70 → 45, harm 37.1% → 44.4%, ρ 0.30 → 0.33, all-FULL reduction 14.7% → 9.8%,
+  oracle@20 21.1% → 14.7%.
+* IDM: 35 → 6 affected states; all-FULL reduction 3.9% → 0.5%.
+* scalar_J: PDM-Closed 175 → 104 affected (harm 37.5%, ρ 0.35); IDM 96 → 25 (harm 48.0%, ρ 0.06).
+
+**Test split, 9 logs, primary.**
+* PDM-Closed safety: 27 affected, harm 33.3%, ρ 0.36, all-FULL 25.2%, oracle@20 39.4%.
+* IDM safety: 6 affected, harm 16.7%.
+* Reading: intermediate.
+
+**Sensitivities, all logs, reading under the same rule.**
+
+| variant | reading | note |
+|---|---|---|
+| nofp | intermediate | PDM-Closed safety affected 45 → 6, scalar_J 104 → 28. Without false positives, PDM-Closed's value nearly vanishes. |
+| s1 (FULL 0.477) | **consistent** | PDM-Closed safety harm 25.7%, ρ 0.25. The IDM part rests on 5 states with ρ 112. |
+| iou50 | intermediate | PDM-Closed safety harm 47.1%, ρ 0.37. IDM safety harm 0 of 4. |
+
+The transported variant, re-evaluated under this rule, reads consistent on all logs and intermediate on test.
+
+**Interpretation, written in `docs/iclr_nuplan_real_perception.md`.**
+* The transported profile exaggerated the recall gap: 0.34 predicted against 0.12 measured, and none inside 10 m.
+* Under real perception, decision value is sparser and far more planner-dependent. PDM-Closed keeps
+  benchmark-level sign variation; IDM is nearly inert.
+* For PDM-Closed the value runs mostly through false positives.
+* The paper should report this track per planner, with real perception primary and the transported profile as a
+  labelled sensitivity. The conclusion is not rewritten to favour the paper.
+
+**Operational.** A background wait of this session was killed when the session was resumed. The detached
+supervisor was unaffected.
