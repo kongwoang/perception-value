@@ -1507,3 +1507,15 @@ What stands without the index:
 
 User action required: log in, accept the terms, and provide the mini sensor-archive names and links from
 the download page. Steps 2–4 can then be finished within the 50 MB metadata cap.
+
+### 2026-09-14 14:20 — Task 4 update: archive names and sizes from the logged-in download page
+
+Transcribed by the user, without links. The v1.1 Mini Sensors are:
+* a "Metadata" archive shown as 0.00 GB;
+* nine camera shards of 42.06–50.48 GB, 419.7 GB in total;
+* nine lidar shards.
+
+The v1.0 section holds only DBs and maps. The whole-archive option cannot fit in ~107 GB free. The
+central directories of all nine shards (~25–35 MB each by estimate) would exceed the 50 MB cap, so the
+plan reads the metadata archive first and only the needed shards' directories. Waiting for the link
+addresses.

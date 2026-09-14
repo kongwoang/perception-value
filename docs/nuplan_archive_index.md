@@ -58,3 +58,40 @@ HEAD and Range without further login:
 | 4b. Needed CAM_F0 members via Range | cannot be assessed until an archive URL is known |
 | 4c. Scenario-window images only | 3,320 images (test) / 12,921 (all 34); ~0.70 / ~2.7 GB by estimate |
 | Measured mean JPEG size | not available (no central directory reachable) |
+
+## Update 2026-09-14 — the download page, as transcribed by the user after logging in
+
+The user pasted the text of the official download page, without links.
+
+**v1.0 section.** Maps (0.90 GB), mini, val, test and train DBs. The page states that raw sensor data is
+not in these archives.
+
+**v1.1 "nuPlan Mini Sensors" section.**
+
+| archive | displayed size |
+|---|---|
+| Mini Sensors Metadata | 0.00 GB |
+| Camera 0 | 48.63 GB |
+| Camera 1 | 50.48 GB |
+| Camera 2 | 46.53 GB |
+| Camera 3 | 46.51 GB |
+| Camera 4 | 45.78 GB |
+| Camera 5 | 47.30 GB |
+| Camera 6 | 46.47 GB |
+| Camera 7 | 45.95 GB |
+| Camera 8 | 42.06 GB |
+| **all nine camera archives** | **419.7 GB** |
+| Lidar 0–8 | 59.6–70.7 GB each (not needed) |
+
+This confirms the earlier PROVENANCE record: nine camera shards, not per-log archives.
+
+Consequences so far:
+* **Option (a), whole archives:** all nine camera shards (419.7 GB) do not fit in ~107 GB free. A single
+  shard (42–50 GB) fits, but which shards hold the 9 test logs is still unknown.
+* **Mapping:** the 0.00 GB "Mini Sensors Metadata" archive is the likely log-to-shard index.
+* **Budget for reading central directories:** at roughly 45 GB per shard and ~200 KB per image, a camera
+  shard holds on the order of 200k JPEGs. Its central directory is then about 25–35 MB, so listing all
+  nine would exceed the 50 MB metadata cap. The plan is: HEAD all ten links, read the metadata archive,
+  then read central directories only for the shards that hold the needed logs.
+
+**Still needed from the user:** the link addresses of Mini Sensors Metadata and Camera 0–8.
