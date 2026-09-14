@@ -1916,3 +1916,37 @@ executed the shifted tail of the edited file. That wrote a spurious "TASK5 PART2
 and possibly a fan-to-auto call. Part 2 sets the fan back to 100% when it starts (verified).
 No computation was affected. Waits now key on the markdown step, and running supervisor files are no
 longer edited.
+
+### 2026-09-14 17:42 — Task 5 interim: IDM branches complete (PDM-Closed still running)
+
+**Why this interim.** The user asked for results. They were computed with the registered 116 statistics
+on IDM alone. Nothing can be changed by seeing them, and the PDM-Closed run continues untouched.
+
+**Run.** 1,440 states, every branch computed a trajectory. 7,965 planner calls. Results shared through
+identical observations, per branch: cheap 37, full 79, cheap_nofp 596, full_nofp 390, full_s1 240,
+cheap_iou50 461, and the rest in `logs/task5_br_idm.log`.
+
+**Primary variant, all 34 logs, IDM** (transported profile in brackets):
+
+| loss | affected states | V+ / V− | harm rate [95% CI] | ρ [95% CI] | all-FULL reduction | oracle@20 reduction |
+|---|---|---|---|---|---|---|
+| safety | **6** (35) | 5 / 1 | 16.7% [0, 16.7] (31.4%) | 0.013 [0.013, 0.013] (0.36) | 0.5% (3.9%) | 0.5% (6.1%) |
+| scalar_J | **25** (96) | 13 / 12 | 48.0% [28.6, 66.7] (40.6%) | 0.062 [0.012, 4.7] (0.37) | 0.2% (2.0%) | 0.2% (3.2%) |
+| collision | 1 (19) | 1 / 0 | 0 (26.3%) | 0 (0.36) | 0.5% (4.1%) | 0.5% (6.4%) |
+
+**What this settles.** Under real perception, IDM's decision value is about 6× sparser than under the
+transported profile, and its harm mass is small.
+
+**Consequence for the registered reading (C3).** It no longer depends on PDM-Closed:
+* "Consistent" needs harm ≥ 20% **and** ρ ≥ 0.20 for **both** planners on **both** aggregates. IDM's
+  safety result (16.7%, ρ 0.013) already fails it.
+* B-F1 needs harm < 5% for **both** planners on an aggregate. IDM is at or above 16.7% on both
+  aggregates, so it cannot fire.
+* The primary reading is therefore **intermediate**, whatever PDM-Closed shows.
+* Caveat: IDM's safety harm rate rests on 1 of 6 affected states.
+
+**Sensitivities, IDM, all logs.**
+* nofp: safety 3 affected (harm 1/3); scalar_J 11 affected (harm 45%, ρ 0.005).
+* s1 (FULL threshold 0.477): safety 5 affected, 2 harmful carrying most of the mass (ρ 112); all-FULL
+  safety reduction −0.5%.
+* iou50: safety 4 affected, 0 harmful; scalar_J 28 affected (harm 46%, ρ 0.06).
