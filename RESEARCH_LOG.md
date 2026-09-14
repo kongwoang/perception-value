@@ -1486,3 +1486,24 @@ under `results/raw/*_nuplan_archive_index`.
 **Reading.** "Doable now" requires every needed archive URL to come from an official source reachable
 without login, and the chosen option's download to fit within free disk with a 25% margin. Anything short
 of that is reported as the exact action the user must take.
+
+## 2026-09-14 14:05 — Task 4 result: the nuPlan archive index is behind a login; stopped as registered
+
+Report: `docs/nuplan_archive_index.md`. The official sources give no archive names or URLs that can be
+reached without logging in:
+* The local devkit docs point to `https://www.nuscenes.org/nuplan#download`. They state that an account and
+  acceptance of the Terms of Use are required, and that the archives appear after logging in.
+* The official page itself is JavaScript-rendered: 6,574 bytes, no archive links.
+
+No HEAD, Range or central-directory read was possible, because no official URL was reachable. No bundle or
+API was mined for links. Total bytes fetched: 6,574.
+
+What stands without the index:
+* the exact image counts from Task 3: 3,320 scenario-window and 37,000 whole-log CAM_F0 images for the 9
+  test logs; 12,921 and 144,939 for all 34;
+* the Task 3 size estimate: ~0.70 GB for the test windows;
+* the earlier PROVENANCE record of nine 45–54 GB mini camera shards split by blob (~450 GB), which would
+  not fit in ~107 GB free.
+
+User action required: log in, accept the terms, and provide the mini sensor-archive names and links from
+the download page. Steps 2–4 can then be finished within the 50 MB metadata cap.
