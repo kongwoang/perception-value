@@ -2293,3 +2293,74 @@ The archived pre-fix outputs are in `results/archive/pre_idm_route_fix/`.
 
 **Readings.** Unchanged rules: Track B B-F1..B-F3; the Task 5 C3 reading; Task 7 descriptive. Results are reported
 **before and after** the fix, labelled as a bug correction. The pre-fix readings are not overwritten in the log.
+
+## 2026-09-15 03:42 — Results: corrected IDM rerun (pre-registered earlier today)
+
+Chain `scripts/supervise_idm_fix.sh` ran 00:52–03:39. Every step exited 0 and every check passed.
+
+**Checks.**
+
+| check | result |
+|---|---|
+| Track B IDM reference (`check_trackb_idm.json`) | median log deviation **1.46 m** (was 2.44); **0%** above 20 m (was 13.3%); collisions **4.2%** (was 13.8%; PDM-Closed 4.5%) |
+| perception filter | track counts equal the archive |
+| Task 5 | IDM reference reproduces corrected Track B with 0 mismatches; identity equals reference |
+| rows that must not move (`idm_route_fix_comparison.json`) | all PDM-Closed, nuScenes and KITTI rows identical in benchmark_table, benchmark_cells, benchmark_table_routers, benchmark_budget_routers, nuplan_real_perception_cells, benchmark_table_nuplan_real, benchmark_budget_nuplan_real and both PDM-Closed raw files |
+
+**Changes (IDM only; full tables in `docs/iclr_idm_route_fix.md`).**
+* **Track B, transported profile.**
+  * safety: affected 35 → 47, harm 31.4% → 27.7%, all-FULL 3.9% → 16.8%, oracle@20 6.1% → 21.6%;
+  * scalar_J: affected 96 → 105, harm 40.6% → 33.3%.
+  * B-F1, B-F2 and B-F3 still do not fire.
+  * Safety top-20 overlap 0.22 → 0.24; gamma 0.78 → 0.69.
+* **Benchmark nuPlan IDM cells** (detection profile, test, 20%). Gate GBM no longer beats random: safety lower
+  bound +0.27 → −0.20; scalar_J +0.26 → −0.05. The E_risk diagnostic still wins (+0.50). So the gate wins only the
+  two PDM-Closed nuPlan cells.
+* **Task 5, real perception** (primary, all).
+  * IDM safety: 5 affected, harm 40%, ρ 0.055 (was 6 / 16.7% / 0.013);
+  * IDM scalar_J: 30 affected, harm 33.3%, ρ 0.136 (was 25 / 48% / 0.062).
+  * **Reading: intermediate, unchanged**, because IDM's ρ is below 0.20.
+  * Non-deciding `nofp · test` now reads "falsifier fires" (≤ 1 affected safety state per planner).
+* **Task 7.**
+  * IDM safety is still undefined (4 affected test states).
+  * IDM scalar_J (10 affected test states): R1-MLP-clf now beats random at every quota and every ms and mJ budget
+    (η 0.94). Gate ridge's earlier wins at 30–50% are gone. This is fragile.
+
+**Interpretation.**
+* The fix changes IDM's transported-profile values substantially and removes the gate's IDM wins on the benchmark.
+* It does not change the Task 5 reading or the planner-identity conclusion. Under real perception IDM is nearly
+  insensitive to the 320/640 choice, and now that is not an artefact.
+* Not rerun: the 6-state IDM wiring probe (superseded by the identity checks).
+* The six hand-written reports with pre-fix IDM numbers now carry a pointer banner.
+* The anonymous code release has not been updated.
+
+## 2026-09-15 03:49 — Amendment: the IDM rerun chain missed one consumer; supplementary rerun pre-registered
+
+**Bug in the rerun chain.** `supervise_idm_fix.sh` ran `93_budget_allocation.py` only with `--routers`.
+* The registered primary budget run (no `--routers`) and its `--suffix _1thread` sensitivity also read the nuPlan
+  IDM decision values.
+* Their outputs are `benchmark_budget_two_level.csv` and `benchmark_budget_two_level_1thread.csv` (nuPlan IDM rows).
+  Both, and the budget section that `94_benchmark_markdown.py` writes to `docs/benchmark_tables.md` from them, still
+  hold pre-fix IDM values.
+* Found while verifying outputs before commit. No row of these files had been read as a result.
+
+**Consumer audit** (every script that reads an IDM-dependent file):
+
+| scripts | why no rerun is needed |
+|---|---|
+| 90, 104, 114, 119 | use only scenario keys, state counts and CHEAP track counts, which the fix leaves unchanged (`check_trackb_idm.json`: track counts equal) |
+| 102, 105 | write nothing that depends on IDM |
+| 107 (R2) | KITTI and nuScenes only |
+| figure scripts 53, 54, 63 | no nuPlan inputs |
+
+**Supplementary rerun** (`scripts/supervise_idm_fix2.sh`, one job at a time):
+1. 93 primary, with the archived `benchmark_budget_overheads.json`;
+2. 93 `--suffix _1thread` under `OMP_NUM_THREADS=1`, with the archived `benchmark_budget_overheads_1thread.json`;
+3. 94;
+4. `121 --stage compare`.
+
+**Checks, fixed now.** `121 --stage compare` now also requires:
+* the non-IDM rows of both two-level files to be identical to the archive;
+* both multi-fidelity files (brake and trajectory systems only) to be fully identical.
+
+It also reports IDM before/after at the 20% budget.

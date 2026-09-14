@@ -71,6 +71,11 @@ def stage_compare():
                    ("nuplan_real_perception_cells.csv", lambda d: d.planner != "idm"),
                    ("benchmark_table_nuplan_real.csv", lambda d: d.system != "idm"),
                    ("benchmark_budget_nuplan_real.csv", lambda d: d.system != "idm"),
+                   # added by the supplementary rerun: 93 without --routers was missing from the first chain
+                   ("benchmark_budget_two_level.csv", lambda d: d.system != "idm"),
+                   ("benchmark_budget_two_level_1thread.csv", lambda d: d.system != "idm"),
+                   ("benchmark_budget_multifidelity.csv", lambda d: d.index >= 0),
+                   ("benchmark_budget_multifidelity_1thread.csv", lambda d: d.index >= 0),
                    ("phase0g_external_pdm_closed_raw.csv", lambda d: d.index >= 0),
                    ("nuplan_real_perception_pdm_closed_raw.csv", lambda d: d.index >= 0)]:
         a, b = pd.read_csv(FINAL / f), pd.read_csv(ARCH / f)
@@ -90,6 +95,13 @@ def stage_compare():
             d = d[(d.system == "idm") & (d.split == "test") & (d.get("quota", pd.Series(0.2, index=d.index)) == 0.2)]
             cols = [c for c in ("target", "signal", "eta", "eta_lo", "eta_hi", "minus_random_lo", "n_affected", "undefined_reason") if c in d.columns]
             rows[tag] = d[cols].round(4).to_dict("records")
+        report["idm_before_after"][f] = rows
+    for f in ("benchmark_budget_two_level.csv", "benchmark_budget_two_level_1thread.csv"):
+        rows = {}
+        for tag, root in (("before", ARCH), ("after", FINAL)):
+            d = pd.read_csv(root / f)
+            d = d[(d.system == "idm") & (d.budget_level == 0.2)]
+            rows[tag] = d[["target", "unit", "signal", "feasible", "escalated_frac", "eta", "minus_random_lo"]].round(4).to_dict("records")
         report["idm_before_after"][f] = rows
     for tag, root in (("before", ARCH), ("after", FINAL)):
         ck = json.loads((root / "nuplan_real_perception_checks.json").read_text())
