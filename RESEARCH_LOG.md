@@ -1401,3 +1401,44 @@ Neither reboot coincides with memory pressure or heat. The second happened at li
 followed by one at idle. That points away from the workload, towards power or hardware; this is not
 verifiable without a kernel log. No result was lost: every finished step had written and committed
 its output. Only the router budget step remains.
+
+## 2026-09-14 13:40 — Task 2 results: lightweight routers on the benchmark and budget tracks
+
+Report: `docs/iclr_routers.md`. Tables: `docs/routers_tables.md`. Runs: `20260914_113930_routers_r1`,
+`20260914_125344_router_r2`, `20260914_132102_benchmark_budget_routers` (`20260914_131102_*` is the run the reboot interrupted).
+
+### Frame quota, test split
+
+| signal | wins | losses | chance wins | where |
+|---|---|---|---|---|
+| R1 detection-list router (four variants) | 7–11 of 56 | 0–1 | ~1.4 | KITTI 6–8 of 16; nuScenes 0–3 of 24; nuPlan 0 of 16 |
+| R2 pixel CNN (0.151 GFLOPs, TensorRT ~ PyTorch Spearman ≥ 0.9996) | 0 of 40 | 4 | ~1.0 | — |
+| 65-feature GBM gate | 14 of 56 | 0 | ~1.4 | KITTI 7, nuPlan 7 |
+
+At 20%, a router beats random in 3 cells and a gate in 5. None do on nuScenes.
+
+### Measured cost on the board
+
+| component | cost |
+|---|---|
+| R1 features | 0.11 ms |
+| R1 MLP inference | 0.54 ms (total 0.65 ms, 3.4% of a FULL pass) |
+| 65-feature extraction | 3.5 ms |
+| batched GBM inference | 0.018 ms/frame |
+| R2 resize + upload | 8.2 ms (nuScenes) / 3.3 ms (KITTI) |
+| R2 TensorRT | 1.55 ms |
+
+### Under measured cost
+
+* **Pre-registered reading at the 20% ms budget:** routers beat random in 1 cell (KITTI oracle
+  Planner B, R1-MLP P(V>0), η 0.41, lower bound +0.11), gates in 0.
+* **R1-MLP** still escalates about 16.5% of frames at that budget and has 9 latency-budget wins across
+  levels. The single-row GBM gate and the R1 GBM escalate nothing.
+* **Batched GBM gate:** 3 wins, all at 30–50%.
+* **R2:** no wins.
+* **Energy budgets:** no learned allocator beats random. R1-MLP's single-row call drew 8.9 W over idle
+  on the CPU rail.
+
+### Operational notes
+
+The fan was set to 100% at 13:21 at the user's request, and will be set to 100% for heavy jobs from now on.
