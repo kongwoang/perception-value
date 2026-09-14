@@ -2056,3 +2056,84 @@ J_cheap and J_full max |diff| 0.0, and 0 action mismatches.
 **C. `results/final/fig_budget_curves.csv`**
 * 856 per-cell rows (unit ms, every allocator and budget level, η with 95% CI and escalated fraction).
 * 180 rows of medians over cells per track × signal × budget level.
+
+## 2026-09-14 21:48 — Task 7 pre-registration: the nuPlan allocation track on real-perception decision values
+
+Committed before any feature is rebuilt or any signal is scored. **No existing result file is modified**;
+every output is new.
+
+**Goal.** Make the benchmark's nuPlan cells consistent with the Task 5 real-perception track, primary variant.
+
+**Labels.**
+* V = J(CHEAP) − J(FULL), from `nuplan_real_perception_{pdm_closed,idm}_raw.csv`: columns `*_cheap` and
+  `*_full` (0.25/0.25, IoU 0.3, FPs), costs from 83's `costs`.
+* Cells: {PDM-Closed, IDM} × {safety, scalar_J}.
+* Frozen log split from `configs/benchmark_splits.json`: 25 train ∪ val logs for fitting, 9 test logs scored once.
+
+**Pre-escalation inputs, CHEAP branch only** (`scripts/119_nuplan_real_features.py`, pynuplan env).
+* **Branch source.** The CHEAP-branch observation exactly as the planner received it: 115's
+  `RealPerceptionFilter` on the logged tracks, i.e. kept tracks plus the real 320 false-positive agents.
+* **Gate features.** 91's 18 gate features with 91's definitions, computed on that branch at the decision
+  iteration; `d_n_cheap_fov` uses the CHEAP branch at iteration − 1. Provenance, registered in
+  `rap.features` and checked with `assert_no_leakage`:
+  * `cheap_det`: detections of the current iteration;
+  * `cheap_prev`: `d_n_cheap_fov`;
+  * `ego_state`: ego speed, ego acceleration, red lights. This is a new legal source, added to
+    `LEGAL_SOURCES` in this commit.
+* **R1 inputs.** 104's `track_vector`, the 25 nearest CHEAP-branch objects, 250 dims.
+* **Cheap-side criticality.** `crit_cheap_sum` on the branch.
+* **Uncertainty.** Excluded as privileged, not scored.
+* **Diagnostics** (not deployable; must fail `assert_no_leakage`, a negative control):
+  * reference criticality: 91's `crit_sum_gt` on the logged tracks;
+  * ΔE as a missed-track count: |eligible in-camera tracks removed by CHEAP| − |removed by FULL| at the decision
+    iteration;
+  * E_risk: Σ criticality × (1[removed by CHEAP] − 1[removed by FULL]). Both ΔE and E_risk count misses only, as in 91.
+* **Checks before scoring.**
+  * The branch's object count equals the raw `n_tracks_cheap` on all 1,440 states.
+  * Recomputed `crit_sum_gt` equals the existing benchmark column.
+
+**Scoring** (`scripts/120_nuplan_real_allocation.py`, edge env) → `results/final/benchmark_table_nuplan_real.csv`.
+* **Protocol.** 92's `evaluate`: exact tie expectation, 1,000 log-level bootstrap draws (seed 0), paired against
+  random, draws with prize < ¼ of the full-sample prize dropped and counted. Quotas 10/20/30/50%.
+* **Signals and splits.**
+
+| signal | scored on |
+|---|---|
+| random | test and all |
+| criticality_cheap | test and all |
+| gate_ridge, gate_gbm (92's `gate_predictions`, fit on train ∪ val) | test only |
+| R1_mlp_reg, R1_mlp_clf, R1_gbm_reg, R1_gbm_clf (103's `fit_score`) | test only |
+| criticality_gt, dE_E1_fn_only, dE_E6_risk_weighted | test and all |
+| oracle | test and all |
+
+* **Columns.** nDG (η), CI, paired difference to random with CI, p ≤ random, responsive fraction, tie fraction.
+  Per row: affected states on that split, V+ and V− counts.
+* **Undefined rule.** nDG, its CI and the paired difference are **undefined** (NaN, with the reason) when the
+  split's oracle prize at that quota is ≤ 1e-9, or when the split has **fewer than 10 affected states**.
+  Gains and prizes are still written.
+
+**Budget track** → `results/final/benchmark_budget_nuplan_real.csv`.
+* **Protocol.** 93's two-level cascade protocol: budget = c₀ + f·c₁ for f ∈ {10, 20, 30, 50}%; the allocator's
+  own overhead is charged; η is paired against random in the same draws.
+* **Costs.** nuPlan's own Task 5 measurements (`results/raw/nuplan_task5/detect_summary.json`):
+
+| mode | ms | mJ |
+|---|---|---|
+| 320 | 14.374 | 44.706 |
+| 640 | 23.571 | 105.788 |
+
+  These replace the KITTI profile. The definitions differ from the old costs, and the doc will say so:
+  * ms is preprocess + inference + postprocess, without JPEG decode;
+  * mJ is CPU+GPU rail power over idle.
+* **Overheads.** Exactly those of the router run: `benchmark_budget_overheads_routers.json`, through 93's
+  `signal_overhead` with the nuScenes feature-time proxy.
+* **Signals.** random, oracle, criticality_cheap, gate_ridge, gate_gbm, gate_gbm_batched, R1 × 4. Diagnostics are
+  written as infeasible.
+* The same undefined rule applies.
+
+**Reading** (descriptive; no pass/fail was registered for Task 7). `docs/iclr_nuplan_real_allocation.md` will
+compare these cells with the detection-profile cells in `benchmark_table.csv`, `benchmark_table_routers.csv`
+and `benchmark_budget_routers.csv`, on three things:
+* which deployable signals beat random (paired lower bound > 0) at 20% quota and at the 20% ms budget;
+* how many cells are undefined;
+* the affected-state counts per split.
