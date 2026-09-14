@@ -1,0 +1,170 @@
+{
+ "nusc_oracle": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.498046875
+  ],
+  "S2": [
+   0.25,
+   0.4
+  ],
+  "S3": [
+   0.25,
+   0.34
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.6481563749444691,
+  "S2_at_grid_floor": {
+   "ns_cheap_320": false,
+   "ns_full_640": false
+  }
+ },
+ "nusc_mono": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.498046875
+  ],
+  "S2": [
+   0.25,
+   0.4
+  ],
+  "S3": [
+   0.25,
+   0.34
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.6481563749444691,
+  "S2_at_grid_floor": {
+   "ns_cheap_320": false,
+   "ns_full_640": false
+  }
+ },
+ "kitti_y8_320_mono": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.56396484375
+  ],
+  "S2": [
+   0.2,
+   0.35
+  ],
+  "S3": [
+   0.25,
+   0.3
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.7370089507707608,
+  "S2_at_grid_floor": {
+   "cheap_320": false,
+   "full_640": false
+  }
+ },
+ "kitti_y8_320_oracle": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.56396484375
+  ],
+  "S2": [
+   0.2,
+   0.35
+  ],
+  "S3": [
+   0.25,
+   0.3
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.7370089507707608,
+  "S2_at_grid_floor": {
+   "cheap_320": false,
+   "full_640": false
+  }
+ },
+ "kitti_y8_384_mono": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.43408203125
+  ],
+  "S2": [
+   0.25,
+   0.35
+  ],
+  "S3": [
+   0.25,
+   0.29
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.7261666332866012,
+  "S2_at_grid_floor": {
+   "cheap_384": false,
+   "full_640": false
+  }
+ },
+ "kitti_y8_512_mono": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.30078125
+  ],
+  "S2": [
+   0.3,
+   0.35
+  ],
+  "S3": [
+   0.25,
+   0.26
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.6978221046203948,
+  "S2_at_grid_floor": {
+   "cheap_512": false,
+   "full_640": false
+  }
+ },
+ "kitti_rt_480_mono": {
+  "S0": [
+   0.25,
+   0.25
+  ],
+  "S1": [
+   0.25,
+   0.252685546875
+  ],
+  "S2": [
+   0.5,
+   0.55
+  ],
+  "S3": [
+   0.25,
+   0.25
+  ],
+  "S3_none_reached_target": false,
+  "S3_target_precision": 0.36015339466719476,
+  "S2_at_grid_floor": {
+   "rt_mid_480": false,
+   "rt_full_640": false
+  }
+ }
+}

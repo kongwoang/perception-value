@@ -1,0 +1,61 @@
+{
+ "all_pass": true,
+ "checks": [
+  {
+   "label": "check3 oracle ns_cheap_320: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 oracle ns_full_640: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 mono ns_cheap_320: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 mono ns_full_640: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check4 oracle cheap: rasters rebuilt at 0.25 == cached",
+   "pass": true,
+   "frames_differing": 0
+  },
+  {
+   "label": "check1 oracle cheap: Planner C at 0.25 == planC_vs_truth",
+   "pass": true,
+   "max_abs_diff": 7.105427357601002e-15
+  },
+  {
+   "label": "check4 oracle full: rasters rebuilt at 0.25 == cached",
+   "pass": true,
+   "frames_differing": 0
+  },
+  {
+   "label": "check1 oracle full: Planner C at 0.25 == planC_vs_truth",
+   "pass": true,
+   "max_abs_diff": 7.105427357601002e-15
+  },
+  {
+   "label": "check4 mono cheap: rasters rebuilt at 0.25 == cached",
+   "pass": true,
+   "frames_differing": 0
+  },
+  {
+   "label": "check1 mono cheap: Planner C at 0.25 == planC_vs_truth",
+   "pass": true,
+   "max_abs_diff": 7.105427357601002e-15
+  },
+  {
+   "label": "check4 mono full: rasters rebuilt at 0.25 == cached",
+   "pass": true,
+   "frames_differing": 0
+  },
+  {
+   "label": "check1 mono full: Planner C at 0.25 == planC_vs_truth",
+   "pass": true,
+   "max_abs_diff": 7.105427357601002e-15
+  }
+ ]
+}

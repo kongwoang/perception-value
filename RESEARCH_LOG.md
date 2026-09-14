@@ -1317,3 +1317,32 @@ Nothing was scored. The script now runs as two processes with the same logic and
   transforming the subset.
 * `--stage plan` (GPU, no tables): rasters per threshold, check 4, Planner C with 74's batch size and
   frame order, check 1.
+
+## 2026-09-14 11:45 — Task 1 results: per-mode operating points — **survives**
+
+Report: `docs/iclr_calibration.md`. Every table: `docs/calibration_tables.md`. Runs:
+`20260914_103252_calibration_outcomes` (Planner B recomputed from `20260914_090507`),
+`20260914_110316_calibration_plan_boxes`, `*_calibration_plan`, `*_calibration_cells`.
+All four equivalence checks passed before any scheme was scored.
+
+* **Reading, all units.**
+  * S1, S2 and S3 each pass 4/4 nuScenes cells and 6/6 KITTI moderate-gap cells.
+  * Cells below the collapse line: 2 (S1) and 3 (S2, S3) of 14. All are KITTI Y8 320→640 cells already
+    below ρ 0.10 at S0.
+  * Verdict: survives.
+* **The false-positive explanation.** Under S1, FULL emits no more boxes than CHEAP and is more precise:
+  0.764 vs 0.654 on nuScenes, 0.793 vs 0.701 on KITTI 384→640. Harm remains:
+  * nuScenes mono braking: 38.3% [33, 44], ρ 0.40 [0.28, 0.59];
+  * KITTI 384→640 braking: 38.7%, ρ 0.49.
+  * Harm on nuScenes braking falls 5–7 points against S0.
+  * The planner cells do not move: harm ~51%, ρ 0.67–0.89.
+* **Sweep over 25 threshold pairs:**
+  * every pair passes in all four nuScenes cells;
+  * 11–25 pairs pass in the moderate-gap KITTI cells;
+  * none passes in the KITTI oracle cells.
+* **Signs.** Perception gains still disagree with V's sign on 29–54% of frames, with |Spearman| ≤ 0.10.
+  Braking and the planner disagree in sign on about half the frames where both respond, under every
+  scheme.
+* **S4.** The CHEAP optimum sits at the 0.10 grid floor in 7 KITTI cells, so those optima are limited by
+  the boundary, as the pre-registration requires. Harm under S4 is 28–55% in every nuScenes and
+  moderate-gap cell.

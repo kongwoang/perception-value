@@ -1,0 +1,13 @@
+{
+  "stage": "plan",
+  "dataroot": "/home/kongwoang/datasets/nuscenes/trainval",
+  "version": "v1.0-trainval",
+  "subs010": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions_calib",
+  "subs025": "/home/kongwoang/research/risk-aware-perception/data/cache/nusc_submissions",
+  "boxes": null,
+  "outcomes": "results/raw/20260914_103252_calibration_outcomes",
+  "bsz": 16,
+  "tag": "calibration_plan",
+  "boxes_run": "20260914_110316_calibration_plan_boxes",
+  "outcomes_run": "20260914_103252_calibration_outcomes"
+}

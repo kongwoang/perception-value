@@ -1,0 +1,30 @@
+{
+ "S1": {
+  "nuScenes_cells_passing": 4,
+  "kitti_moderate_cells_passing": 6,
+  "cells_below_collapse_line": 2,
+  "n_cells": 14,
+  "survives": true,
+  "survives_most_kitti_reading": true,
+  "collapses": false
+ },
+ "S2": {
+  "nuScenes_cells_passing": 4,
+  "kitti_moderate_cells_passing": 6,
+  "cells_below_collapse_line": 3,
+  "n_cells": 14,
+  "survives": true,
+  "survives_most_kitti_reading": true,
+  "collapses": false
+ },
+ "S3": {
+  "nuScenes_cells_passing": 4,
+  "kitti_moderate_cells_passing": 6,
+  "cells_below_collapse_line": 3,
+  "n_cells": 14,
+  "survives": true,
+  "survives_most_kitti_reading": true,
+  "collapses": false
+ },
+ "verdict": "survives"
+}

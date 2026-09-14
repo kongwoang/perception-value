@@ -1,0 +1,21 @@
+{
+ "all_pass": true,
+ "checks": [
+  {
+   "label": "check3 oracle ns_cheap_320: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 oracle ns_full_640: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 mono ns_cheap_320: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  },
+  {
+   "label": "check3 mono ns_full_640: 0.10 submission filtered at 0.25 == recorded",
+   "pass": true
+  }
+ ]
+}

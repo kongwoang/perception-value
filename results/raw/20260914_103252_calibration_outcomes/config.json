@@ -1,0 +1,5 @@
+{
+  "workers": 3,
+  "tag": "calibration_outcomes",
+  "reuse_run": "results/raw/20260914_090507_calibration_outcomes"
+}
