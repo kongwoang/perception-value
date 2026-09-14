@@ -1,0 +1,3 @@
+set,logs,scenarios,cam_f0_images_whole_logs,cam_f0_images_scenario_windows,est_gb_whole_logs,est_gb_scenario_windows,est_detector_hours_whole_logs,est_detector_hours_scenario_windows
+34 benchmark logs,34,60,144939,12921,30.659816304000003,2.733256656,3.5719563981042652,0.31843222748815164
+9 test logs,9,16,37000,3320,7.826832,0.7022995200000001,0.9118483412322274,0.08181990521327014

@@ -10,5 +10,5 @@
 # 10 GB resident set then looked like unexplained memory pressure to the gate.
 ps -eo pid=,args= | awk -v me=$$ '
   $1 != me && $2 ~ /(python|python3|python3\.8|python3\.9)$/ &&
-  $3 ~ /scripts\/[0-9][0-9][a-z]?_[a-z0-9_]*\.py$/ { print $1; exit }
+  $3 ~ /scripts\/[0-9][0-9][0-9]?[a-z]?_[a-z0-9_]*\.py$/ { print $1; exit }
   $1 != me && $2 ~ /run_simulation\.py$/ { print $1; exit }'
