@@ -2498,3 +2498,66 @@ G variant, on train units and on train ∪ val, with the number of pairs.
 * `results/final/benchmark_target_swap_summary.json`: sanity, agreement, pooled results, reading, and every row where
   the G-target beats the V-target significantly (Δ CI entirely below 0).
 * `docs/iclr_target_swap.md`.
+
+## 2026-09-15 22:02 — Task 9 results: target swap (pre-registered, commit 33f96a4)
+
+`scripts/supervise_task9.sh` ran 21:43–22:00, exit 0, one job with the fan at 100%. Outputs:
+`results/final/benchmark_target_swap.csv` (1,106 rows) and `benchmark_target_swap_summary.json`. Report:
+`docs/iclr_target_swap.md`.
+
+**Checks.**
+* S1: the official V-target scores reproduce all 434 official nDG values (quotas and the 20% ms budget) to 3
+  decimals; maximum absolute difference 1e-16.
+* S2 and S3: asserted.
+* In 382 of 1,000 draws at least one of the 12 pooled cells was left out at 20% (prize under a quarter of the
+  full-sample prize).
+  * Per cell: both PDM-Closed cells 319 draws each (their prize sits in one log), KITTI oracle traj 85, KITTI mono
+    traj 29, every other cell 7 or fewer.
+
+**Pooled test (primary G, 20%, 12 cells). Reading: architecture-driven.**
+
+| architecture | mean Δ (V − G) | 95% CI | cells with V > G |
+|---|---|---|---|
+| gate_ridge | +0.118 | [−0.080, +0.275] | 9 |
+| gate_gbm | +0.106 | [−0.058, +0.217] | 7 |
+| R1_mlp_reg | +0.040 | [−0.083, +0.141] | 6 |
+| R1_mlp_clf | +0.117 | [−0.037, +0.197] | 9 |
+| R1_gbm_reg | −0.069 | [−0.186, +0.131] | 6 |
+| R1_gbm_clf | +0.013 | [−0.070, +0.164] | 7 |
+
+* Every pooled CI includes 0. The secondary G variants (`dE_exact`, `dE_E6_risk_weighted`) also read
+  architecture-driven.
+* Point estimates favour V for five of six architectures (both gates and R1_mlp_clf by about 0.12), but none is
+  significant.
+
+**Significant cells, primary G, 20%.**
+
+| direction | cells |
+|---|---|
+| G-target beats V-target | R1_gbm_reg and R1_gbm_clf on both PDM-Closed cells (Δ −0.63 and about −0.41) |
+| V-target beats G-target | gate_ridge and gate_gbm on both PDM-Closed cells (Δ +0.56 to +0.71); R1_mlp_clf on PDM-Closed scalar_J; gate_gbm and R1_mlp_clf on KITTI oracle traj; R1_gbm_clf on KITTI oracle brake |
+| V-target beats G-target, not pooled | IDM scalar_J (10 affected test states): R1_mlp_reg, R1_mlp_clf (0.94 vs 0.03), R1_gbm_clf |
+
+* At other quotas, G beats V on KITTI mono traj with gate_ridge (30% and 50%).
+* No nuScenes cell differs significantly at 20% with the primary G.
+
+**Budget, 20% ms (primary G).**
+* On core cells the gates and GBM routers escalate no frames: their overhead exceeds the budget. There V and G are
+  identical by construction.
+* Where frames are escalated, V beats G significantly in 10 rows and G beats V in 1 (IDM scalar_J batched gate,
+  Δ −0.001).
+
+**Train-split sign agreement P(sign G = sign V | both ≠ 0), primary G.**
+
+| cells | agreement |
+|---|---|
+| nuScenes | 0.49–0.58 |
+| KITTI | 0.62–0.85 |
+| PDM-Closed | 0.73 (11 pairs, safety), 0.68 (28 pairs, scalar_J) |
+
+**Interpretation.**
+* By the registered rule the pooled advantage cannot be attributed to the decision-value objective.
+* The objective does matter in individual cells, in both directions:
+  * **V-trained gates win PDM-Closed.** This rests on one scenario (Task 7 caveat).
+  * **G-trained GBM routers win PDM-Closed.** A dense perception label is learnable where the V label has only 18 or
+    56 affected training states.
