@@ -2576,3 +2576,51 @@ computation errors only. It cannot change the registered reading. Anything beyon
 | **A3** | Are any G-target scores degenerate (constant, few distinct values, ties at the 20% cut)? Does the recomputed nDG equal 122's? |
 | **A4** | per-cell V-target CIs at 20% from 122's joint bootstrap against the official per-cell CIs |
 | **A5** | 122's pooled bootstrap re-run with the same seed must reproduce its CIs. Exploratory: the pooled CI on draws with all 12 cells present, core 10 only, and the two PDM-Closed cells only |
+
+## 2026-09-15 22:27 — Task 9 audit results: no computation error found
+
+`scripts/supervise_task9_audit.sh` ran 22:19–22:25, exit 0. Outputs in `results/raw/20260915_221911_target_swap_audit/`.
+
+| check | result |
+|---|---|
+| **A1** G-target code path with V as label | reproduces the official V-target scores in 84/84 architecture × cell rows (83 bit-identical, 1 differing by 1e-16); nDG at 20% identical. The G-target models differ from the official ones in the label alone. |
+| **A3** degenerate scores | no constant G-target scores; no row with a tie share above 0.5 at the 20% cut; all 252 G-target nDG values recomputed from the saved scores equal 122's. The only constant scores are two official V-target classifiers on IDM safety, which is undefined. |
+| **A4** joint vs official per-cell bootstrap | V-target CI width ratio median 1.00 (range 0.58–1.09). At 20%, 13 of 78 rows beat random against 12 in the official tables. The joint bootstrap does not inflate per-cell uncertainty. |
+| **A5** pooled bootstrap re-run with the same seed | reproduces 122's pooled CIs exactly for all six architectures |
+| **A2** labels | equal the official diagnostic columns (label nDG equals the official `dE_*` rows, 30/30) |
+
+**A2 in detail: how the G labels behave.**
+* **nuScenes `dE_E5_combined` is negative on 49% of fitting frames** (mean −0.07 to −0.09), while `dE_exact` is positive
+  (mean +0.85, 3% negative). So the sign convention is right. At 640, nuScenes detections carry more
+  false-positive and localisation error, which outweighs the fewer misses in E5.
+* **G carries little information about V.**
+  * Spearman(G, V) on the fitting units: nuScenes −0.01 to 0.09, KITTI 0.06–0.22, PDM-Closed 0.02–0.06.
+  * The G label itself, ranked against V on test at 20%: nuScenes −0.08 to 0.19, KITTI 0.16–0.66, PDM-Closed 0.30.
+
+**Why the pooled test is null** (A5 exploratory, not part of the registered test):
+
+| subset | gate_ridge | gate_gbm | R1_mlp_reg | R1_mlp_clf | R1_gbm_reg | R1_gbm_clf |
+|---|---|---|---|---|---|---|
+| core 10 cells, mean Δ [CI] | +0.000 [−0.111, +0.186] | +0.014 [−0.097, +0.144] | +0.061 [−0.083, +0.155] | +0.121 [−0.052, +0.209] | +0.043 [−0.108, +0.162] | +0.097 [−0.013, +0.186] |
+| PDM-Closed 2 cells, mean Δ [CI] | +0.704 [+0.393, +0.924] | +0.566 [+0.315, +0.704] | −0.067 [−0.148, +0.072] | +0.098 [−0.057, +0.292] | −0.631 [−0.684, −0.531] | −0.410 [−0.547, −0.211] |
+| 618 draws with all 12 cells present, CI | [+0.005, +0.284] | [+0.009, +0.231] | [−0.086, +0.123] | [−0.010, +0.195] | [−0.179, +0.033] | [−0.071, +0.105] |
+| pooled mean, PDM-Closed in / out of the draw | 0.136 / 0.024 | 0.109 / 0.020 | 0.027 / 0.046 | 0.090 / 0.092 | −0.072 / 0.034 | 0.015 / 0.090 |
+
+* **On the 10 core cells the target makes no difference to the gates** (Δ ≈ 0). The R1 classifiers lean towards V by
+  0.10–0.12, not significantly.
+* **The gates' pooled lean comes entirely from the two PDM-Closed cells**, whose prize sits in one scenario.
+* **Restricting to draws that contain all 12 cells would put both gate CIs above 0.** That subset is conditional on
+  resampling PDM-Closed's dominant log, so it is not an unbiased interval. It does not change the registered
+  reading.
+* **The official V-target allocators themselves beat random in only 12 of 78 rows at 20%**, none on nuScenes. There
+  is little V-target advantage for a G-target to fall short of.
+
+**Two design choices in the pre-registration to flag** (not errors; both were registered before the run):
+1. **Resampling.** Units are resampled once per dataset per draw and shared by all cells of that dataset. The Task 9
+   specification's "resample units within every cell in each draw" could also be read as independent resampling
+   per cell. That would treat cells sharing the same scenes and sequences as independent and give a narrower
+   pooled CI.
+2. **Dropped cells.** The pooled mean in a draw averages only the cells not dropped by the 25%-prize rule. A 382-draw
+   mixture of 10-cell and 12-cell means widens the CI.
+
+Neither changes the reading without a new pre-registration.

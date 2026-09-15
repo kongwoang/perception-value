@@ -214,3 +214,34 @@ R1_gbm_clf.
   * Averaged over the pooled cells, the V-trained gates recover about twice the absolute loss reduction of their
     G-trained counterparts: 10.4–10.5% against 4.6–5.2%, point estimates.
 * **How to state it.** Per cell and per architecture, with the pooled null result reported alongside.
+
+## 9. Audit after the results: no computation error found
+
+Requested after the results were read. Code: `scripts/123_target_swap_audit.py`; outputs in
+`results/raw/*_target_swap_audit/`.
+
+| check | result |
+|---|---|
+| G-target code path with V as label | reproduces the official V-target scores in 84/84 architecture × cell rows (1 differs by 1e-16; nDG identical). The G models differ from the official ones in the label alone |
+| degenerate G-target scores | none constant; no tie share above 0.5 at the 20% cut; all 252 recomputed nDG values equal 122's |
+| per-cell bootstrap | CI width against the official per-cell CIs: median ratio 1.00 (0.58–1.09); 13 vs 12 rows beat random at 20% |
+| pooled bootstrap | re-run with the same seed reproduces the pooled CIs exactly |
+| G labels | equal the official `dE_*` diagnostic columns. On nuScenes, `dE_exact` is positive on average (+0.85), so the sign is right; `dE_E5_combined` is negative on 49% of frames, because at 640 nuScenes carries more FP and localisation error |
+
+**Why the result is null** (exploratory, not the registered test):
+* **G says little about V.** Spearman(G, V) on the fitting units is at most 0.22. Ranked against V at 20%, the G label
+  itself reaches −0.08 to 0.19 on nuScenes, 0.16–0.66 on KITTI and 0.30 on PDM-Closed.
+* **The official V-target allocators beat random in only 12 of 78 rows at 20%**, none on nuScenes. There is little
+  V-target advantage to lose.
+* **On the 10 core cells the target makes no difference to the gates:** mean Δ +0.000 and +0.014. The R1 classifiers
+  lean towards V by +0.12 (mlp_clf) and +0.10 (gbm_clf), and every CI includes 0.
+* **The two PDM-Closed cells carry the pooled signal in both directions:** gates +0.70 and +0.57, GBM routers −0.63
+  and −0.41, all significant. They are dropped from 319 draws, and the pooled mean then averages 10 instead of 12
+  cells.
+* **Restricting to the 618 draws with all 12 cells present puts both gate CIs above 0.** That subset is conditional
+  on resampling PDM-Closed's dominant log, so it is not an unbiased interval and does not change the reading.
+
+**Two registered design choices a reader may question:**
+1. **Units are resampled once per dataset and shared by that dataset's cells.** Independent per-cell resampling
+   would ignore that the cells share scenes and sequences, and would narrow the pooled CI.
+2. **The pooled mean averages the cells that survive the 25%-prize rule in each draw.**
