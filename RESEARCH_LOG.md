@@ -2561,3 +2561,18 @@ G variant, on train units and on train ∪ val, with the number of pairs.
   * **V-trained gates win PDM-Closed.** This rests on one scenario (Task 7 caveat).
   * **G-trained GBM routers win PDM-Closed.** A dense perception label is learnable where the V label has only 18 or
     56 affected training states.
+
+## 2026-09-15 22:18 — Task 9 audit plan (requested after the results were read)
+
+**Request.** After seeing the result, the user asked whether anything was computed wrongly. This audit looks for
+computation errors only. It cannot change the registered reading. Anything beyond A1–A4 is labelled exploratory.
+
+**Script:** `scripts/123_target_swap_audit.py`. It changes no result file.
+
+| check | question |
+|---|---|
+| **A1** | The G-target code path (92's `gate_predictions` and 103's `fit_score` on 122's inputs and masks), given V as label, must reproduce the official V-target scores in every cell. Only then are the G-target fits known to differ from the official ones in the label alone. |
+| **A2** | G labels per cell: orientation, non-zero shares, Spearman correlation with V on the fitting units, and the nDG of the label itself against V on test (the ceiling for a G-trained model) |
+| **A3** | Are any G-target scores degenerate (constant, few distinct values, ties at the 20% cut)? Does the recomputed nDG equal 122's? |
+| **A4** | per-cell V-target CIs at 20% from 122's joint bootstrap against the official per-cell CIs |
+| **A5** | 122's pooled bootstrap re-run with the same seed must reproduce its CIs. Exploratory: the pooled CI on draws with all 12 cells present, core 10 only, and the two PDM-Closed cells only |
