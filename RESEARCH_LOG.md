@@ -3001,3 +3001,49 @@ feasible bounded subset may be reported as information, but is not run under thi
 **Why this matters for the paper.** The nuPlan track's prize mass concentrates in a single test log. An expansion
 is worth running only if it adds test logs; adding scenarios inside the existing 34 logs would not address the
 concentration. Whether it does is an outcome, not a gate criterion.
+
+## 2026-09-16 10:22 — Correction to the Task 13 Part C pre-registration (commit 8e175d2)
+
+The motivation sentence in that entry said the nuPlan track's prize mass "concentrates in a single test log".
+That was written from memory and is not what the data says. Checked against the Task 12 influence section
+(`results/final/statistics_hardening.csv`): nuPlan has 9 test units, and 17 of its 37 rows with positive nDG fall
+to <= 0 when a single test log is dropped; the same count is 10 of 92 on KITTI and 36 of 99 on nuScenes.
+
+The defensible statement is **single-test-unit fragility, worst on nuPlan**, not that the prize sits in one log.
+The gate criteria and the decision rule of that pre-registration are unchanged.
+
+## 2026-09-16 10:15 — Task 13 Part D pre-registration: does a perception-centric objective pick a different allocator?
+
+**Relation to Task 9.** Task 9 asked which *training target* produces a better model and returned a pre-registered
+null. That null stands and is not revisited. This asks a different question: with the method pool and the protocol
+held fixed, which method does each *evaluation objective* select?
+
+**Objectives.** Both use the existing selection protocol, the exact tie expectation (`topk_expect`) and the
+cluster bootstrap over units, on the test split of the 14 official held-out cells, at quotas 10/20/30/50%.
+* `E_dec`: realised decision value / decision-value oracle prize at the budget — the official nDG.
+* `E_perc`: identical, with the per-input value replaced by a perception gain and normalised by the
+  perception-gain oracle at the same budget. Run twice: `G^dE = dE_E1_fn_only` (missed objects) and
+  `E_risk = dE_E6_risk_weighted`.
+
+**Method pool, in three tiers, reported separately; the headline is tiers 1 and 3.**
+1. Target-free, non-circular core: `random`, `uncertainty`, `criticality_cheap`, `trivial_ego_speed`.
+2. V-trained, **flagged as advantaged under E_dec**: `gate_ridge`, `gate_gbm`, the four R1 routers, `R2_cnn_clf`.
+3. Perception diagnostics: `dE_exact`, `dE_E1_fn_only`, `dE_E6_risk_weighted`, `PKL`, `TIP`.
+
+Known unavailability, recorded now so it cannot be mistaken for a result: on the nuPlan real-perception cells
+`uncertainty` (no cheap-detection uncertainty in those features), `R2_cnn_clf` (trained on nuScenes and KITTI
+images), `dE_exact`, `PKL` and `TIP` are undefined; on KITTI `PKL` and `TIP` are undefined. Under `E_perc` with
+value `G`, the signal equal to `G` scores 1.0 by construction; that is expected, not a finding.
+
+**Reported per cell and budget.** Kendall tau between the two induced method rankings; whether the argmax differs,
+and in how many cells; the **selection regret** — decision value realised by the method `E_perc` selects minus
+that of the method `E_dec` selects, in nDG and as a share of the all-cheap loss, with a paired unit bootstrap of
+1,000 draws where **every draw is kept**, the official 25% prize filter reported alongside as a count, never
+substituted; and how often the `E_perc` winner is worse than random on decision value. Selection is fixed from the
+point estimate; the bootstrap measures the two selected methods.
+
+**Sanity check to report.** The `E_dec` column must reproduce the official held-out nDG to 3 decimals, against
+`benchmark_table.csv`, `benchmark_table_routers.csv` and `benchmark_table_nuplan_real.csv`. The run asserts this.
+
+**Outputs.** `results/final/objective_swap.csv` (sections `score`, `compare`, `sanity`) and
+`docs/iclr_objective_swap.md`. No official result file is modified. Report whatever comes out.
