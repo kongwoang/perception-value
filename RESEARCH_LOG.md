@@ -2624,3 +2624,100 @@ computation errors only. It cannot change the registered reading. Anything beyon
    mixture of 10-cell and 12-cell means widens the CI.
 
 Neither changes the reading without a new pre-registration.
+
+## 2026-09-16 07:16 — Task 11 pre-registration: causal streaming allocation with a calibrated threshold
+
+**Question.** The benchmark scores an allocator as a ranking that fills a budget over the whole test split. What
+happens when the same scores are applied causally: one threshold frozen before the test stream, then applied in
+timestamp order?
+
+Written and committed before the script is run. No official result file is modified. CPU only, cached scores.
+Code: `scripts/124_causal_threshold.py`. Outputs: `results/final/causal_threshold.csv`,
+`docs/iclr_causal_threshold.md`.
+
+### Cells and signals
+
+* The 14 official held-out cells: 10 core (nuScenes oracle/mono × brake/plan_ade/plan_fde; KITTI oracle/mono ×
+  brake/traj) and 4 nuPlan real-perception cells. IDM safety keeps Task 7's undefined rule (< 10 affected test
+  states), so its nDG stays undefined; realised rates are still reported.
+* Signals: `random`, `uncertainty`, `criticality_cheap`, `gate_ridge`, `gate_gbm`, `R1_mlp_reg`, `R1_mlp_clf`,
+  `R1_gbm_reg`, `R1_gbm_clf`, and `R2_cnn_clf` on core cells.
+* **Availability, checked before registering:**
+  * `uncertainty` does not exist on the nuPlan real cells (no `unc_proxy` among 119's signals, and 120's leakage
+    guard refuses it): reported as unavailable there.
+  * **R2's cached scores cover the test frames only.** A threshold cannot be calibrated for it on validation or
+    train ∪ val without re-running the image model, which needs a GPU. R2 therefore appears only in the official
+    top-k row and in the sanity check; its V1 and V2 rows are written as unavailable with that reason.
+* Target rates: 10, 20, 30, 50%.
+
+### Calibration variants (both reported)
+
+| variant | model | threshold calibrated on |
+|---|---|---|
+| **V1 (primary)** | refit on TRAIN units only (gates: 92's model spec; R1: 103's `fit_score`) | the VALIDATION units (nuScenes 16 scenes, KITTI 4 sequences, nuPlan 6 logs) |
+| **V2** | the official model, fit on train ∪ val | grouped 5-fold cross-fitting inside train ∪ val: units sorted and assigned round-robin to folds, each fold scored by a model refit on the other four, thresholds calibrated on the pooled out-of-fold scores |
+
+V2 isolates whether any change comes from refitting. For `uncertainty` and `criticality_cheap` nothing is fitted, so
+V2 calibrates on all train ∪ val scores.
+
+**tau_k.** On the calibration scores (n values, rounded to 9 decimals as `topk_expect` does), tau is the value at
+rank ceil(k·n) from the top, and p = (k·n − #{s > tau}) / #{s = tau}, clipped to [0, 1]. On test a frame escalates
+iff s > tau, or s = tau and a seeded Bernoulli(p) fires. This is `topk_expect`'s randomised tie convention, so the
+target rate is hit in expectation.
+
+### Policies on the test split
+
+| policy | rule |
+|---|---|
+| **A** | frozen threshold: escalate iff the tie-broken score passes tau_k |
+| **B** | A plus a causal budget: inputs of each test unit are processed in timestamp order; escalate iff A fires **and** the running count of escalations in that unit is < floor(1 + k·t), where t is the 1-based index of the current input. No future information and no knowledge of the unit's length |
+| **C** | the official top-k over the whole test split: the hindsight reference row |
+
+`random` escalates Bernoulli(k) under A, and the same draw under B's cap; it is simulated with 32 seeded
+realisations and reported as their mean.
+
+**Stream order.** Core cells: `(seq, frame)` ascending. nuPlan: within a log, scenarios ordered by their `t0` in
+`configs/benchmark_nuplan_scenarios.csv`, then by iteration. Scenario windows inside one log can overlap in time
+(5.2–9.1 s, recorded with the splits); this ordering is the registered convention.
+
+### Reported per cell × signal × rate × policy × variant
+
+* realised escalation rate on test: overall, and the minimum and maximum across test units;
+* realised decision value: the raw gain Σ V over escalated frames, in loss units and as a share of the all-cheap
+  loss on test;
+* nDG against the official oracle prize at the target rate: the denominator is `topk_expect` at
+  k_n = max(round(k·n), 1), the official rule;
+* a paired unit-level bootstrap against `random` under the same policy: 1,000 draws, units resampled once per
+  dataset per draw and shared by every cell, signal and policy, so all differences are paired; the official 25%
+  prize filter applies and the number of dropped draws is reported.
+
+### Measured-budget variant
+
+93's costs and overheads (`profile_costs`, `signal_overhead`, `benchmark_budget_overheads_routers.json`; nuPlan
+uses the KITTI profile, as in the official budget table). At the 20% and 50% ms budgets the target rate is the
+feasible escalation share after the allocator's own overhead, k = max((budget − cheap − overhead)/full, 0), and
+policy B is run at that rate. Two baseline rows are added:
+
+* **all-cheap**: nothing escalates;
+* **uniform full fidelity**: FULL on every frame, feasible only when the budget covers a full pass, that is from
+  budget level 1 − cheap/full = 28.6% on KITTI and nuPlan and 34.3% on nuScenes (checked against 93's costs).
+
+### Primary statistic and reading rule (registered before running)
+
+At the 20% rate, variant V1, over the 10 core cells plus the two PDM-Closed cells, the mean paired difference
+nDG(policy B) − nDG(official top-k), bootstrapped jointly. The primary averages over the six learned deployable
+signals (both gates and the four R1 routers) as well as over the 12 cells; the per-signal pooled intervals are
+reported beside it.
+
+| reading | condition on the pooled 95% CI |
+|---|---|
+| **streaming holds** | lower bound above −0.05 |
+| **streaming costs** | the interval lies entirely below −0.05 |
+| **inconclusive** | otherwise |
+
+### Checks
+
+* **Sanity (deciding):** calibrating tau on the TEST scores instead, policy A's expected gain must reproduce the
+  official top-k nDG to 3 decimals, for every cell, signal and rate.
+* Refitting on train ∪ val must reproduce the official scores (the same code path as 92 and 103).
+* Every realised rate that deviates from its target by more than 5 percentage points is listed.
