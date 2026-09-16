@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""Task 2, R2: a raw-pixel weak-skipping router -- MobileNetV2-style CNN at 128 x 128.
+"""Task 2, R2: a raw-pixel router under the cascade -- MobileNetV2-style CNN at 128 x 128.
+
+CHEAP runs on every input, and R2 only decides whether FULL is added; the skipping design, where an
+escalated input runs FULL instead of CHEAP, is evaluated separately in scripts/128_skip_accounting.py.
 
 Pre-registered in RESEARCH_LOG.md (2026-09-14, "Task 2 pre-registration").
 

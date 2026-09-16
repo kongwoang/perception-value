@@ -21,9 +21,13 @@ No router hyperparameter was changed after a test score was seen.
 | router | input | model | score |
 |---|---|---|---|
 | **R1** (ORIC-style) | top 25 CHEAP detections by confidence (conf ≥ 0.10): conf, normalised box, class one-hot, area, 225 dims. nuPlan: 25 nearest CHEAP-kept tracks, 250 dims | MLP 2×64 or the benchmark GBM | V (regression) or P(V>0) (classification) |
-| **R2** (weak skipping) | CHEAP camera frame resized to 128×128 | MobileNetV2 ×1.2 = **0.151 GFLOPs**, trained from scratch, one head per cell, served as a TensorRT FP16 engine | P(V>0) |
+| **R2** (raw-pixel router, cascade) | raw camera image (nuScenes CAM_FRONT, KITTI image_02) resized to 128×128, aspect ratio not preserved | MobileNetV2 ×1.2 = **0.151 GFLOPs**, trained from scratch: one network per dataset, shared across its cells, with a single Linear(1536 → one logit per cell), trained jointly under a masked multi-task BCE; served as a TensorRT FP16 engine | P(V>0) |
 
-R2 check: TensorRT and PyTorch scores agree to Spearman 0.9996–0.9999 per head.
+R2 runs under the benchmark's cascade: CHEAP runs on every input, and R2 only decides whether FULL is added.
+The skipping design, where an escalated input runs FULL instead of CHEAP, is evaluated as a separate cost
+accounting in `docs/iclr_skip_accounting.md`.
+
+R2 check: TensorRT and PyTorch scores agree to Spearman 0.9996–0.9999 per output.
 
 R2 training data and fit:
 * nuScenes: 2,421 train ∪ val frames, 6 heads, loss 1.20 → 0.015;
@@ -40,9 +44,9 @@ Single-frame medians. CHEAP's decode is shared and not charged to R2.
 | ridge / GBM inference, one row | 0.41 / 17.9 ms | same |
 | GBM inference, amortised in a 1,000-row batch | 0.018 ms | same |
 | **R1 features** | **0.106 ms** | **0.111 ms** |
-| R1 MLP / GBM inference, one row | 0.54 / 15.8 ms | same |
+| R1 MLP / GBM inference, one row (timed on the regressors; the classifiers are charged the same) | 0.54 / 15.8 ms | same |
 | R2 resize + upload | 8.22 ms | 3.27 ms |
-| R2 TensorRT inference | 1.55 ms | 1.55 ms |
+| R2 TensorRT inference (timed once, with the nuScenes engine, and charged to both datasets) | 1.55 ms | 1.55 ms |
 | (image decode, already paid by CHEAP) | 31.0 ms | 15.7 ms |
 
 Totals per frame:

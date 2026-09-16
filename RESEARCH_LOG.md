@@ -3263,3 +3263,33 @@ identical k.
 **Change.** The script now reads the shipped table with `float_precision="round_trip"`. The gate is unchanged:
 exact equality of the share, `eta` to 1e-9. No tolerance was added. The medians the task asked for were already
 right on the failed run: 0.0% / 0.0% at 20% and 0.0% / 23.9% at 50% (nuScenes / KITTI, ms).
+
+## 2026-09-16 22:00 — Task 16 Part A results: R2 under skipping accounting tracks random
+
+Registered run `20260916_215103_skip_accounting` (`--nboot 1000`), after the logged gate deviation. Output
+`results/final/skip_accounting.csv` (80 validation, 18 share and 28 evaluation rows); report
+`docs/iclr_skip_accounting.md`. No official result file was touched.
+
+**Validation passed.** The cascade branch reproduces all 80 shipped R2 rows: share exactly equal 80/80, `eta` within
+1e-9 80/80. That includes 0.0% / 0.0% at 20% ms and 0.0% / 23.9% at 50% ms (nuScenes / KITTI).
+
+**Shares confirmed as registered.** The task's expected ms shares are right: nuScenes 0% at every budget; KITTI 0,
+0, 13.69 and 83.51%. Energy gives nuScenes 9.79 / 40.83% and KITTI 11.08 / 45.52% at 30 / 50%.
+
+**Evaluation, 28 rows with a positive skipping share.**
+* **R2 beats random in 0 and loses in 2**, both at the 50% energy budget:
+  * nuScenes oracle braking: nDG −0.172 against +0.168, difference −0.340 [−1.171, −0.025];
+  * KITTI oracle Planner B: +0.200 against +0.453, difference −0.253 [−0.395, −0.061].
+* Point nDG is below random in 18 of 28.
+* Latency rows (KITTI only): 8 rows, 0 wins, 0 losses. At the 83.5% share, R2 reaches 0.31–0.70 nDG and random
+  0.29–0.83.
+* No bootstrap draw had a non-positive oracle; every draw was kept.
+
+**Protocol check.** The denominator is the oracle escalating the same k in every row. The regimes: at capacity in
+21 rows; share below the positive share in 6 (oracle 0.863–0.998 of capacity); **share above the non-negative
+share in exactly 1**, KITTI mono braking at 50% ms, 83.5% against a non-negative share of 79.0%, oracle 0.996 of
+capacity. The other KITTI cells' non-negative shares are 88.5, 94.6 and 98.8%.
+
+**Reading, as registered.** Skipping changes how many inputs R2 escalates, not which. The ranking that did not
+beat random under the cascade does not beat it here, and loses significantly in two energy rows. With 28 one-sided
+tests, about 0.7 wins and 0.7 losses are expected by chance. No surprise to report.
