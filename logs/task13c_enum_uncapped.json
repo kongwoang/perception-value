@@ -1,0 +1,16 @@
+{
+ "rule": "ScenarioFilter(all filters None, shuffle=False), limit_total_scenarios=None",
+ "n_scenarios": 219607,
+ "n_logs": 54,
+ "mini_split_db_files": 64,
+ "frozen_n_scenarios": 60,
+ "frozen_n_logs": 34,
+ "additional_scenarios": 219547,
+ "additional_logs": 20,
+ "frozen_tokens_all_in_pool": true,
+ "first60_matches_frozen_set": false,
+ "first60_n_logs": 36,
+ "scenarios_per_log_median": 4000,
+ "scenarios_per_log_max": 7200,
+ "seconds": 21.6
+}

@@ -3047,3 +3047,67 @@ point estimate; the bootstrap measures the two selected methods.
 
 **Outputs.** `results/final/objective_swap.csv` (sections `score`, `compare`, `sanity`) and
 `docs/iclr_objective_swap.md`. No official result file is modified. Report whatever comes out.
+
+## 2026-09-16 11:15 — Task 13 Part C results: the expansion gate is CLOSED
+
+Enumeration recorded in `logs/task13c_enum_uncapped.json` (the existing rule: `ScenarioFilter` with every filter
+`None`, `shuffle=False`, uncapped; 21.6 s).
+
+| quantity | value |
+|---|---|
+| scenarios the rule admits | 219,607 over 54 logs (mini split has 64 db files) |
+| currently frozen | 60 scenarios over 34 logs |
+| **additional** | **219,547 scenarios, 20 logs** |
+| scenarios per log | median 4,000, max 7,200 |
+| frozen tokens all present in the pool | yes |
+| **the frozen 60 are the first 60 of the enumeration** | **no** — the first 60 span 36 logs, not 34 |
+
+**Measured per-scenario cost** from the Task 5 chain on 60 scenarios / 1,440 states: fetch 12.4 min, detection
+12.6, projection 5.4, IDM reference 18.3, PDM-Closed reference 39.8, IDM branches 76.3, PDM-Closed branches
+186.2, cells and markdown 0.7 — **351.7 min for 60 scenarios, i.e. 5.86 min per scenario** and 46.1 MB of CAM_F0
+images per 20 s window (2.766 GB for the current 60).
+
+**Gate arithmetic.** Running the additional scenarios the rule admits would take 219,547 × 5.86 min ≈ **21,400
+hours** and need ≈ **10.1 TB** of camera images against **102 GB** free. Both limits of the pre-registered
+decision rule are exceeded by orders of magnitude, so per that rule: **STOP, report the gate only.** Nothing was
+run, and no directory was created for it.
+
+**Two findings worth carrying forward, neither of them a result.**
+1. **The existing rule cannot be extended by raising its cap.** The frozen 60 are not a prefix of the uncapped
+   enumeration (the first 60 span 36 logs; a cap of 1,500 gives 35), so the builder's order depends on the cap
+   itself. Any expansion must freeze an explicit token list before any outcome is seen — expressible in the same
+   machinery through `ScenarioFilter(scenario_tokens=...)`.
+2. **A bounded expansion is affordable, and is not authorised by this pre-registration.** At the measured rate,
+   12 hours buys about **122 scenarios** (≈5.6 GB of images, which fits). That would also require raising the
+   registered 3.5 GB member-byte fetch cap. Reported as information for a future decision.
+
+## 2026-09-16 11:20 — Task 13 Part D results: perception-centric evaluation selects a different allocator
+
+Pre-registered at commit `2f1c219`, run afterwards. Output `results/final/objective_swap.csv` (3,388 rows),
+report `docs/iclr_objective_swap.md`. No official result file was touched.
+
+**Sanity.** `E_dec` reproduces the official held-out nDG in **688 of 688 comparable rows** (max abs diff
+1.1e-16). The other 40 sanity rows have a NaN official value: they are the nuPlan IDM safety cell, which the
+benchmark declares undefined (4 affected test states < 10). My script computes a number there because its prize
+is positive; the cell is flagged `ndg_defined=False` and is excluded from every summary. The printed sanity line
+says 728/728 because NaN comparisons fail silently — corrected here and in the report.
+
+**Result (headline pool = tiers 1 and 3, 13 defined cells × 4 budgets = 52 per variant).**
+
+| | `E_perc_dE` | `E_perc_risk` |
+|---|---|---|
+| argmax differs | 42/52 | 40/52 |
+| Kendall tau, median | +0.171 | 0.000 |
+| selection regret, median nDG | −0.104 | −0.122 |
+| worse than random on decision value | 16/52 | 22/52 |
+| regret intervals excluding zero | 4/52 | **0/52** |
+
+Under `E_perc` the winner is a perception diagnostic in 104/104; under `E_dec` it splits 52 target-free / 52
+diagnostics, with `trivial_ego_speed` winning 34. With the V-trained tier added, 87/104 argmaxes differ, median
+regret −0.229, worse-than-random 38/104, and `E_dec` picks a V-trained method in 44/104.
+
+**Reading, and its limit.** The objective changes the selected method in most cells, and the perception-selected
+method often fails to beat random on the decision. But with 24, 6 and 9 test units the per-cell regret is mostly
+not separable from zero — 4 of 52 intervals exclude it for the missed-object variant and none for the
+risk-weighted one. What the data supports is the disagreement in *selection*; the *size* of the loss is not
+established. Reported as it came out.
