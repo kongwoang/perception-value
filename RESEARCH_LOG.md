@@ -2721,3 +2721,51 @@ reported beside it.
   official top-k nDG to 3 decimals, for every cell, signal and rate.
 * Refitting on train ∪ val must reproduce the official scores (the same code path as 92 and 103).
 * Every realised rate that deviates from its target by more than 5 percentage points is listed.
+
+## 2026-09-16 07:57 — Task 11 results: causal streaming allocation (pre-registered, commit 780efbe)
+
+Run 07:27–07:53, exit 0. `results/final/causal_threshold.csv` (3,464 rows), report `docs/iclr_causal_threshold.md`.
+No official result file was touched.
+
+**Two fixes after the pre-registration commit, before any result was read.**
+1. The debug path (`--max_cells`, added for a 2-cell smoke run) did not write the refit-check file; it does now.
+2. The sanity variant calibrated tau at the fractional count k·n, while the official top-k row uses the integer
+   max(round(k·n), 1). Three of 72 smoke rows then missed the 3-decimal target at the 30% rate. The sanity variant
+   now calibrates at the official integer count, which is what the registered check meant.
+
+**Checks.**
+* Refitting on train ∪ val reproduces the official scores: maximum absolute difference 1.11e-16 over 64 rows.
+* A threshold calibrated on the test scores reproduces the official top-k nDG to 3 decimals in **444 of 444 rows**.
+
+**Primary statistic (V1, 20%, 12 cells, six learned signals): −0.089, CI [−0.143, −0.024]. Reading: inconclusive.**
+The interval straddles the registered −0.05 line, so neither "streaming holds" nor "streaming costs" fires. Per
+signal: gate_ridge −0.090 [−0.226, +0.097], gate_gbm −0.096 [−0.195, +0.035], R1_mlp_reg −0.015 [−0.088, +0.086],
+R1_mlp_clf −0.095 [−0.176, −0.015], R1_gbm_reg −0.114 [−0.218, −0.020], R1_gbm_clf −0.124 [−0.207, −0.050]. 382 of
+1,000 draws left a pooled cell out.
+
+**What the decomposition shows (20%, pooled cells, learned signals).**
+
+| policy | mean nDG | vs official |
+|---|---|---|
+| official top-k | +0.205 | — |
+| A, frozen threshold | +0.217 | +0.012 |
+| B, frozen threshold + causal cap | +0.105 | −0.100 |
+
+* A beats the official ranking in 41 of 72 cell × signal pairs, B in 21. **The frozen threshold is free; the causal
+  cap costs about half the decision value**, because escalations arrive in bursts that floor(1 + k·t) refuses.
+* Refitting is not the cause: V2 (official models, cross-fitted threshold) gives −0.081 against V1's −0.095.
+* Worst cells: PDM-Closed scalar_J −0.254, PDM-Closed safety −0.206, nuScenes oracle brake −0.183, KITTI oracle
+  traj −0.180. Two cells gain: nuScenes oracle plan_ade +0.061, KITTI mono traj +0.018.
+
+**Realised rates.** 1,195 of 1,840 rows miss the target by more than 5 pp (median 7.4–8.5 pp, worst 35.5 pp), in
+both directions, and the miss grows with the target rate. Only `random`, which needs no calibration, holds its rate.
+
+**Significance against random (V1, all rates).** Official 71 rows; A 106 rows (55 verdicts change); B 81 rows (64
+change). Streaming promotes some allocators and demotes others.
+
+**Measured budgets.** At 20% ms both gates and both GBM routers have zero feasible rate after their overhead, so
+they escalate nothing; mean policy-B nDG is +0.026. At 50% ms the mean is +0.110, and **uniform full fidelity beats
+the best allocator in 11 of 14 cells** on loss reduction (for example KITTI oracle traj 51.8% against 30.6%).
+
+**Reading for the paper.** The benchmark's rows are hindsight top-k. The frozen threshold reproduces them, the
+causal cap does not, and at deployable latency budgets the ranking often matters less than simply running FULL.

@@ -311,7 +311,9 @@ def main():
                                          "undefined_reason": R2_REASON})
                         continue
                     cal, test_s = c["scores"][(variant, s)]
-                    tau, p = calibrate(cal, k)
+                    # the sanity variant calibrates at the official integer count, so its tie convention is exactly
+                    # the one topk_expect uses for the top-k row it must reproduce
+                    tau, p = calibrate(cal, (kn / n) if variant == "TEST" else k)
                     if variant == "TEST":
                         st = np.round(np.nan_to_num(test_s, nan=-np.inf), 9)
                         g_exp = float(v[st > tau].sum() + p * v[st == tau].sum())
@@ -433,6 +435,7 @@ def main():
     if args.max_cells:
         print("  debug run: the pooled statistic needs all 12 cells, skipping it")
         pd.DataFrame(rows).to_csv(run / "causal_threshold.csv", index=False)
+        pd.DataFrame(refit_check).to_csv(run / "refit_matches_official.csv", index=False)
         return
     assert len(pooled_cells) == 12, len(pooled_cells)
     per_signal, left_out = {}, None
