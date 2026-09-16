@@ -2829,3 +2829,46 @@ and harmed / all inputs, with counts, where harmed means V < −1e-9.
 
 Recomputing the official nDG through this script must match the released tables to 3 decimals for every cell,
 signal and quota.
+
+## 2026-09-16 08:11 — Task 12 results: statistics hardening (pre-registered, commit e627e60)
+
+Run 08:04–08:08, exit 0. `results/final/statistics_hardening.csv` (2,552 rows), report `docs/iclr_statistics.md`.
+No official result file was touched.
+
+**Check.** The recomputed official nDG matches the released tables to 3 decimals in **980 of 980** comparisons.
+
+**(a) Raw gain instead of nDG.** Paired unit bootstrap, every draw kept.
+
+| quota | rows | beat random, every draw | beat random, 25% filter | verdicts changed |
+|---|---|---|---|---|
+| 10% | 294 | 18 | 28 | 10 |
+| 20% | 294 | 18 | 24 | 6 |
+| 30% | 294 | 28 | 34 | 6 |
+| 50% | 294 | 36 | 55 | 19 |
+
+* **The prize filter only ever adds wins**, never removes one, and it acts exactly where the prize sits in one unit
+  (KITTI oracle traj 85 dropped draws; the PDM-Closed cells 319).
+* At 20%, of the 12 official wins among 118 deployable pairs: **8 survive on raw gain, 4 do not** (PDM-Closed safety
+  gate_ridge and gate_gbm, PDM-Closed scalar_J gate_gbm, IDM scalar_J R1_mlp_clf). The three gate rows have a lower
+  bound of exactly 0.000, because draws without the dominant log give a difference of exactly zero.
+* Surviving wins are worth 3.1–19.5% of the all-cheap loss on KITTI and 30.5% on PDM-Closed scalar_J (gate_ridge).
+
+**(b) Leave-one-test-unit-out at 20%.** Of the 36 official win rows, 2 lose more than half their nDG and 9 have a
+leave-one-out range wider than 0.2. **The PDM-Closed gates keep nDG 0.99 while losing 93% of their raw gain** when
+log `2021.05.12.23.36.44_veh-35_00152_00504` is removed (162.9 → 12.0 on safety, 171.3 → 12.9 on scalar_J): the
+prize collapses with the log, so the ratio cannot show the dependence. Largest swings: PDM-Closed safety R1_gbm_reg
++0.072 → −0.922; IDM scalar_J R1_gbm_clf +0.059 → +0.999; IDM scalar_J R1_mlp_clf 0.938 → 0.318; on core, trivial
+ego speed on KITTI mono traj +0.554 → −0.260 without sequence 0008.
+
+**(c) Trivial baselines.** **No trivial baseline beats random on raw gain at 20% (0 of 38 rows)**; across all quotas
+only three rows do. But on nDG, **ego speed alone outranks every learned allocator on all four KITTI cells**
+(0.402–0.784 against 0.220–0.575). On the nuPlan cells the learned allocators are clearly ahead of the trivial ones
+(gates 0.99 against 0.29 for detection count), and that lead is the single-log one from (b). Cheap-side risk alone
+reproduces the official `criticality_cheap` row by construction, as registered.
+
+**(d) Harm shares.** Mean over cells on test: 39.4% of affected inputs are harmed, which is 8.9% of all inputs
+(whole split: 40.9% and 8.7%). Range on test: 10.0–53.3% of affected, and 0.3–29.9% of all inputs.
+
+**Reading for the paper.** Report the raw-gain interval beside nDG; drop or report the 25% prize filter, which only
+inflates significance; state the single-log dependence of the nuPlan gate claims; and report both harm shares with
+the trivial baselines in their own row.
