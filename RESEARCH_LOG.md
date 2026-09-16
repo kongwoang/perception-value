@@ -2949,3 +2949,55 @@ supported on the core tracks; on nuPlan the useful direction is PDM-Closed → I
 **Hygiene.** The 64 nuScenes plan→brake R1 entries cover 78.7% of the evaluation frames (cached scores exist only
 for the training consumer's frames); uncovered frames are scored below the threshold. The 25% prize filter changes
 66 of 840 verdicts, every one of them by adding a win, 64 of those on nuPlan: the Task 12 finding repeats here.
+
+## 2026-09-16 09:47 — Task 13 Part B pre-registration: release hygiene, second pass
+
+No experiment. The anonymous release is at `037fb53`; work happens in a clean clone and is pushed with the
+anonymous identity only. Items 1, 2, 3, 6, 7 and 8 of the brief were already applied in Task 10 and are verified
+again here rather than redone; item 5 is already satisfied (no Task 9 artefact exists in the release).
+
+**What changes in this pass.**
+1. **Add the new work the appendix cites** (item 4): `scripts/124_causal_threshold.py`,
+   `scripts/125_statistics_hardening.py`, `scripts/126_consumer_transfer.py`, their three CSVs, and
+   `docs/iclr_causal_threshold.md`, `docs/iclr_statistics.md`, `docs/iclr_consumer_transfer.md`.
+2. **Three new cached-tier stages** (C14 causal threshold, C15 statistics hardening, C16 consumer transfer) so
+   `--verify` covers them, plus README and script-index entries.
+3. **One code change, registered here:** 124 and 125 hard-code the run directory names
+   `20260915_014442_routers_r1` and `20260915_033311_nuplan_real_allocation`. The release ships exactly those
+   runs, so results are unaffected, but a reviewer re-running the full tier would produce new run names and break
+   them. Both are changed to pick the latest run of the tag, as 126 already does. This alters file lookup only;
+   the three CSVs must reproduce byte-identically under `--verify`.
+4. **Item 5 re-checked:** the final tree must contain no `122`, no `target_swap` artefact and no RESEARCH_LOG.
+5. **Item 9:** the identity scan (names, emails, /home/, claude, session URLs) over the final tree, then push.
+
+**Checks before pushing.** `python reproduce.py --tier cached --verify` on a copy must report every stage
+identical, including the three new ones; the identity scan must come back empty.
+
+## 2026-09-16 10:05 — Task 13 Part C pre-registration: gated nuPlan expansion
+
+**Status: gate only.** Nothing is run against decision values in this part until the gate below is reported and
+reviewed. If the gate opens, any expansion writes to a separate directory and no official result file changes.
+
+**What the gate measures**, all from the existing selection rule and measured timings, not from estimates of
+convenience:
+1. **Pool size.** Every scenario in the nuPlan mini split the existing rule admits, and how many logs they span,
+   against the frozen 60 scenarios over 34 logs. Recorded as `logs/task13c_enum_uncapped.json`.
+2. **Reproducibility of the rule.** Whether the first 60 scenarios of an uncapped enumeration reproduce the frozen
+   set. A capped probe (cap 1500) already covers 35 logs in its first 60 against the frozen set's 34, so the
+   builder's order appears to depend on the cap itself. If the frozen 60 are not a prefix of the enumeration, an
+   expansion cannot be defined by raising `limit_total_scenarios`, and a new explicitly listed target set must be
+   frozen before any outcome is seen.
+3. **Download.** Camera-image volume for the new scenario windows, from the measured 12,921 images / 2.766 GB for
+   the current 60 windows, against free disk. The Task 5 fetch ran under a registered 3.5 GB member-byte cap; a
+   larger fetch needs that cap raised, which is a change to the registered data policy and is recorded here.
+4. **Wall clock.** From the measured Task 5 chain on 60 scenarios / 1,440 states: fetch 12.4 min, detection
+   12.6 min, projection 5.4 min, IDM reference 18.3 min, PDM-Closed reference 39.8 min, IDM branches 76.3 min,
+   PDM-Closed branches 186.2 min, cells and markdown 0.7 min.
+
+**Decision rule, fixed before the numbers are read.** If the additional scenarios admitted by the existing rule
+need more than 12 hours of compute, or their images do not fit on free disk, STOP and report the gate only. A
+feasible bounded subset may be reported as information, but is not run under this pre-registration.
+
+**Why this matters for the paper.** The nuPlan track's prize mass concentrates in a single test log. An expansion
+is worth running only if it adds test logs; adding scenarios inside the existing 34 logs would not address the
+concentration. Whether it does is an outcome, not a gate criterion.
