@@ -73,7 +73,7 @@ def feature_matrix(d, fcols):
                          nan=0.0, posinf=1e6, neginf=-1e6)
 
 
-def build_cells(splits):
+def build_cells(splits, nr_fcols):
     cells = []
     for gen in (t92.nuscenes_cells, t92.kitti_cells):
         for c in gen(splits):
@@ -98,7 +98,7 @@ def build_cells(splits):
         ida, idb = id_columns(list(z.files))
         assert np.array_equal(z["V"], v)
         cells.append(dict(group="nuPlan real perception", track="nuPlan", geometry="n/a", system=c["system"],
-                          target=c["target"], dataset="nuPlan", d=d, v_all=v, fcols=c["fcols"], cheap=c["cheap"],
+                          target=c["target"], dataset="nuPlan", d=d, v_all=v, fcols=nr_fcols, cheap=c["cheap"],
                           id_cols=(ida, idb),
                           keys=d[[ida, idb]].astype({ida: str, idb: int}).reset_index(drop=True),
                           r1={r: np.asarray(z[r], float) for r in R1},
@@ -127,9 +127,9 @@ def main():
     args = ap.parse_args()
     run = runmeta.new_run("consumer_transfer", vars(args))
     splits = json.loads((ROOT / "configs" / "benchmark_splits.json").read_text())
-    t120.register_features()
+    nr_fcols, _ = t120.register_features()
     official = official_diagonal()
-    cells = build_cells(splits)
+    cells = build_cells(splits, nr_fcols)
     print(f"  {len(cells)} consumer cells in {len(set(c['group'] for c in cells))} groups", flush=True)
 
     for c in cells:
@@ -234,6 +234,9 @@ def main():
         if (b + 1) % 200 == 0:
             print(f"  bootstrap {b + 1}/{args.nboot} [{time.time() - t0:.0f}s]", flush=True)
 
+    new_cols = ["delta_lo_all_draws", "delta_hi_all_draws", "beats_random_all_draws", "delta_lo_filtered",
+                "beats_random_filtered", "draws_dropped_by_filter", "delta_share_lo_all_draws"]
+    buf = {c_: np.full(len(df), np.nan) for c_ in new_cols}
     idx = {(r.group, r.trained_for, r.evaluated_on, r.signal, round(r.quota, 2)): i for i, r in enumerate(df.itertuples())}
     for key, x in draws.items():
         group, akey, bkey, s = key
@@ -246,11 +249,15 @@ def main():
             lo, hi = t92.ci(col)
             sub = col[keep[(group, bkey)][:, qi]]
             flo, fhi = t92.ci(sub)
-            df.loc[i, ["delta_lo_all_draws", "delta_hi_all_draws", "beats_random_all_draws",
-                       "delta_lo_filtered", "beats_random_filtered", "draws_dropped_by_filter",
-                       "delta_share_lo_all_draws"]] = [
-                lo, hi, bool(lo > 0), flo, bool(flo > 0), int(args.nboot - len(sub)),
-                lo / c["tot_cheap"] if c["tot_cheap"] > EPS else np.nan]
+            vals = [lo, hi, float(lo > 0), flo, float(flo > 0), float(args.nboot - len(sub)),
+                    lo / c["tot_cheap"] if c["tot_cheap"] > EPS else np.nan]
+            for c_, val in zip(new_cols, vals):
+                buf[c_][i] = val
+
+    for c_ in new_cols:
+        df[c_] = buf[c_]
+    for c_ in ("beats_random_all_draws", "beats_random_filtered"):
+        df[c_] = df[c_].map({1.0: True, 0.0: False})
 
     # per-group summary
     summary = []

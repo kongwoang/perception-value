@@ -2920,3 +2920,32 @@ verdict beside it (Task 12 showed the filter only ever adds wins); and whether A
 entries still beat random.
 
 **Check.** The diagonal must reproduce the official held-out nDG to 3 decimals.
+
+## 2026-09-16 09:45 — Task 13 Part A results: consumer transfer matrix (pre-registered, commit 3a656a5)
+
+Run 09:39–09:42, exit 0. `results/final/consumer_transfer.csv` (845 rows), report `docs/iclr_consumer_transfer.md`.
+No official result file was touched.
+
+**Check.** The diagonal reproduces the official held-out nDG to 3 decimals in **312 of 312** comparisons.
+
+**Note on the brief's premise.** It said the identifier columns differ between the two router runs. On disk all
+three `*_routers_r1` runs carry `seq`/`frame` for the core cells and `scenario`/`iteration` for the nuPlan cells.
+The script detects them anyway, as registered.
+
+**Transfer regret** (nDG(A→B) − nDG(B→B), 528 off-diagonal entries over all quotas): median −0.002, IQR
+[−0.082, +0.063], range −1.062 to +0.969; 38.3% of entries land within 0.05 nDG of the diagonal.
+
+* **Core tracks: the consumer barely matters.** Median regret at 20% is −0.002 (KITTI mono), +0.009 (KITTI oracle),
+  −0.036 (nuScenes mono), +0.009 (nuScenes oracle).
+* **nuPlan is bimodal.** An allocator trained for IDM scores 0.000 on both PDM-Closed cells (regret −0.99), while
+  allocators trained for PDM-Closed reach 0.94 on IDM scalar_J against IDM's own 0.000 (regret +0.94).
+* **Off-diagonal entries beat random at least as often as the diagonal**: 18 of 132 against 9 of 78 at 20%, and the
+  same pattern at every quota. 13 of the 18 are KITTI transfers in both directions.
+
+**Reading.** Planner-conditionality is a property of the decision values, not of the allocators: V differs by
+consumer, but the rankings these allocators produce mostly do not. Fitting one allocator per consumer is not
+supported on the core tracks; on nuPlan the useful direction is PDM-Closed → IDM, never the reverse.
+
+**Hygiene.** The 64 nuScenes plan→brake R1 entries cover 78.7% of the evaluation frames (cached scores exist only
+for the training consumer's frames); uncovered frames are scored below the threshold. The 25% prize filter changes
+66 of 840 verdicts, every one of them by adding a win, 64 of those on nuPlan: the Task 12 finding repeats here.
