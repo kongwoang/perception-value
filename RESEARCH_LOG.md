@@ -2769,3 +2769,63 @@ the best allocator in 11 of 14 cells** on loss reduction (for example KITTI orac
 
 **Reading for the paper.** The benchmark's rows are hindsight top-k. The frozen threshold reproduces them, the
 causal cap does not, and at deployable latency budgets the ranking often matters less than simply running FULL.
+
+## 2026-09-16 08:02 — Task 12 pre-registration: statistics hardening
+
+**Question.** Do the held-out conclusions survive without the prize denominator, without one dominant test unit,
+and against trivial predictors?
+
+Written and committed before the script runs. No official result file is modified. CPU only.
+Code: `scripts/125_statistics_hardening.py`. Outputs: `results/final/statistics_hardening.csv`,
+`docs/iclr_statistics.md`.
+
+**Cells.** The 14 official held-out cells: 10 core and 4 nuPlan real-perception cells. Core cells are compared
+against `benchmark_table.csv` and `benchmark_table_routers.csv`; nuPlan real cells against
+`benchmark_table_nuplan_real.csv`.
+
+**Signals.** Every signal the official table carries for that cell: `random`, `uncertainty`, `criticality_cheap`,
+`criticality_gt`, `dE_exact`, `dE_E1..E6`, `PKL`, `TIP`, `gate_ridge`, `gate_gbm`, `oracle`, the four R1 routers and
+`R2_cnn_clf` on core cells; on the nuPlan real cells the 12 signals of its own table. Cached scores throughout;
+gates are the official deterministic fit.
+
+### (a) Paired intervals on raw gain, not on nDG
+
+For every cell, signal and quota (10/20/30/50%): the realised decision value of the signal minus that of random,
+
+* in loss units: Δ = topk_expect(score) − k_n/n · ΣV, with the official k_n = max(round(q·n), 1);
+* as a share of the all-cheap loss: Δ / Σ J_cheap on test.
+
+A 1,000-draw unit-level paired bootstrap, units resampled once per dataset per draw and shared by every cell and
+signal. **Every draw is kept**, since the quantity is not divided by the prize. The same statistic with the official
+25% prize filter applied is reported in separate columns, together with the number of draws that filter would drop.
+
+### (b) Leave-one-test-unit-out influence
+
+At the 20% quota, models and thresholds unchanged, each test unit (scene, sequence or log) is dropped in turn and
+nDG and the raw gain are recomputed on the remainder (k_n and the prize recomputed on the reduced split). Reported
+per cell and signal: the minimum, the maximum, the unit whose removal moves nDG most, and the value with that unit
+removed. Reported for every signal, and called out for the signals the paper counts as wins (the official rows with
+`minus_random_lo` > 0 at 20%) and for the two PDM-Closed cells where the gates reach 0.99.
+
+### (c) Trivial baselines, same protocol as the official signals
+
+| baseline | core cells | nuPlan real cells |
+|---|---|---|
+| ego speed alone | `v_ego` | `nr_ego_speed` |
+| number of cheap detections alone | `feat_n_det` | `nr_n_cheap` |
+| cheap-side risk alone | `feat_crit_sum` | `nr_crit_cheap_sum` |
+| largest cheap detection area alone | `feat_area_frac_max` | not available: the nuPlan real features carry no area |
+
+All four quotas, the paired bootstrap against random, and the raw-gain statistic of (a). Note, registered here: on
+core cells `feat_crit_sum` is exactly the column the official `criticality_cheap` signal uses, so that baseline
+reproduces an official row by construction; the same holds for `nr_crit_cheap_sum` on the nuPlan real cells.
+
+### (d) Harm as a share of all inputs
+
+Per cell and split (test and all units): affected inputs, harmed inputs, harmed / affected (the existing reading)
+and harmed / all inputs, with counts, where harmed means V < −1e-9.
+
+### Check
+
+Recomputing the official nDG through this script must match the released tables to 3 decimals for every cell,
+signal and quota.
