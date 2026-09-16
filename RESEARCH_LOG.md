@@ -3139,3 +3139,37 @@ does not: `reproduce.py --tier cached --verify --only C10` reports `identical` f
 and regenerated `nuplan_real_perception_checks.json` are byte-identical (27,881 bytes, same single `NaN` token,
 zero fields differing at rel 1e-9). So the change above is a robustness fix against the described mechanism, not
 a confirmed repair of an observed failure here. Recorded rather than presented as a fix.
+
+## 2026-09-16 15:40 — Task 14 results: 17-stage verify, and a false claim of mine corrected
+
+**Per-stage verdicts** (`reproduce.py --tier cached --verify`, 17 stages, fresh clone, rebuilt env):
+C1–C13 identical, **C14 DIFFERS**, C15 identical, C16 identical, **C17 identical**. Exit 1 from C14 alone.
+
+* **C10 is identical**, and was identical before the comparator change too: `--only C10 --verify` on the
+  unpatched tree already reported `identical`, with byte-identical files. The DIFFERS described in the task does
+  not reproduce here, so the comparator change is a robustness fix, not a confirmed repair.
+* **C17 reproduces byte-identically** and prints the corrected sanity line: 688/688 comparable rows, 40 further
+  rows with no official value.
+* **C2, C12, C15, C16 are identical on this machine.** The README documents C2 and C12 as differences that *can*
+  appear on other platforms, so this is consistent with it.
+
+**C14, and a claim I got wrong.** In Task 13 I wrote into the release README that "each number quoted in
+`docs/iclr_causal_threshold.md` … is unchanged at the three decimals it is quoted to". That is false. This run
+moves 72 of 3,464 rows (Task 13's moved 71), all of them learned signals, 45 with `ndg` NaN in the undefined
+cell — a nondeterministic refit, not a data change. Checking every pooled row at 3 dp:
+
+* the pooled headline is stable: −0.089007 → −0.089056, CI [−0.142568, −0.023583] → [−0.142610, −0.023838], i.e.
+  −0.089 [−0.143, −0.024] either way;
+* `gate_ridge`, `gate_gbm`, `R1_mlp_reg`, `R1_gbm_reg`, `R1_gbm_clf` are bit-stable;
+* **`R1_mlp_clf`'s upper bound moves −0.015 → −0.016**, and the report quotes that endpoint.
+
+The README note and the report now say this. Also recorded: the per-policy means and the "A beats the official
+ranking in 41 of 72 pairs, B in 21" counts are **not stored** in `causal_threshold.csv` and script 124 does not
+emit them, so `--verify` cannot cover them; a like-for-like recomputation moved by one pair between the two runs.
+I could not reproduce the report's exact 72-pair selection from the shipped tables in three attempts (I get 78
+pairs joining against the official eta, and the report's "official top-k" appears to be 124's own policy-C
+recomputation), so I state only what was checked rather than restating that table.
+
+**A recurring bug of mine, twice now.** Joining on the nuPlan geometry `"n/a"` fails silently because `read_csv`
+parses it as NaN; it cost 12 of 72 pairs here. Task 9 hit the same thing, and script 127 already guards with
+`fillna("n/a")`. Worth a helper rather than a third occurrence.
