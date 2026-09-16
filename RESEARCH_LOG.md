@@ -2872,3 +2872,51 @@ reproduces the official `criticality_cheap` row by construction, as registered.
 **Reading for the paper.** Report the raw-gain interval beside nDG; drop or report the 25% prize filter, which only
 inflates significance; state the single-log dependence of the nuPlan gate claims; and report both harm shares with
 the trivial baselines in their own row.
+
+## 2026-09-16 09:34 — Task 13 Part A pre-registration: consumer transfer matrix
+
+**Question.** How much of an allocator's value survives when the downstream consumer changes?
+
+Written and committed before the script runs. No official result file is modified. CPU only, cached scores.
+Code: `scripts/126_consumer_transfer.py`. Outputs: `results/final/consumer_transfer.csv`,
+`docs/iclr_consumer_transfer.md`.
+
+**Groups and consumers.** One square matrix per (track, geometry):
+
+| group | consumers |
+|---|---|
+| nuScenes oracle, nuScenes mono | brake (J), plan_ade (JC_ade), plan_fde (JC_fde) |
+| KITTI oracle, KITTI mono | brake (J), traj (JB) |
+| nuPlan real perception | PDM-Closed safety, PDM-Closed scalar_J, IDM scalar_J |
+
+The nuPlan consumers are the real-perception cells, the ones the paper's held-out set uses; IDM safety is absent
+because its nDG is undefined there (4 affected test states), which matches the consumer list.
+
+**Signals.** The four cached R1 routers and the two gates.
+* R1 scores come from the cached `results/raw/*_routers_r1/scores__*.npz` for core cells and from the
+  nuPlan real-perception run for nuPlan. Key names differ between runs, so the identifier columns are detected
+  from the file (`seq`/`frame` or `scenario`/`iteration`) rather than assumed.
+* Gates are refit from the cached features with the official hyperparameters.
+
+**Deviation, registered and reported.** The brief asks for gate scores out of fold by unit; the sanity check asks
+the diagonal to reproduce the official held-out nDG to 3 decimals. These conflict, because the official gate is fit
+on train ∪ val and scored on test. The official protocol is kept: a gate is fit on the train ∪ val units of the
+consumer it is trained for and applied to the evaluation cell's frames. Every evaluated test unit is therefore
+outside the fitting set, which is what out-of-fold protects against.
+
+**Entry (A, B).** The allocator trained for consumer A, evaluated against consumer B's decision value on B's frozen
+test split, at quotas 10/20/30/50% with the exact tie expectation.
+
+**Frame coverage.** A gate model scores every frame of B. Cached R1 scores exist only for A's own frames: where A
+does not cover a B test frame (nuScenes plan cells hold fewer frames than brake cells), that frame is given A's
+minimum score, so it is never escalated, and the coverage fraction is reported per entry. Entries below full
+coverage are flagged in the table.
+
+**Reported per entry.** nDG; transfer regret nDG(A→B) − nDG(B→B); realised gain as a share of the all-cheap loss;
+a paired unit bootstrap over 1,000 draws against random with **every draw kept**, with the 25% prize filter
+verdict beside it (Task 12 showed the filter only ever adds wins); and whether A→B beats random.
+
+**Per group:** the diagonal, the median transfer regret over off-diagonal entries, and how many off-diagonal
+entries still beat random.
+
+**Check.** The diagonal must reproduce the official held-out nDG to 3 decimals.
