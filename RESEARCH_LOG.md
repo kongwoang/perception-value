@@ -3111,3 +3111,31 @@ method often fails to beat random on the decision. But with 24, 6 and 9 test uni
 not separable from zero — 4 of 52 intervals exclude it for the missed-object variant and none for the
 risk-weighted one. What the data supports is the disagreement in *selection*; the *size* of the loss is not
 established. Reported as it came out.
+
+## 2026-09-16 14:55 — Task 14: ship Part D, and harden the verifier's JSON comparison
+
+**Part D artefacts shipped** to the anonymous release as cached-tier stage C17, with README and script-index
+entries: `scripts/127_objective_swap.py`, `results/final/objective_swap.csv`, `docs/iclr_objective_swap.md`.
+
+**Two corrections to Part D, made before shipping.**
+1. The `compare` rows carried no definedness flag. Regret is measured in decision value, so the nuPlan IDM
+   safety cell — undefined under `E_dec` with 4 affected states — produced regret numbers that looked usable.
+   Added `e_dec_defined` and `n_affected_dec` to every compare row: 16 of 224 rows are now flagged False, all of
+   them that cell. Note the flag is objective-specific by construction: under both `E_perc` variants the same
+   cell *is* defined, because the perception gain is non-zero on many more inputs.
+2. The script printed `sanity: 728/728`, folding in 40 rows whose official value is NaN, because a NaN
+   comparison fails silently. It now prints 688/688 comparable rows plus the count with no official value. The
+   report and this log already carried the corrected figure; the script did not. The table is byte-identical
+   before and after this change, checked with `cmp`.
+
+**Verifier.** `reproduce.py`'s JSON branch decided equality with `round(x, 9)`, which turns a difference in the
+last bits into a verdict whenever two values straddle a rounding boundary. Replaced with a recursive comparison:
+NaN equals NaN in the same position, numbers compare at `rtol=1e-9, atol=1e-12`, booleans by identity, dicts by
+key set, lists by order. The CSV branch already used exactly this tolerance and is unchanged, so the documented
+platform differences for C2, C12 and C14 are unaffected — they are orders of magnitude larger.
+
+**What I could not reproduce.** The task described C10 reporting DIFFERS on an unchanged tree. On this machine it
+does not: `reproduce.py --tier cached --verify --only C10` reports `identical` for both outputs, and the shipped
+and regenerated `nuplan_real_perception_checks.json` are byte-identical (27,881 bytes, same single `NaN` token,
+zero fields differing at rel 1e-9). So the change above is a robustness fix against the described mechanism, not
+a confirmed repair of an observed failure here. Recorded rather than presented as a fix.

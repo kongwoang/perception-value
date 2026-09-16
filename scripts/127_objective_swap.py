@@ -238,6 +238,11 @@ def main():
                          "undefined_reason": val_na[name]})
 
         # ---- section: compare --------------------------------------------------------------
+        # Regret is measured in decision value, so a cell the benchmark calls undefined under E_dec carries no
+        # usable regret even when the perception objective is well defined there.  Flag it on every compare row.
+        n_aff_dec = int((np.abs(v) > EPS).sum())
+        prize_v = t92.topk_expect(v, [v], ks)[0][0]
+
         # every signal that any comparison selects, bootstrapped once per cell
         picks, compare = {}, []
         for obj, _ in OBJECTIVES:
@@ -290,7 +295,11 @@ def main():
                  "eta_dec_of_perc": cmp["eta_dec_of_perc"],
                  "regret_ndg": cmp["eta_dec_of_perc"] - cmp["eta_dec_of_dec"],
                  "perc_winner_worse_than_random": bool(cmp["eta_dec_of_perc"] < etas[("E_dec", "random")][qi]),
-                 "cheap_loss_total": cheap_total}
+                 "cheap_loss_total": cheap_total,
+                 # regret is measured in decision value: false where the benchmark calls this cell undefined
+                 # under E_dec, even though the perception objective is well defined on the same inputs
+                 "e_dec_defined": bool(n_aff_dec >= MIN_AFFECTED and prize_v[qi] > EPS),
+                 "n_affected_dec": n_aff_dec}
             if boot and a_dec in boot["draws"] and a_per in boot["draws"]:
                 dr = boot["draws"][a_per][:, qi] - boot["draws"][a_dec][:, qi]
                 lo, hi = (float(np.percentile(dr, 2.5)), float(np.percentile(dr, 97.5)))
@@ -329,7 +338,11 @@ def main():
                      "target": r.target, "signal": r.signal, "quota": r.quota, "objective": "E_dec",
                      "eta": r.eta, "eta_official": r.eta_official, "abs_diff": r.abs_diff,
                      "matches_to_3dp": bool(round(r.abs_diff, 3) == 0)})
-    print(f"  sanity: {len(m) - len(bad)}/{len(m)} E_dec values reproduce the official held-out nDG to 3 dp",
+    # Rows whose official counterpart is NaN are cells the benchmark declares undefined; a NaN comparison fails
+    # silently, so they are counted separately instead of being folded into the match rate.
+    comparable = m[m.eta.notna() & m.eta_official.notna()]
+    print(f"  sanity: {len(comparable) - len(bad)}/{len(comparable)} E_dec values reproduce the official held-out "
+          f"nDG to 3 dp; {len(m) - len(comparable)} further rows have no official value (undefined cells)",
           flush=True)
     if len(bad):
         print(bad[["track", "system", "target", "signal", "quota", "eta", "eta_official", "abs_diff"]]
