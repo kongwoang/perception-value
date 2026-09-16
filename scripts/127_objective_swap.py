@@ -336,10 +336,13 @@ def main():
               .head(12).to_string(index=False), flush=True)
 
     out = pd.DataFrame(rows)
-    dst = FINAL / "objective_swap.csv"
-    out.to_csv(dst, index=False)
     out.to_csv(run / "objective_swap.csv", index=False)
-    print(f"  wrote {dst} ({len(out)} rows) in {time.time() - t0:.0f}s", flush=True)
+    if args.debug:                                          # a two-cell smoke never lands in results/final
+        print(f"  debug: wrote {run / 'objective_swap.csv'} only ({len(out)} rows)", flush=True)
+    else:
+        dst = FINAL / "objective_swap.csv"
+        out.to_csv(dst, index=False)
+        print(f"  wrote {dst} ({len(out)} rows) in {time.time() - t0:.0f}s", flush=True)
     assert len(bad) == 0 or args.debug, "E_dec does not reproduce the official held-out nDG"
 
 
