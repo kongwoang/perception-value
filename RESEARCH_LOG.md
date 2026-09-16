@@ -3247,3 +3247,19 @@ stage C18.
 
 **Part B**, no experiment: relabel R2 and correct items 1, 3, 4, 5 and 6 of `docs/iclr_router_implementation.md` in
 `scripts/107_router_r2.py` and `docs/iclr_routers.md`. Items 2 and 7 are left alone.
+
+## 2026-09-16 21:50 — Task 16 Part A: the validation gate fired on the smoke run (reading bug, criterion unchanged)
+
+The first run (`--debug --nboot 50`, run `20260916_214811_skip_accounting`) stopped at the registered gate: the
+cascade share equalled the shipped `escalated_frac` in 56 of 80 R2 rows, while `eta` matched in 80 of 80. Nothing
+was evaluated.
+
+**Cause: my script's reading of the shipped table, not the computation.** The 24 unequal rows are exactly the
+positive shares, apart from the four KITTI mJ rows at 50%, and differ by at most 9.7e-17 (one unit in the last
+place, relative 1.5e-15). pandas' default CSV float parser is not round-trip exact. Re-reading the same file with
+`float_precision="round_trip"` gives **80 of 80 exactly equal**. Identical `eta` in all 80 rows already implied
+identical k.
+
+**Change.** The script now reads the shipped table with `float_precision="round_trip"`. The gate is unchanged:
+exact equality of the share, `eta` to 1e-9. No tolerance was added. The medians the task asked for were already
+right on the failed run: 0.0% / 0.0% at 20% and 0.0% / 23.9% at 50% (nuScenes / KITTI, ms).
