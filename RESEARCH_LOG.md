@@ -3173,3 +3173,77 @@ recomputation), so I state only what was checked rather than restating that tabl
 **A recurring bug of mine, twice now.** Joining on the nuPlan geometry `"n/a"` fails silently because `read_csv`
 parses it as NaN; it cost 12 of 72 pairs here. Task 9 hit the same thing, and script 127 already guards with
 `fillna("n/a")`. Worth a helper rather than a third occurrence.
+
+## 2026-09-16 17:10 — Task 16 Part A pre-registration: skipping cost accounting for the pixel router
+
+**What changes.** A second cost-accounting variant, run alongside the shipped cascade and never in its place. Nothing
+is retrained; R2's model and its cached scores (`results/raw/20260914_125344_router_r2`) are unchanged. No official
+result file is modified.
+
+* **Cascade (shipped).** Per-input cost Cs + Cc + f·Cf, so the escalated share is f_c = max((B − Cc − Cs)/Cf, 0)
+  (`93_budget_allocation.py:342`).
+* **Skipping.** An escalated input runs FULL instead of CHEAP: Cs + (1−f)·Cc + f·Cf = Cs + Cc + f·(Cf − Cc), so
+  f_s = clip((B − Cc − Cs)/(Cf − Cc), 0, 1).
+* **Budget** B = Cc + q·Cf for q in {10, 20, 30, 50}% (`93:317`), the benchmark's own, so both variants spend the
+  same budget.
+* **Constants**, exactly those of the shipped budget track. Cc, Cf come from `profile_costs` (`93:56`): median
+  end-to-end latency and GPU-rail energy per frame. Cs comes from `signal_overhead` for R2 (`93:168-169`): resize,
+  host-to-device copy and engine call, with energy = Cs ms × CPU+GPU rails over idle. **Image decoding is charged in
+  neither variant.** The profiler decodes images before its clock starts (`01_profile_jetson.py:75-85,153`), and
+  R2's cost excludes decoding. Under skipping an escalated input still needs a decoded image that nobody pays
+  for. That is stated, not changed.
+* **Decision values are the same in both designs.** Escalation replaces CHEAP's output with FULL's either way, so
+  V = J(CHEAP) − J(FULL) is unchanged. Only the cost differs.
+
+**Eligibility.** R2 only: it reads the raw camera frame, which exists before CHEAP runs. R1 reads CHEAP's detection
+list (`103_routers_r1.py:43-56`), and the gates read features of CHEAP's detections, so neither can run before
+CHEAP. Both are structurally ineligible and are not implemented.
+
+**Expected shares.** This is arithmetic on the measured constants, not an outcome:
+
+| track | unit | Cc | Cf | Cs | cascade 10/20/30/50% | skipping 10/20/30/50% |
+|---|---|---|---|---|---|---|
+| nuScenes | ms | 12.710 | 19.351 | 9.766 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 (Cs + Cc = 22.476 > B = 22.386 at 50%) |
+| KITTI | ms | 13.179 | 18.469 | 4.817 | 0 / 0 / 3.92 / 23.92% | 0 / 0 / **13.69 / 83.51%** |
+| nuScenes | mJ | 23.706 | 66.661 | 15.792 | 0 / 0 / 6.31 / 26.31% | 0 / 0 / **9.79 / 40.83%** |
+| KITTI | mJ | 13.858 | 33.050 | 7.789 | 0 / 0 / 6.43 / 26.43% | 0 / 0 / **11.08 / 45.52%** |
+
+The task's expected ms shares are confirmed. The energy constants support skipping, so the energy budgets are
+evaluated too. 28 (cell, unit, budget) rows have a positive skipping share: KITTI ms 4 cells × 2 budgets,
+KITTI mJ 4 × 2, nuScenes mJ 6 × 2.
+
+**Validation gate, run first; the script stops if it fails.**
+1. The cascade branch must reproduce `escalated_frac` of all 80 R2 rows in `results/final/benchmark_budget_routers.csv`
+   exactly, including 0.0% / 0.0% at the 20% ms budget and 0.0% / 23.9% at the 50% ms budget (nuScenes / KITTI).
+2. It must also reproduce the point `eta` of every R2 row with a positive share, to 1e-9 relative. This checks the
+   gain and oracle code path against the shipped convention, whose denominator is the oracle at the nominal
+   share q (`93:328`).
+
+**Evaluation, for every row with f_s > 0.**
+* Test split of `configs/benchmark_splits.json`, the benchmark's cells, R2 scores aligned by (seq, frame).
+* k = floor(f_s·n + 1e-9) (`93:321`). R2's gain uses the exact tie expectation (`topk_expect`). Random's gain is
+  k/n · ΣV.
+* **Denominator: the oracle escalating the same k**, topk_expect(V, V, k), i.e. the budget-constrained oracle at
+  the realised share. It equals the capacity oracle Σmax(V, 0) exactly when #positive ≤ k ≤ #non-negative. It is
+  smaller when the share cannot reach every positive input, and smaller again when k exceeds the non-negative
+  inputs, which forces negative V in. For every row the capacity oracle, the share of non-negative V, the share
+  of positive V and a flag for each case are reported. The shipped nominal-share denominator is not used,
+  because f_s can exceed q.
+* **Paired cluster bootstrap.** 1,000 draws, seed 0, test units resampled with replacement. R2, random and the
+  oracle share the same draws, with k_t = floor(f_s·n_t + 1e-9). **Every draw is kept**: no prize filter. Draws
+  with an oracle ≤ 1e-9 have an undefined nDG and are counted; they still count in the gain difference.
+* **Gain as a share of the all-cheap loss**: gain / ΣJ_cheap on the test split, for R2 and for random.
+* **Beats random** when the 2.5th percentile of the paired gain difference (R2 − random) over all 1,000 draws is
+  above 0. **Loses** when the 97.5th percentile is below 0. On draws with a positive oracle this has the same sign
+  as the nDG difference.
+
+**Expectation, registered.** Skipping changes how many inputs R2 can escalate, not which ones it picks. R2 beats
+random nowhere under the cascade, even when charged nothing, so it should track random here too. If it beats
+random, that is a finding and will be stated plainly.
+
+**Outputs.** `scripts/128_skip_accounting.py`; `results/final/skip_accounting.csv` (sections `validation`,
+`shares`, `evaluation`); `docs/iclr_skip_accounting.md`. The anonymous release gets the same files as cached-tier
+stage C18.
+
+**Part B**, no experiment: relabel R2 and correct items 1, 3, 4, 5 and 6 of `docs/iclr_router_implementation.md` in
+`scripts/107_router_r2.py` and `docs/iclr_routers.md`. Items 2 and 7 are left alone.
