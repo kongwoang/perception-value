@@ -36,6 +36,11 @@ maximum absolute difference of 1.1e-16. A further 40 rows have no official count
 safety cell, which the benchmark declares undefined (4 affected test states, below the minimum of 10). That cell
 is excluded from every summary below; including it does not change any conclusion.
 
+In the table, `section=score` rows carry `ndg_defined` per objective, and every `section=compare` row carries
+`e_dec_defined` with `n_affected_dec`. The two differ on purpose: regret is measured in decision value, so the
+nuPlan IDM safety cell is flagged `e_dec_defined=False` on all 16 of its compare rows, while its `E_perc` score
+rows remain defined — the perception gain is non-zero on many more inputs than the decision value is.
+
 ## The two objectives disagree about which method to use
 
 Headline pool, 13 defined cells × 4 budgets = 52 comparisons per variant.
