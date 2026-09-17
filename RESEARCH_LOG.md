@@ -3448,3 +3448,36 @@ warning. Exit 1 from C14 alone.
 derivation: **no verdict changes** (15 safe, 5 not safe, 1 fragile). Two ranges widen: the pooled point to −0.0892
 (drift 1.5e-4, under its 4.9e-4 margin) and `R1_mlp_clf`'s point to −0.0958. The table in
 `docs/iclr_causal_threshold.md` (release and private) and the README now say six runs and five regenerations.
+
+## 2026-09-17 11:40 — Task 18 results: C19 reproduces byte-for-byte; the three-decimal rule on the quoted gate figures
+
+**Release validation** (fresh clone of `bb1e398` plus Task 18, git checkout, cached env).
+* **`--only C19 --verify`:** both outputs identical.
+* **29 of 29 quoted figures unchanged:** sanity 434/434, the 18 pooled means and bounds, all six CIs include 0,
+  sums 8/4, core-cell means, `sign_agree_train_n` 11/28, and the reading.
+* **The audit (129), run standalone against the shipped 122 run:** all five record files identical to the shipped
+  record.
+* **The audit after a fresh C19:** it runs; `A1_identical_scores` reads 82/84 against the shipped 83/84. The extra row
+  is `R1_gbm_reg` KITTI oracle brake, with a score difference of 5.6e-17. `A1_eta20_max_abs_diff` = 0 in every run.
+  The report's A1 row now says bit-identical in 83 rows (82 in a second run), the rest within 1.1e-16, and nDG
+  identical in all 84.
+
+**Drift.** Two more regenerations, with BLAS and OpenMP pinned to 1 and 4 threads, and the C19 regeneration all
+produced **byte-identical** CSV and summary files (`cmp`). Unlike C14, the target swap does not drift on this board,
+including under changed thread order.
+
+**The rule at the quoted precision** (two decimals; shipped plus three regenerations, drift 0 for all four):
+
+| figure | stored | correct 2 dp | quoted | margin | verdict |
+|---|---|---|---|---|---|
+| gate_ridge mean | +0.117528 | +0.12 | +0.12 | 2.5e-3 | safe |
+| gate_ridge ci_lo | −0.080183 | −0.08 | −0.08 | 4.8e-3 | safe |
+| gate_ridge ci_hi | +0.274565 | **+0.27** | **+0.28** | 4.4e-4 | safe as +0.27; **the quote is a double rounding** (+0.275 → +0.28) |
+| gate_gbm mean | +0.105569 | +0.11 | +0.11 | 5.7e-4 | safe on this board; **caution**: below the 1.1e-3 gradient-boosting drift seen on macOS in C14 |
+| gate_gbm ci_lo | −0.057752 | −0.06 | −0.06 | 2.8e-3 | safe |
+| gate_gbm ci_hi | +0.217011 | +0.22 | +0.22 | 2.0e-3 | safe |
+
+**Safe precision.** Two decimals for all four, with gate_ridge's upper bound corrected to +0.27. The ridge figures
+are also safe at three decimals, since the fit is closed-form with zero drift anywhere, though gate_ridge's mean sits
+only 2.8e-5 from its three-decimal boundary. gate_gbm's mean is the only figure whose two-decimal margin is smaller
+than cross-platform drift observed elsewhere; no second platform has run this stage.

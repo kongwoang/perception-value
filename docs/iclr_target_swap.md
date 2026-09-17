@@ -74,6 +74,21 @@ paired difference Δ = nDG(V-target) − nDG(G-target).
 * Only R1_gbm_reg leans towards the G-target, by 0.07.
 * None of these leans is significant.
 
+**Reproducibility of these figures.** The G-target models are refit inside the stage. Four runs on the reference
+platform produced byte-identical tables: the shipped run, a regeneration, and two with BLAS and OpenMP pinned to 1 and
+to 4 threads. No second platform has run this stage.
+
+At two decimals the gate figures are:
+* gate_ridge: +0.12 [−0.08, +0.27];
+* gate_gbm: +0.11 [−0.06, +0.22].
+
+gate_ridge's upper bound is 0.2746, which rounds to +0.27. Rounding the three-decimal +0.275 again would give +0.28,
+which is wrong.
+
+gate_gbm's mean, 0.1056, lies 5.7e-4 from its rounding boundary. A gradient-boosting pooled figure of the causal-threshold
+stage moved by 1.1e-3 on a second platform, more than that margin. So this is the one two-decimal gate figure that
+another platform could change, to +0.10. The other three figures lie at least 2.0e-3 from their boundaries.
+
 ## 3. The 20% table (primary G)
 
 **How to read it.**
@@ -226,7 +241,7 @@ Requested after the results were read. Code: `scripts/129_target_swap_audit.py`;
 
 | check | result |
 |---|---|
-| G-target code path with V as label | reproduces the official V-target scores in 84/84 architecture × cell rows (1 differs by 1e-16; nDG identical). The G models differ from the official ones in the label alone |
+| G-target code path with V as label | reproduces the official V-target scores in all 84 architecture × cell rows: bit-identical in 83 (82 in a second audit run), the rest within 1.1e-16, and nDG identical in all 84 (`A1_eta20_max_abs_diff` = 0). The G models differ from the official ones in the label alone |
 | degenerate G-target scores | none constant; no tie share above 0.5 at the 20% cut; all 252 recomputed nDG values equal 122's |
 | per-cell bootstrap | CI width against the official per-cell CIs: median ratio 1.00 (0.58–1.09); 13 vs 12 rows beat random at 20% |
 | pooled bootstrap | re-run with the same seed reproduces the pooled CIs exactly |
