@@ -3392,3 +3392,48 @@ ranges. The reading, inconclusive, holds in every run.
 * **README section lead-in:** it said every listed difference leaves the paper's numbers unchanged, which was
   false for C14.
 * **Report `docs/iclr_causal_threshold.md`, release and private:** the rule, the per-figure table, and what to quote.
+
+## 2026-09-17 10:00 — Task 18: ship the Task 9 target swap; renumber its audit; two corrections to its report
+
+**Decision reversed by the author.** Task 9 was a pre-registered null kept out of the paper. Appendix E now cites
+it, so its artefacts go into the release.
+
+**Number collision.** `123` was the target-swap audit here and the mechanism table in the release (stage C13).
+The audit is renumbered to **`129_target_swap_audit.py`** (`git mv`), and `scripts/supervise_task9_audit.sh` and
+`docs/iclr_target_swap.md` point to it. The Task 9 audit entry above still says `123_target_swap_audit.py`; it is
+left as written, because this log records history.
+
+**Quoted figures checked against the shipped tables.**
+
+| figure | where it is stored | value |
+|---|---|---|
+| `sanity_S1.n / .reproduced / .max_abs_diff` | summary JSON | 434 / 434 / 1.11e-16 |
+| per-architecture `mean_diff_V_minus_G`, `ci_lo`, `ci_hi` | summary JSON `pooled.primary.per_architecture` | all six CIs include 0 |
+| Σ `cells_diff_ci_above_0` / `_below_0` | same | 8 (2+3+0+2+0+1) / 4 (0+0+0+0+2+2) |
+| `sign_agree_train_n`, PDM-Closed safety / scalar_J | summary JSON `sign_agreement`, primary G | 11 / 28 |
+| ten core-cell gate means at 20% | **not a field of either table** | +0.000242 / +0.013557 |
+
+**The core-cell gate means are exactly the mean of the stored `diff` column** over the 10 core cells at primary G
+and 20%. They are stored as `A5.exploratory.<arch>.core10_point` only in the audit's run directory, which was not
+shipped. They therefore become citable only if the audit record ships; it now does, with 122's run directory,
+which the audit reads.
+
+**Correction 1 (report, section 2).** "The R1 GBMs lean the other way" contradicted "five of six lean towards
+the V-target". Only `R1_gbm_reg` leans towards G (−0.069); `R1_gbm_clf` is +0.013. Rewritten.
+
+**Correction 2 (report, section 7).** "18 (safety) and 56 (scalar_J) affected training states … 783 of 1,056"
+is in no shipped table. The counts are exact but were stated loosely: they are over the fitting states
+(train ∪ val, 1,056), and the audit's `a2_G_labels.csv` stores them as shares:
+* `fit_share_V_nonzero` = 0.017045 = 18/1,056 (safety) and 0.053030 = 56/1,056 (scalar_J);
+* `fit_share_G_pos` + `fit_share_G_neg` = 0.741478 = 783/1,056.
+
+Restated with those stored shares plus `sign_agree_train_n` (11, 28), which is stored in the summary.
+
+**Release plan.**
+* Stage C19 runs `122_target_swap.py` and compares both outputs.
+* The audit gets no verify stage: it writes nothing under `results/final`. It ships with its record.
+* 122's hard-coded run directories become `_latest(tag)` in the release copy, as for 124 and 125.
+* Both run directories ship without `environment.json` / `config.json`, which carry private commit hashes, as
+  the release's other raw runs already do.
+* 122 refits models, so C19's verify is expected to report learned-signal drift as C14 does. The quoted figures
+  are checked against a release regeneration before pushing.

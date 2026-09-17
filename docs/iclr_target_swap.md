@@ -9,7 +9,7 @@
 
 **Provenance.**
 * Pre-registration: `RESEARCH_LOG.md`, Task 9 (commit `33f96a4`), committed before any G-target model was trained.
-* Code: `scripts/122_target_swap.py`.
+* Code: `scripts/122_target_swap.py`; the audit in section 9 is `scripts/129_target_swap_audit.py`.
 * Outputs: `results/final/benchmark_target_swap.csv` (1,106 rows) and `benchmark_target_swap_summary.json`.
 * No official result file was changed.
 
@@ -69,8 +69,10 @@ paired difference Δ = nDG(V-target) − nDG(G-target).
 * Both secondary G variants give the same reading. Their means lie between −0.057 and +0.157, and every CI includes 0.
 
 **What the point estimates say.**
-* Five of six architectures lean towards the V-target: both gates and R1_mlp_clf by about 0.12.
-* None of these leans is significant, and the R1 GBMs lean the other way.
+* Five of six architectures lean towards the V-target: both gates and R1_mlp_clf by about 0.12, R1_mlp_reg by 0.04
+  and R1_gbm_clf by 0.01.
+* Only R1_gbm_reg leans towards the G-target, by 0.07.
+* None of these leans is significant.
 
 ## 3. The 20% table (primary G)
 
@@ -191,8 +193,10 @@ R1_gbm_clf.
     routers.
   * Their prize sits in one log and one scenario (Task 7), and they are dropped from 319 of 1,000 draws.
 * **Sparse V labels may explain the G-target's win for the PDM-Closed GBM routers.**
-  * The V label has only 18 (safety) and 56 (scalar_J) affected training states. The G label is non-zero on 783 of
-    the 1,056 training states (74%).
+  * On the fitting states (train ∪ val), V is non-zero on 1.7% (safety) and 5.3% (scalar_J), and G on 74.1%
+    (`fit_share_V_nonzero`, and `fit_share_G_pos` + `fit_share_G_neg`, in the audit's `a2_G_labels.csv`).
+  * V and G are both non-zero on only 11 (safety) and 28 (scalar_J) training states (`sign_agree_train_n` in
+    `benchmark_target_swap_summary.json`).
   * The G-trained GBMs may simply learn from denser supervision. This does not show that perception gain is the
     better objective.
 * **IDM scalar_J rests on 10 affected test states** and is excluded from the pooled test, as registered.
@@ -217,7 +221,7 @@ R1_gbm_clf.
 
 ## 9. Audit after the results: no computation error found
 
-Requested after the results were read. Code: `scripts/123_target_swap_audit.py`; outputs in
+Requested after the results were read. Code: `scripts/129_target_swap_audit.py`; outputs in
 `results/raw/*_target_swap_audit/`.
 
 | check | result |
@@ -233,7 +237,8 @@ Requested after the results were read. Code: `scripts/123_target_swap_audit.py`;
   itself reaches −0.08 to 0.19 on nuScenes, 0.16–0.66 on KITTI and 0.30 on PDM-Closed.
 * **The official V-target allocators beat random in only 12 of 78 rows at 20%**, none on nuScenes. There is little
   V-target advantage to lose.
-* **On the 10 core cells the target makes no difference to the gates:** mean Δ +0.000 and +0.014. The R1 classifiers
+* **On the 10 core cells the target makes no difference to the gates:** mean Δ +0.0002 and +0.0136
+  (`A5.exploratory.<arch>.core10_point` in the audit record, equal to the mean of `diff` over those cells in the table). The R1 classifiers
   lean towards V by +0.12 (mlp_clf) and +0.10 (gbm_clf), and every CI includes 0.
 * **The two PDM-Closed cells carry the pooled signal in both directions:** gates +0.70 and +0.57, GBM routers −0.63
   and −0.41, all significant. They are dropped from 319 draws, and the pooled mean then averages 10 instead of 12
