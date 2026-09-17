@@ -27,7 +27,7 @@ mac.update({("all_learned", "ndg"): STABLE, ("all_learned", "ndg_lo"): -0.142434
             ("gate_ridge", "ndg"): STABLE, ("gate_gbm", "ndg"): STABLE, ("R1_mlp_reg", "ndg"): STABLE,
             ("R1_gbm_reg", "ndg"): STABLE})
 runs["macOS (reported)"] = mac
-for label, path in zip(("Jetson, 1 thread", "Jetson, 4 threads"), sys.argv[2:4]):
+for label, path in zip(("Jetson, 1 thread", "Jetson, 4 threads", "Jetson regen (Task 17 verify)"), sys.argv[2:4] + [sys.argv[5]]):
     runs[label] = pooled(path)
 
 def r3(x):

@@ -3437,3 +3437,14 @@ Restated with those stored shares plus `sign_agree_train_n` (11, 28), which is s
   the release's other raw runs already do.
 * 122 refits models, so C19's verify is expected to report learned-signal drift as C14 does. The quoted figures
   are checked against a release regeneration before pushing.
+
+## 2026-09-17 10:40 — Task 17: full 18-stage verify with the patched comparator; a sixth C14 run folded in
+
+**Verify** (release `44f940f` plus the patched `reproduce.py`, git checkout, cached env). C1–C13 identical, including
+C4's and C10's JSON outputs; C14 DIFFERS, the documented learned-signal drift; C15–C18 identical. No stale-reference
+warning. Exit 1 from C14 alone.
+
+**The C14 of that verify is a sixth run on this board.** It moved 71 rows, learned signals only. Folded into the
+derivation: **no verdict changes** (15 safe, 5 not safe, 1 fragile). Two ranges widen: the pooled point to −0.0892
+(drift 1.5e-4, under its 4.9e-4 margin) and `R1_mlp_clf`'s point to −0.0958. The table in
+`docs/iclr_causal_threshold.md` (release and private) and the README now say six runs and five regenerations.
