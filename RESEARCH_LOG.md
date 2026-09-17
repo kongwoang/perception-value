@@ -3316,3 +3316,39 @@ cover point estimates only unless it states a bound.
 A figure failing 1 is **not safe**. A figure passing 1 but failing 2 is **fragile**: it has stayed in its bin only
 because the drift happened to point away from the boundary. Both are quoted at two decimals. The pre-registered
 reading (inconclusive: the interval straddles −0.05) is checked separately against every run.
+
+## 2026-09-17 08:55 — Task 17 item 3: why C10 can report DIFFERS when a numeric comparison finds nothing
+
+**Is the Task 14 comparator reached for C10's check file? Yes.** There is one comparison path
+(`reproduce.py:248` → `compare`), and a `.json` suffix reaches the new branch (177–205). Checked with controlled
+variants of the real file rather than by reading: a float moved across a `round(x, 9)` boundary is `identical` under
+the new code and `DIFFERS` under the old (release `9d3eeb1`). Only the new branch can produce that.
+
+**The file C10 is judged on is written by C9.** C9 and C10 both run `116_nuplan_real_cells.py`. C9 (`--stage checks`)
+builds `nuplan_real_perception_checks.json` from scratch (116:79–145) but declares only
+`nuplan_real_perception_recall.csv`; C10 (`--stage cells`) reads that file, adds the reading sections and rewrites it
+(116:194–201). A write audit of every cached stage finds this the only case of one stage writing an output another
+stage declares. So a difference reported under C10 can originate in C9.
+
+**The Task 14 comparator is stricter than a numeric comparison in one respect I introduced.** Booleans had to be
+identical objects (`u is v`), so `false` against `0.0` was DIFFERS. The old comparator and any NaN-aware numeric
+comparison call them equal. A NumPy boolean written through `json.dumps(default=float)` produces exactly that. The
+other ways the verdict can disagree with a comparison of numeric fields: key only in one file, list length, text,
+and null against NaN.
+
+**What I cannot establish here.** On this board the C10 regeneration is byte-identical to the shipped file, so
+which of these modes fires on macOS is not observable from here. The fix makes the next run say.
+
+**A second hazard found on the way.** `--verify` copies each output to `results/.shipped_outputs` only if no copy
+exists (`reproduce.py:233`), and never refreshes it. A reference taken after outputs were regenerated in place is
+wrong, for example `--only C9` followed by `--only C10`, since C9 rewrites C10's file first.
+
+**Changes (release `reproduce.py`, tested before shipping).**
+1. JSON: a boolean equals the number it stands for; NaN equals NaN; numbers at rel 1e-9 / abs 1e-12; keys, list
+   lengths, text and nulls exactly. A DIFFERS verdict now names up to eight differing field paths and what differs.
+2. Reference: in a git checkout the shipped copy is the committed version; an existing stale copy is replaced with
+   a printed warning; outside git the copy-once behaviour is unchanged.
+3. README: the comparison rules, and that the check file under C10 is written by C9 and completed by C10.
+
+Tests on a local clone: all ten controlled variants give the intended verdicts. A planted stale reference for
+C11's output was detected and replaced, and C11 then verified identical.
