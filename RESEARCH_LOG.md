@@ -3293,3 +3293,26 @@ capacity. The other KITTI cells' non-negative shares are 88.5, 94.6 and 98.8%.
 **Reading, as registered.** Skipping changes how many inputs R2 escalates, not which. The ranking that did not
 beat random under the cascade does not beat it here, and loses significantly in two energy rows. With 28 one-sided
 tests, about 0.7 wins and 0.7 losses are expected by chance. No surprise to report.
+
+## 2026-09-17 00:10 — Task 17 item 2: rule for which pooled C14 figures may be quoted at three decimals (fixed before the new runs report)
+
+The pooled C14 figures are `B − official` for V1 at 20% over 12 cells: the six-learned-signal statistic and one
+row per signal, each with a point estimate and a 95% bound on either side. The learned signals are refit inside
+the stage, and those fits are not bit-reproducible, so a three-decimal figure drifts. The Task 14 note listed the
+stable figures from one re-run. This replaces that listing with a rule applied to every run available.
+
+**Runs.** (1) shipped, Jetson; (2) Task 13 regeneration, Jetson; (3) Task 14 regeneration, Jetson; (4) the macOS run
+reported for Task 17; (5) and (6) two regenerations on this board with BLAS and OpenMP threads pinned to 1 and to 4,
+which change floating-point order inside the refits. (5) and (6) are running while this is written. For (4) only
+the reported figures are known: the pooled lower bound −0.142434, `R1_gbm_clf` −0.125136, `R1_mlp_clf` at −0.095, and
+the points of `gate_ridge`, `gate_gbm`, `R1_mlp_reg` and `R1_gbm_reg` stable at three decimals. The report is taken to
+cover point estimates only unless it states a bound.
+
+**Rule.** A figure is quoted at three decimals only if both hold:
+1. it rounds to the same three-decimal value in every run where it is known;
+2. its distance to the nearest three-decimal rounding boundary exceeds the largest drift from the shipped value
+   observed for that same figure in any run.
+
+A figure failing 1 is **not safe**. A figure passing 1 but failing 2 is **fragile**: it has stayed in its bin only
+because the drift happened to point away from the boundary. Both are quoted at two decimals. The pre-registered
+reading (inconclusive: the interval straddles −0.05) is checked separately against every run.
