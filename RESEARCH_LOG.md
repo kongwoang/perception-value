@@ -3352,3 +3352,43 @@ wrong, for example `--only C9` followed by `--only C10`, since C9 rewrites C10's
 
 Tests on a local clone: all ten controlled variants give the intended verdicts. A planted stale reference for
 C11's output was detected and replaced, and C11 then verified identical.
+
+## 2026-09-17 09:55 — Task 17 items 1–2: which pooled C14 figures are safe at three decimals
+
+Rule registered at commit `a78dfd0`, before the two new runs reported. Applied mechanically by `derive.py`
+(`results/raw/20260917_094000_c14_three_decimal_derivation`). Runs:
+* five on this board: shipped; the Task 13 and Task 14 regenerations; two new ones with BLAS and OpenMP pinned to 1
+  and 4 threads, which moved 95 and 73 rows (earlier 71 and 72), learned signals only;
+* one macOS run, with the figures reported for Task 17 only.
+
+**Verdicts.**
+* **Safe at three decimals:** the pooled point −0.089 (margin 4.9e-4, largest drift 1.3e-4), and all of
+  `gate_ridge`, `gate_gbm`, `R1_mlp_reg` and `R1_gbm_reg`, plus `R1_gbm_clf`'s bounds. All of these are identical in
+  every run on this board.
+* **Fragile:** the pooled upper bound, −0.024 in every run. It lies 8.3e-5 from a rounding boundary against a drift
+  of 4.4e-4 that happened to point away.
+* **Not safe:**
+  * the pooled lower bound (−0.143 / −0.142 on macOS);
+  * `R1_mlp_clf`'s point (−0.096 / −0.095, on this board), lower bound (−0.177 / −0.176) and upper bound (−0.017 /
+    −0.016 / −0.015);
+  * `R1_gbm_clf`'s point (−0.125 on macOS / −0.124).
+
+**Two corrections to the task's premises.**
+1. **`R1_mlp_clf`'s point is not stable.** It reads −0.095 on macOS, but already read −0.096 in the Task 13
+   regeneration on this board.
+2. **"Safe" rests on this board alone for most figures.** Apart from the few points macOS reported, the exact values
+   come from here. Pooled figures of the same model classes moved 1.1e-3 (gradient boosting, macOS) and 1.3e-3 (MLP,
+   here). Either exceeds any three-decimal margin (at most 5e-4), so three decimals is not guaranteed for
+   `gate_gbm`, `R1_mlp_reg`, `R1_gbm_reg` or `R1_gbm_clf`'s bounds on another platform. This is reported as a
+   caution, not as a verdict: applied as a rule, it would push `gate_gbm`'s bounds to one decimal.
+
+**Two decimals is not a blanket fallback.** The pooled interval is safe there, [−0.14, −0.02]. But `R1_mlp_clf`'s and
+`R1_gbm_clf`'s points change even at two decimals (−0.09 / −0.10; −0.12 / −0.13), so they can only be quoted as
+ranges. The reading, inconclusive, holds in every run.
+
+**Text changed.**
+* **Release README C14 note:** only the pooled point is stable at three decimals; the lower bound moves on a second
+  platform; the upper bound lies within 1e-4 of a boundary; the interval is stable at two decimals.
+* **README section lead-in:** it said every listed difference leaves the paper's numbers unchanged, which was
+  false for C14.
+* **Report `docs/iclr_causal_threshold.md`, release and private:** the rule, the per-figure table, and what to quote.
